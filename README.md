@@ -2,10 +2,18 @@
 
 ## /api/location
 ### Methods
-- GET:      all     Returns business ID's close to the location
-- PUT:      root    Undefined
-- POST:     owner   Undefined
-- DELETE:   root    Undefined
+- GET:
+    - Access: all
+    - Action: Returns business ID's close to the location
+- PUT:
+    - Access: root
+    - Action: Undefined
+- POST:
+    - Access: owner
+    - Action: Undefined
+- DELETE:
+    - Access: root
+    - Action: Undefined
 
 ### Parameters
 - zip: A US zipcode
@@ -15,10 +23,18 @@
 
 ## /api/business/[business id]
 ### Methods
-- GET:      all     Returns business model
-- PUT:      root    Creates new business model
-- POST:     owner   Updates business model
-- DELETE:   root    Deletes model
+- GET:
+    - Access: all
+    - Action: Returns business model
+- PUT:
+    - Access: root
+    - Action: Creates new business model
+- POST:
+    - Access: owner
+    - Action: Updates business model
+- DELETE:
+    - Access: root
+    - Action: Deletes model
 
 ### Parameters
 None.
