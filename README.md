@@ -6,10 +6,12 @@
 - PUT:      root    Undefined
 - POST:     owner   Undefined
 - DELETE:   root    Undefined
+
 ### Parameters
 - zip: A US zipcode
 - lat: Lattitude, -90 < lat < +90. Must also use lon.
 - lon: Longitude, -90 < lon < +90. Must also use lat.
+
 
 ## /api/business/[business id]
 ### Methods
@@ -17,5 +19,6 @@
 - PUT:      root    Creates new business model
 - POST:     owner   Updates business model
 - DELETE:   root    Deletes model
+
 ### Parameters
 None.
