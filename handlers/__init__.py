@@ -1,9 +1,10 @@
-import root
-import location
-import business
+from root import MainHandler
+from location import LocationHandler
+from business import BusinessHandler
+
 
 __all__ = [
-    root.MainHandler,
-    location.LocationHandler,
-    business.BusinessHandler
+    MainHandler,
+    LocationHandler,
+    BusinessHandler
 ]

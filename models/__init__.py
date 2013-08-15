@@ -1,2 +1,8 @@
-import business
-__all__ = [business.Business]
+from business import Business
+from user import User
+
+
+__all__ = [
+    Business,
+    User
+]
