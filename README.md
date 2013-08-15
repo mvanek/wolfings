@@ -38,6 +38,48 @@ Undefined
 Undefined
 
 
+## /api/user/[user id]
+### GET
+- Action: Retrieves user model
+- Access level: all
+- Return value
+    - Success: User object
+    - Failure: Appropriate 400 status code
+
+### PUT
+- Action: Creates new user model
+- Access level: root
+- Parameters
+    - name
+        - Required
+        - Type:     string
+        - Domain:   All strings
+        - Desc:     The display name of the user
+- Return value
+    - Success: Status code 200
+    - Failure: Appropriate 400 status code
+
+### POST
+- Action: Updates existing user model
+- Access level: owner
+- Parameters
+    - name
+        - Optional
+        - Type:     string
+        - Domain:   All strings
+        - Desc:     The display name of the user
+- Return value
+    - Success: Status code 200
+    - Failure: Appropriate 400 status code
+
+### DELETE
+- Action: Deletes existing user model
+- Access level: root
+- Return value
+    - Success: Status code 200
+    - Failure: Appropriate 400 status code
+
+
 ## /api/business/[business id]
 ### GET
 - Action: Retrieves business model
