@@ -3,8 +3,8 @@ from google.appengine.api import users
 from google.appengine.ext import ndb
 
 import json
+import urllib
 
-import utils
 import models
 
 
@@ -19,7 +19,7 @@ def users_exist(user_ids):
 class BusinessHandler(webapp2.RequestHandler):
 
     def get_id(self):
-        return utils.path_list(self.request.path)[3]
+        return urllib.unquote(self.request.path.split('/')[3])
 
     def authenticate(self, user_ids=[], admin=False):
         user = users.get_current_user()
@@ -34,8 +34,8 @@ class BusinessHandler(webapp2.RequestHandler):
 
     def get_location(self):
         try:
-            lat = int(self.request.get('lat'))
-            lon = int(self.request.get('lon'))
+            lat = int(urllib.unquote(self.request.get('lat')))
+            lon = int(urllib.unquote(self.request.get('lon')))
         except ValueError:
             return None
         if lat < -90 or lat > 90 or lon < -90 or lon > 90:
@@ -43,11 +43,11 @@ class BusinessHandler(webapp2.RequestHandler):
         return ndb.GeoPt('{},{}'.format(lat, lon))
 
     def get_name(self):
-        return self.request.get('name')
+        return urllib.unquote(self.request.get('name'))
 
     def get_owners(self):
         try:
-            owners = json.loads(self.request.get('owners'))
+            owners = json.loads(urllib.unquote(self.request.get('owners')))
         except ValueError:
             return []
         else:
@@ -59,13 +59,15 @@ class BusinessHandler(webapp2.RequestHandler):
         business_id = self.get_id()
         business = models.Business.get_by_id(business_id)
         try:
-            self.response.write(json.dumps(business.to_dict()))
+            self.response.write(business.to_json())
         except AttributeError:
             self.abort(404)
 
     def post(self):
         business_id = self.get_id()
         business = models.Business.get_by_id(business_id)
+        if not business:
+            self.abort(404)
         self.authenticate(business.owners)
 
         name = self.get_name()
@@ -82,7 +84,12 @@ class BusinessHandler(webapp2.RequestHandler):
             business.owners = owners
 
         if not (name or location or owners):
-            self.abort(400, 'Nothing changed')
+            self.abort(
+                400,
+                'Incomplete request:\n'
+                'name: {}\n'
+                'location: {}\n'
+                'owners: {}'.format(name, location, owners))
         business.put()
 
     def put(self):
@@ -93,7 +100,12 @@ class BusinessHandler(webapp2.RequestHandler):
         location = self.get_location()
         owners = self.get_owners()
         if not (name and location and owners):
-            self.abort(400, 'Incomplete request')
+            self.abort(
+                400,
+                'Incomplete request:\n'
+                'name: {}\n'
+                'location: {}\n'
+                'owners: {}'.format(name, location, owners))
 
         business = models.Business(id=business_id,
                                    name=name,

@@ -2,8 +2,8 @@ import webapp2
 from google.appengine.api import users
 
 import json
+import urllib
 
-import utils
 import models
 
 
@@ -15,13 +15,13 @@ def user_exists(user_id):
 class UserHandler(webapp2.RequestHandler):
 
     def get_id(self):
-        return utils.path_list(self.request.path)[3]
+        return urllib.unquote(self.request.path.split('/')[3])
 
     def authenticate(self, user_id=None, admin=False):
         user = users.get_current_user()
         if not user:
             self.redirect(users.create_login_url(self.request.uri))
-            self.abort()
+            self.abort(401)
         if users.is_current_user_admin():
             return True
         if admin is False and user.user_id() == user_id:
@@ -40,7 +40,7 @@ class UserHandler(webapp2.RequestHandler):
         user_id = self.get_id()
         self.authenticate(user_id)
 
-        name = self.request.get('name')
+        name = urllib.unquote(self.request.get('name'))
         if name:
             user_model = models.User.get_by_id(user_id)
             user_model.name = name
@@ -56,7 +56,7 @@ class UserHandler(webapp2.RequestHandler):
             self.abort(400, 'User exists')
 
         user_model = models.User(id=user_id,
-                                 name=self.request.get('name'))
+                                 name=urllib.unquote(self.request.get('name')))
         user_model.put()
 
     def delete(self):
