@@ -77,7 +77,7 @@ Undefined
 - Access level: root
 - Return value
     - Success: Status code 200
-    - Failure: Appropriate 400 status code
+    - Failure: Appropriate 400 status code. Deleting a nonexistent model will not raise an error.
 
 
 ## /api/business/[business id]
@@ -157,5 +157,5 @@ Undefined
 - Action: Deletes existing business model
 - Access level: root
 - Return value
-    - Success: Status code 200
-    - Failure: Appropriate 400 status code
+    - Success: Status code 200.
+    - Failure: Appropriate 400 status code. Deleting a nonexistent model will not raise an error.
