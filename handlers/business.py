@@ -5,125 +5,102 @@ from google.appengine.ext import ndb
 import json
 
 import utils
-from models import Business, User
+import models
+
+
+def users_exist(user_ids):
+    ret = True
+    keys = [ndb.Key('User', uid) for uid in user_ids]
+    for user in ndb.get_multi(keys):
+        ret = ret and bool(user)
+    return ret
 
 
 class BusinessHandler(webapp2.RequestHandler):
-    def get(self):
-        business_id = utils.path_list(self.request.path)[3]
-        business = ndb.Key('Business', business_id).get()
-        if business:
-            self.reponse.write(json.dumps(business.to_dict()))
-        else:
-            self.abort(404)
 
-    def post(self):
-        # Authenticate as owner or admin
+    def get_id(self):
+        return utils.path_list(self.request.path)[3]
+
+    def authenticate(self, user_ids=[], admin=False):
         user = users.get_current_user()
         if not user:
             self.redirect(users.create_login_url(self.request.uri))
             self.abort()
+        if users.is_current_user_admin():
+            return True
+        if admin is False and user.user_id() in user_ids:
+            return True
+        self.abort(401)
 
-        # Fetch model from datastore
-        business_id = utils.path_list(self.request.path)[3]
-        business = ndb.Key('Business', business_id).get()
-        if user not in business.owners or not user.is_current_user_admin():
-            self.abort(401)
-        changed = False
+    def get_location(self):
+        try:
+            lat = int(self.request.get('lat'))
+            lon = int(self.request.get('lon'))
+        except ValueError:
+            return None
+        if lat < -90 or lat > 90 or lon < -90 or lon > 90:
+            return None
+        return ndb.GeoPt('{},{}'.format(lat, lon))
 
-        # Set business name
-        name = self.request.get('name')
+    def get_name(self):
+        return self.request.get('name')
+
+    def get_owners(self):
+        try:
+            owners = json.loads(self.request.get('owners'))
+        except ValueError:
+            return []
+        else:
+            if not users_exist(owners):
+                self.abort(400, 'Nonexistent owners')
+        return owners
+
+    def get(self):
+        business_id = self.get_id()
+        business = models.Business.get_by_id(business_id)
+        try:
+            self.response.write(json.dumps(business.to_dict()))
+        except AttributeError:
+            self.abort(404)
+
+    def post(self):
+        business_id = self.get_id()
+        business = models.Business.get_by_id(business_id)
+        self.authenticate(business.owners)
+
+        name = self.get_name()
         if name:
             business.name = name
-            changed = True
 
-        # Set location
-        try:
-            lat = int(self.request.get('lat'))
-            lon = int(self.request.get('lon'))
-        except ValueError:
-            pass
-        else:
-            if not user.is_current_user_admin():
-                self.abort(401)
-            if lat > -90 and lat < 90 and lon > -90 and lon < 90:
-                business.location = ndb.GeoPt('{},{}'.format(lat, lon))
-                changed = True
-            else:
-                self.abort(400, 'Invalid lat/lon')
+        location = self.get_location()
+        if location:
+            self.authenticate(admin=True)
+            business.location = location
 
-        # Set owners
-        try:
-            owners = json.loads(self.request.get('owners'))
-        except ValueError:
-            pass
-        else:
-            num_owners = len(owners)
-            query = User.query(User.id.IN(owners)).fetch(num_owners)
-            if num_owners != len(query):
-                self.abort(400, 'Invalid owners list')
+        owners = self.get_owners()
+        if owners:
             business.owners = owners
-            changed = True
 
-        # Save changes, or throw an error if nothing changed
-        if changed:
-            business.put()
-        else:
+        if not (name or location or owners):
             self.abort(400, 'Nothing changed')
+        business.put()
 
     def put(self):
-        # Authenticate as admin
-        user = users.get_current_user()
-        if not user:
-            self.redirect(users.create_login_url(self.request.uri))
-            return
-        if not users.is_current_user_admin():
-            self.abort(401)
+        self.authenticate(admin=True)
 
-        # Set ID
-        business_id = utils.path_list(self.request.path)[3]
+        business_id = self.get_id()
+        name = self.get_name()
+        location = self.get_location()
+        owners = self.get_owners()
+        if not (name and location and owners):
+            self.abort(400, 'Incomplete request')
 
-        # Set name
-        name = self.request.get('name')
-        if not len(name):
-            self.abort(400, 'No name given')
-
-        # Set lattitude and longitude
-        try:
-            lat = int(self.request.get('lat'))
-            lon = int(self.request.get('lon'))
-        except ValueError:
-            self.abort(400, 'Invalid lat/lon: non-integer value')
-        if not (lat > -90 and lat < 90 and lon > -90 and lon < 90):
-            self.abort(400, 'Invalid lat/lon: bad domain')
-
-        # Set owners
-        try:
-            owners = json.loads(self.request.get('owners'))
-        except ValueError:
-            self.abort(400, 'Invalid owner list')
-        num_owners = len(owners)
-        query = User.query(User.uid.IN(owners)).fetch(num_owners)
-        if num_owners != len(query):
-            self.abort(400, 'Non-existent users specified')
-
-        # Create new business model and store it.
-        business = Business(id=business_id,
-                            name=name,
-                            location=ndb.GeoPt('{},{}'.format(lat, lon)))
+        business = models.Business(id=business_id,
+                                   name=name,
+                                   location=location,
+                                   owners=owners)
         business.put()
 
     def delete(self):
-        # Authenticate as admin
-        user = users.get_current_user()
-        if not user:
-            self.redirect(users.create_login_url(self.request.uri))
-            return
-        if not user.is_current_user_admin():
-            self.abort(401)
-            return
-
-        # Delete the business model from datastore
-        business_id = utils.path_list(self.request.path)[3]
-        business = ndb.Key("Business", business_id).get()
-        business.delete()
+        self.authenticate(admin=True)
+        ndb.Key('Business', self.get_id()).delete()
