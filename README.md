@@ -50,7 +50,7 @@
     - lon: Longitude of the business location 
         - Type: float
         - Domain: -90.0 < lon < 90.0
-- Return value: Status code '200 OK'
+- Return value: JSON object representing business entity
 
 ### DELETE
 - Action: Deletes existing business model
