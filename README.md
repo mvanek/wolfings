@@ -1,41 +1,64 @@
 # API Specification:
 
-## /api/location
-### GET
-- Access: all
-- Parameters: Must use one of the following
-    - zip
-        - Required
-        - Type:     int
-        - Domain:   0 < zip < 1,000,000,000
-        - Desc:     US ZIP code
-    - lat
-        - Required
-        - Type:     float
-        - Domain:   -90 < lat < 90
-        - Desc:     Lattitude. If used, must also define lon.
-    - lon
-        - Required
-        - Type:     float
-        - Domain:   -90 < lon < 90
-        - Desc:     Longitude. If used, must also define lat.
-    - radius
-        - Optional
-        - Type:     int
-        - Domain:   0 < int < inf
-        - Desc:     Max distance from location that should be searched
-- Return value
-    - Success: Array of business objects
-    - Failure: Appropriate 400 status code
 
-### PUT
-Undefined
+## /api/business
+### GET
+- Action: Retrieves a collection of business entities
+- Access level: all
+- Parameters
+    - name: Filters results by the business name
+        - Type: string
+        - Domain: all strings
+    - lat, lon: Filters results by proximity to location
+        - Type: float
+        - Domain: -90.0 < lat,lon < 90.0
+- Return value: JSON array of objects containing keys 'name' and 'id'
 
 ### POST
-Undefined
+- Action: Creates a new business entity
+- Access level: root
+- Parameters
+    - name: Filters results by the business name
+        - Type: string
+        - Domain: all strings
+    - lat: Latitude of the business location
+        - Type: float
+        - Domain: -90.0 < lat < 90.0
+    - lon: Longitude of the business location 
+        - Type: float
+        - Domain: -90.0 < lon < 90.0
+- Return value: URI of new entity
+
+
+## /api/business/{id}
+### GET
+- Action: Retrieves business entity
+- Access level: all
+- Parameters
+    none
+- Return value: JSON object representing business entity
+
+### PUT
+- Action: Creates new business entity at specified numeric ID. There is an entity with this ID, it will be replaced.
+- Access level: root
+- Parameters
+    - name: Filters results by the business name
+        - Type: string
+        - Domain: all strings
+    - lat: Latitude of the business location
+        - Type: float
+        - Domain: -90.0 < lat < 90.0
+    - lon: Longitude of the business location 
+        - Type: float
+        - Domain: -90.0 < lon < 90.0
+- Return value: Status code '200 OK'
 
 ### DELETE
-Undefined
+- Action: Deletes existing business model
+- Access level: root
+- Parameters
+    none
+- Return value: Status code '204 No Content'
 
 
 ## /api/user/[user id]
@@ -56,7 +79,7 @@ Undefined
         - Domain:   All strings
         - Desc:     The display name of the user
 - Return value
-    - Success: Status code 200
+    - Success: Status code '200 OK'
     - Failure: Appropriate 400 status code
 
 ### POST
@@ -69,93 +92,12 @@ Undefined
         - Domain:   All strings
         - Desc:     The display name of the user
 - Return value
-    - Success: Status code 200
+    - Success: Status code '200 OK'
     - Failure: Appropriate 400 status code
 
 ### DELETE
 - Action: Deletes existing user model
 - Access level: root
 - Return value
-    - Success: Status code 200
-    - Failure: Appropriate 400 status code. Deleting a nonexistent model will not raise an error.
-
-
-## /api/business/[business id]
-### GET
-- Action: Retrieves business model
-- Access level: all
-- Return value
-    - Success: Business object
-    - Failure: Appropriate 400 status code
-
-### PUT
-- Action: Creates new business model
-- Access level: root
-- Parameters
-    - name
-        - Required
-        - Type:     string
-        - Domain:   All strings
-        - Desc:     The display name of the business
-    - owners
-        - Required
-        - Type:     array of strings
-        - Domain:   All strings
-        - Desc:     Lists the users allowed to modify the business's properties.
-    - lat
-        - Required
-        - Type:     float
-        - Domain:   -90 < lat < 90
-        - Desc:     Lattitude of business. If used, must also define lon.
-        - For root only
-    - lon
-        - Required
-        - Type:     float
-        - Domain:   -90 < lon < 90
-        - Desc:     Longitude of business. If used, must also define lat.
-        - For root only
-- Return value
-    - Success: Status code 200
-    - Failure: Appropriate 400 status code
-
-### POST
-- Action: Updates existing business model
-- Access level: owners
-- Parameters
-    - id
-        - Optional
-        - Type:     string
-        - Domain:   All strings
-        - Desc:     The new business ID
-    - name
-        - Optional
-        - Type:     string
-        - Domain:   All strings
-        - Desc:     The display name of the business
-    - owners
-        - Optional
-        - Type:     array of strings
-        - Domain:   All strings
-        - Desc:     Lists the users allowed to modify the business's properties.
-    - lat
-        - Optional
-        - Type:     float
-        - Domain:   -90 < lat < 90
-        - Desc:     Lattitude of business. If used, must also define lon.
-        - For root only
-    - lon
-        - Optional
-        - Type:     float
-        - Domain:   -90 < lon < 90
-        - Desc:     Longitude of business. If used, must also define lat.
-        - For root only
-- Return value
-    - Success: Status code 200
-    - Failure: Appropriate 400 status code
-
-### DELETE
-- Action: Deletes existing business model
-- Access level: root
-- Return value
-    - Success: Status code 200.
+    - Success: Status code '200 OK'
     - Failure: Appropriate 400 status code. Deleting a nonexistent model will not raise an error.
