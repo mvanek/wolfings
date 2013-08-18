@@ -1,4 +1,4 @@
-# API Specification:
+# API Specification
 
 
 ## /api/business
@@ -34,8 +34,7 @@
 ### GET
 - Action: Retrieves business entity
 - Access level: all
-- Parameters
-    none
+- Parameters: none
 - Return value: JSON object representing business entity
 
 ### PUT
@@ -56,8 +55,7 @@
 ### DELETE
 - Action: Deletes existing business model
 - Access level: root
-- Parameters
-    none
+- Parameters: none
 - Return value: Status code '204 No Content'
 
 
