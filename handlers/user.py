@@ -7,6 +7,9 @@ import urllib
 import models
 
 
+__all__ = ['UserHandler']
+
+
 def user_exists(user_id):
     query = models.User.get_by_id(user_id)
     return bool(query)

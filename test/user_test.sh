@@ -21,3 +21,6 @@ curl ${URL} ${OPTS} -X DELETE
 
 echo "\n\nGET ${URL}"
 curl ${URL} ${OPTS} -X GET -f
+
+echo "\n\nDELETE ${URL}"
+curl ${URL} ${OPTS} -X DELETE

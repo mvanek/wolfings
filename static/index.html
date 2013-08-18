@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+    <head>
+
+        <title>Testing</title>
+        <meta charset="UTF-8">
+        <script src="/static/jquery-1.10.2.min.js"></script>
+        <script src="/static/script.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css">
+
+    </head>
+    <body>
+
+        <h1>BusinessHandler</h1>
+        <article id="biz">
+            <section class="get">
+                <form action="javascript:get_biz()">
+                    <label for="name">Name: </label>
+                    <input type="text" name="name">
+                    <label for="lat">Lat: </label>
+                    <input type="text" name="lat">
+                    <label for="lon">Lon: </label>
+                    <input type="text" name="lon">
+                    <input type="submit" value="GET">
+                </form>
+            </section>
+            <section class="post">
+                <form action="javascript:post_biz()">
+                    <label for="name">Name: </label>
+                    <input type="text" name="name">
+                    <label for="lat">Lat: </label>
+                    <input type="text" name="lat">
+                    <label for="lon">Lon: </label>
+                    <input type="text" name="lon">
+                    <input type="submit" value="POST">
+                </form>
+            </section>
+        </article>
+
+        <h1>BusinessIDHandler</h1>
+        <article id="bizid">
+            <section class="get">
+                <form action="javascript:get_bizid()">
+                    <label for="id">ID: </label>
+                    <input type="text" name="id">
+                    <input type="submit" value="GET">
+                </form>
+            </section>
+            <section class="put">
+                <form action="javascript:put_bizid()">
+                    <label for="id">ID: </label>
+                    <input type="text" name="id">
+                    <label for="name">Name: </label>
+                    <input type="text" name="name">
+                    <label for="lat">Lat: </label>
+                    <input type="text" name="lat">
+                    <label for="lon">Lon: </label>
+                    <input type="text" name="lon">
+                    <input type="submit" value="PUT">
+                </form>
+            </section>
+            <section class="delete">
+                <form action="javascript:delete_bizid()">
+                    <label for="id">ID: </label>
+                    <input type="text" name="id">
+                    <input type="submit" value="DELETE">
+                </form>
+            </section>
+        </article>
+
+        <h1>Server Responses</h1>
+        <article id="res">
+            <h2>Status:</h2>
+            <section id="status"></section>
+            <h2>Message:</h2>
+            <section id="msg"></section>
+        </article>
+
+    </body>
+</html>
