@@ -31,5 +31,5 @@ class Business(ndb.Model):
 
     def to_json(self):
         data = self.to_dict()
-        del data['geoboxes']
+        #del data['geoboxes']
         return json.dumps(data)

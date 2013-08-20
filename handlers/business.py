@@ -15,7 +15,7 @@ class BusinessHandler(webapp2.RequestHandler):
     '''
     def get(self):
         '''
-        Returns business ID's, filtered by optional parameters
+        Returns business URI's, filtered by optional parameters
         Parameters:
             name - Name of the business
             lat,lon - Location of the business
@@ -33,16 +33,8 @@ class BusinessHandler(webapp2.RequestHandler):
             query = query.filter(Business.name == name)
 
         self.response.status = '200 OK'
-        self.response.write('[')
-        flag = False
-        for b in query.iter():
-            if flag:
-                self.response.write(', ')
-            else:
-                flag = True
-            self.response.write('{{"id":"{}","name":"{}"}}'
-                .format(b.key.id(), b.name))
-        self.response.write(']')
+        for key in query.iter(keys_only=True):
+            self.response.write(str(key.id()) + '\n')
 
     def post(self):
         '''
@@ -71,15 +63,14 @@ class BusinessIDHandler(webapp2.RequestHandler):
     '''
     HTTP Request Handler, Entity: /api/business/[id]
     '''
-    def get_business_id(self):
+    def get_id(self):
         return int(urllib.unquote(self.request.path.split('/')[3]))
 
     def get_business(self):
         '''
         Returns business entity, and aborts with code 404 if there's no entity
         '''
-        id = self.get_business_id()
-        b = Business.get_by_id(id)
+        b = Business.get_by_id(self.get_id())
         if b:
             return b
         self.abort(404)
@@ -97,16 +88,20 @@ class BusinessIDHandler(webapp2.RequestHandler):
         Creates business entity at the specified URI
         The ID must be an integer
         '''
+        data = json.loads(self.request.body)
         try:
-            data = json.loads(self.request.body)
-            b = Business.new(id=self.get_business_id(),
-                             name=data['name'],
-                             lat=float(data['lat']),
-                             lon=float(data['lon']))
+            data['lat'] = float(data['lat'])
+            data['lon'] = float(data['lon'])
         except ValueError:
             self.abort(400)
+        except KeyError:
+            pass
+        b = self.get_business()
+        for key, value in data.iteritems():
+            setattr(b, key, value)
+        key = b.put()
         self.response.status = '200 OK'
-        self.response.write(b.to_json())
+        self.response.write('/api/business/' + str(key.id()))
 
     def delete(self):
         '''

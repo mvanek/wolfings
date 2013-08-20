@@ -18,8 +18,8 @@ class UserHandler(webapp2.RequestHandler):
         Returns a list of user URI's
         '''
         self.response.status = '200 OK'
-        for user in User.list_users(keys_only=True):
-            self.response.write(user.id())
+        for key in User.list_users(keys_only=True):
+            self.response.write(str(key.id()) + '\n')
 
     def post(self):
         '''

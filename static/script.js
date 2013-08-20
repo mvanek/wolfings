@@ -87,8 +87,8 @@ function get_coup() {
         type: 'GET',
         url: '/api/coupon',
         data: {
-            user: document.forms['get_coup']['user'],
-            business: document.forms['get_coup']['business']
+            user: document.forms['get_coup']['user'].value,
+            business: document.forms['get_coup']['business'].value
         }
     }).done(success_res).fail(fail_res);
 }
@@ -98,8 +98,8 @@ function post_coup() {
         type: 'POST',
         url: '/api/coupon',
         data: {
-            name: document.forms['post_coup']['name'],
-            business: document.forms['post_coup']['business']
+            name: document.forms['post_coup']['name'].value,
+            business: document.forms['post_coup']['business'].value
         }
     }).done(success_res).fail(fail_res);
 }
@@ -118,8 +118,8 @@ function put_coupid() {
         processData: false,
         contentType: 'text/json',
         data: JSON.stringify({
-            name: document.forms['put_coup']['name'],
-            business: document.forms['put_coup']['business']
+            name: document.forms['put_coupid']['name'].value,
+            business: document.forms['put_coupid']['business'].value
         })
     }).done(success_res).fail(fail_res);
 }

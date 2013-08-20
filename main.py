@@ -6,6 +6,7 @@ from handlers import (MainHandler,
                       CouponIDHandler,
                       UserHandler,
                       UserIDHandler)
+from populate import InitHandler
 
 
 def main():
@@ -16,7 +17,8 @@ def main():
         ('/api/coupon', CouponHandler),
         ('/api/coupon/.*', CouponIDHandler),
         ('/api/business', BusinessHandler),
-        ('/api/business/.*', BusinessIDHandler)
+        ('/api/business/.*', BusinessIDHandler),
+        ('/api/init', InitHandler)
     ], debug=True)
 
 

@@ -9,27 +9,20 @@ class Coupon(ndb.Model):
     business = ndb.KeyProperty('b', required=True, kind='Business')
 
     @classmethod
-    def new(cls, name=None, business_id=None):
-        coupon = cls(business=ndb.Key(Business, business_id),
-                     name=name)
-        return coupon.put()
-
-    @classmethod
     def get_all(cls, keys_only=False):
         '''
         Returns a list of all coupons
         '''
-        query = Coupon.query(keys_only=keys_only)
-        return [c for c in query.iter()]
+        query = Coupon.query()
+        return [c for c in query.iter(keys_only=keys_only)]
 
     @classmethod
     def get_by_business(cls, business_id, keys_only=False):
         '''
         Returns a list of all coupons
         '''
-        query = Coupon.query(cls.business == ndb.Key(Business, business_id),
-                             keys_only=keys_only)
-        return [c for c in query.iter()]
+        query = Coupon.query(cls.business == ndb.Key(Business, business_id))
+        return [c for c in query.iter(keys_only=keys_only)]
 
     @classmethod
     def get_by_user(cls, user_id, keys_only=False):
@@ -72,6 +65,7 @@ class Coupon(ndb.Model):
 
     def to_json(self):
         data = self.to_dict()
+        data['business'] = data['business'].id()
         return json.dumps(data)
 
     def delete(self):
