@@ -6,7 +6,7 @@ import urllib
 from models import Business
 
 
-__all__ = ['BusinessHandler']
+__all__ = ['BusinessHandler', 'BusinessIDHandler']
 
 
 class BusinessHandler(webapp2.RequestHandler):

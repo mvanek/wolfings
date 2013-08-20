@@ -11,10 +11,19 @@
     </head>
     <body>
 
+        <h1>Server Responses</h1>
+        <article id="res">
+            <button id="clear">Clear</button>
+            <h2>Status</h2>
+            <section id="status"></section>
+            <h2>Message</h2>
+            <section id="msg"></section>
+        </article>
+
         <h1>BusinessHandler</h1>
         <article id="biz">
             <section class="get">
-                <form action="javascript:get_biz()">
+                <form name="get_biz" action="javascript:get_biz()">
                     <label for="name">Name: </label>
                     <input type="text" name="name">
                     <label for="lat">Lat: </label>
@@ -25,7 +34,7 @@
                 </form>
             </section>
             <section class="post">
-                <form action="javascript:post_biz()">
+                <form name="post_biz" action="javascript:post_biz()">
                     <label for="name">Name: </label>
                     <input type="text" name="name">
                     <label for="lat">Lat: </label>
@@ -40,14 +49,14 @@
         <h1>BusinessIDHandler</h1>
         <article id="bizid">
             <section class="get">
-                <form action="javascript:get_bizid()">
+                <form name="get_bizid" action="javascript:get_bizid()">
                     <label for="id">ID: </label>
                     <input type="text" name="id">
                     <input type="submit" value="GET">
                 </form>
             </section>
             <section class="put">
-                <form action="javascript:put_bizid()">
+                <form name="put_bizid" action="javascript:put_bizid()">
                     <label for="id">ID: </label>
                     <input type="text" name="id">
                     <label for="name">Name: </label>
@@ -60,7 +69,7 @@
                 </form>
             </section>
             <section class="delete">
-                <form action="javascript:delete_bizid()">
+                <form name="delete_bizid" action="javascript:delete_bizid()">
                     <label for="id">ID: </label>
                     <input type="text" name="id">
                     <input type="submit" value="DELETE">
@@ -68,12 +77,107 @@
             </section>
         </article>
 
-        <h1>Server Responses</h1>
-        <article id="res">
-            <h2>Status:</h2>
-            <section id="status"></section>
-            <h2>Message:</h2>
-            <section id="msg"></section>
+        <h1>UserHandler</h1>
+        <article id="user">
+            <section class="get">
+                <form name="get_user" action="javascript:get_user()">
+                    <input type="submit" value="GET">
+                </form>
+            </section>
+            <section class="post">
+                <form name="post_user" action="javascript:post_user()">
+                    <label for="business">Name: </label>
+                    <input type="text" name="name">
+                    <input type="submit" value="POST">
+                </form>
+            </section>
+        </article>
+
+        <h1>UserIDHandler</h1>
+        <article id="userid">
+            <section class="get">
+                <form name="get_userid" action="javascript:get_userid()">
+                    <label for="id">UserID: </label>
+                    <input type="text" name="id">
+                    <input type="submit" value="GET">
+                </form>
+            </section>
+            <section class="post">
+                <form name="post_userid" action="javascript:post_userid()">
+                    <label for="id">UserID: </label>
+                    <input type="text" name="id">
+                    <label for="CouponID">CouponID: </label>
+                    <input type="text" name="coupon">
+                    <input type="submit" value="POST">
+                </form>
+            </section>
+            <section class="put">
+                <form name="put_userid" action="javascript:put_userid()">
+                    <label for="id">UserID: </label>
+                    <input type="text" name="id">
+                    <label for="name">Name: </label>
+                    <input type="text" name="name">
+                    <input type="submit" value="PUT">
+                </form>
+            </section>
+            <section class="delete">
+                <form name="delete_userid" action="javascript:delete_userid()">
+                    <label for="id">UserID: </label>
+                    <input type="text" name="id">
+                    <input type="submit" value="DELETE">
+                </form>
+            </section>
+        </article>
+
+        <h1>CouponHandler</h1>
+        <article id="coup">
+            <section class="get">
+                <form name="get_coup" action="javascript:get_coup()">
+                    <label for="business">BusinessID: </label>
+                    <input type="text" name="business">
+                    <label for="user">UserID: </label>
+                    <input type="text" name="user">
+                    <input type="submit" value="GET">
+                </form>
+            </section>
+            <section class="post">
+                <form name="post_coup" action="javascript:post_biz()">
+                    <label for="business">Name: </label>
+                    <input type="text" name="name">
+                    <label for="business">BusinessID: </label>
+                    <input type="text" name="business">
+                    <input type="submit" value="POST">
+                </form>
+            </section>
+        </article>
+
+        <h1>CouponIDHandler</h1>
+        <article id="coupid">
+            <section class="get">
+                <form name="get_coupid" action="javascript:get_coupid()">
+                    <label for="id">CouponID: </label>
+                    <input type="text" name="id">
+                    <input type="submit" value="GET">
+                </form>
+            </section>
+            <section class="put">
+                <form name="put_coupid" action="javascript:put_coupid()">
+                    <label for="id">CouponID: </label>
+                    <input type="text" name="id">
+                    <label for="name">BusinessID: </label>
+                    <input type="text" name="business">
+                    <label for="name">Name: </label>
+                    <input type="text" name="name">
+                    <input type="submit" value="PUT">
+                </form>
+            </section>
+            <section class="delete">
+                <form name="delete_coupid" action="javascript:delete_coupid()">
+                    <label for="id">CouponID: </label>
+                    <input type="text" name="id">
+                    <input type="submit" value="DELETE">
+                </form>
+            </section>
         </article>
 
     </body>

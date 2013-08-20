@@ -1,128 +1,82 @@
 import webapp2
-from google.appengine.api import users
-from google.appengine.ext import ndb
-
-import json
 import urllib
+import json
 
-import models
-
-
-__all__ = ['CouponHandler']
+from models import Coupon
 
 
-def user_exists(user_id):
-    '''
-    Checks datastore for user
-    '''
-    query = models.User.get_by_id(user_id)
-    return bool(query)
+__all__ = ['CouponHandler', 'CouponIDHandler']
 
 
 class CouponHandler(webapp2.RequestHandler):
     '''
+    HTTP Request Handler: /api/coupon
+    '''
+    def get(self):
+        '''
+        HTTP GET Method Handler
+        Returns a JSON list of objects with keys 'name' and 'id'
+        Parameters:
+            - int business: the ID of the business that created the coupon
+            - int user: the ID of the user whose coupons you want to check
+            - int active: 0 if you want non-active coupons
+        '''
+        business_id = int(urllib.unquote(self.request.get('business')))
+        user_id = int(urllib.unquote(self.request.get('user')))
+        active = bool(urllib.unquote(self.request.get('user')))
+        self.status = '200 OK'
+        for c in Coupon.list_coupons(user_id=user_id,
+                                     business_id=business_id,
+                                     active=active):
+            self.response.write(c.id() + '\n')
+
+    def post(self):
+        '''
+        HTTP POST Method Handler
+        Creates new coupon
+        '''
+        name = urllib.unquote(self.request.get('name'))
+        business = urllib.unquote(self.request.get('business'))
+        coupon = Coupon.new(name=name, business=business)
+        key = coupon.put()
+        self.status = '200 OK'
+        self.response.write('/api/coupon/' + key.id())
+
+
+class CouponIDHandler(webapp2.RequestHandler):
+    '''
     HTTP Request Handler: /api/coupon/[id]
     '''
     def get_id(self):
-        '''
-        Returns coupon ID
-        '''
-        if not self.coupon_id:
-            self.coupon_id = urllib.unquote(self.request.path.split('/')[3])
-        return self.coupon_id
-
-    def get_coupon(self):
-        '''
-        Returns coupon entity
-        '''
-        if not self.coupon:
-            self.coupon = models.Coupon.get_by_id(self.get_id())
-        return self.coupon
-
-    def get_business(self, business_id=None):
-        '''
-        Returns business entity
-        '''
-        if not self.business:
-            if business_id:
-                self.business = models.Business.get_by_id(business_id)
-            else:
-                self.business = self.get_coupon().business.get()
-        return self.business
-
-    def authenticate(self, business_id=None):
-        '''
-        Authenticates current user against business owners
-        '''
-        user = users.get_current_user()
-        if not user:
-            self.redirect(users.create_login_url(self.request.uri))
-            self.abort()
-        if users.is_current_user_admin():
-            return True
-        user_ids = [key.id() for key in self.get_business(business_id).owners]
-        if user.user_id() in user_ids:
-            return True
-        self.abort(401)
+        return int(urllib.unquote(self.request.path.split('/')[3]))
 
     def get(self):
         '''
         HTTP GET Method Handler
         Returns JSON representation of coupon
         '''
-        try:
-            self.response.write(json.dumps(self.get_coupon().to_dict()))
-        except AttributeError:
-            self.abort(404)
-
-    def post(self):
-        '''
-        HTTP POST Method Handler
-        Updates existing coupon
-        '''
-        self.authenticate()
-
-        name = urllib.unquote(self.request.get('name'))
-        description = urllib.unquote(self.request.get('description'))
-        if not (name or description):
-            self.abort(400, 'Nothing changed')
-
-        coupon = self.get_coupon()
-        if not coupon:
-            self.abort(404)
-        if name:
-            coupon.name = name
-        if description:
-            coupon.description = description
+        id = self.get_id()
+        self.status = '200 OK'
+        self.response.write(Coupon.get_by_id(id).to_json())
 
     def put(self):
         '''
         HTTP PUT Method Handler
-        Creates a new coupon
+        Creates new coupon at the requested URI
         '''
-        business_id = urllib.unquote(self.request.get('business'))
-        business = models.Business.get_by_id(business_id)
-        try:
-            self.authenticate([key.id() for key in business.owners])
-        except AttributeError:
-            self.abort(400, 'Invalid business id')
-
-        coupon = models.Coupon(
-            id=self.get_id(),
-            name=urllib.unquote(self.request.get('name')),
-            business=business_id,
-            description=urllib.unquote(self.request.get('description')))
-        coupon.put()
+        coupon = Coupon.get_by_id(self.get_id())
+        data = json.loads(self.request.body)
+        for key, value in data.iteritems():
+            setattr(coupon, key, value)
+        key = coupon.put()
+        self.status = '200 OK'
+        self.response.write('/api/coupon/' + key.id())
 
     def delete(self):
         '''
         HTTP DELETE Method Handler
         Deletes exiting coupon
         '''
-        business_id = urllib.unquote(self.request.get('business'))
-        business = models.Business.get_by_id(business_id)
-        try:
-            self.authenticate([key.id() for key in business.owners])
-        except AttributeError:
-            self.abort(400, 'Invalid business id')
-        ndb.Key('Coupon', self.get_id()).delete()
+        coupon = Coupon.get_by_id(self.get_id())
+        coupon.key.delete()
+        self.status = '204 No Content'
