@@ -3,7 +3,7 @@ import webapp2
 import json
 import urllib
 
-from models import Business
+from models import Business, Coupon
 
 
 __all__ = ['BusinessHandler', 'BusinessIDHandler']
@@ -85,20 +85,18 @@ class BusinessIDHandler(webapp2.RequestHandler):
 
     def put(self):
         '''
-        Creates business entity at the specified URI
-        The ID must be an integer
+        Modifies business entity at the specified URI from JSON data in
+        request body
         '''
-        data = json.loads(self.request.body)
         try:
-            data['lat'] = float(data['lat'])
-            data['lon'] = float(data['lon'])
-        except ValueError:
-            self.abort(400)
-        except KeyError:
-            pass
-        b = self.get_business()
+            b = self.get_business()
+        except webapp2.HTTPException:
+            b = Business(id=self.get_id())
+        data = json.loads(self.request.body)
         for key, value in data.iteritems():
-            setattr(b, key, value)
+            if value:
+                setattr(b, key, value)
+        b.gen_geoboxes()
         key = b.put()
         self.response.status = '200 OK'
         self.response.write('/api/business/' + str(key.id()))
@@ -108,5 +106,11 @@ class BusinessIDHandler(webapp2.RequestHandler):
         Deletes an existing model
         '''
         b = self.get_business()
+        coupons = Coupon.get_by_business(self.get_id(), keys_only=True)
+        if coupons:
+            self.response.status = '409 Conflict'
+            for c in coupons:
+                self.response.write('/api/business/{}\n'.format(c.id()))
+            return
         b.key.delete()
         self.response.status = '204 No Content'

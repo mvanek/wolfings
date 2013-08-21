@@ -1,7 +1,32 @@
+var toInt,
+    toFloat;
+
+(function() {
+    var _dispatch;
+    _dispatch = function(fn, val, def) {
+        if (!def) {
+            def = '';
+        }
+        if (isNaN( val = fn(val) )) {
+            return def;
+        }
+        return val;
+    }
+
+    toInt = function(val, def) {
+        return _dispatch(parseInt, val, def);
+    }
+    toFloat = function(val, def) {
+        return _dispatch(parseFloat, val, def);
+    }
+})();
+
+
 function success_res(data, textStatus, xhr) {
     document.getElementById('status').innerHTML = textStatus;
     document.getElementById('msg').innerHTML = data;
 }
+
 
 function fail_res(xhr, textStatus, errorThrown) {
     var msg,
@@ -30,17 +55,19 @@ function fail_res(xhr, textStatus, errorThrown) {
     msg.appendChild(table);
 }
 
+
 function get_biz() {
     $.ajax({
         type: 'GET',
         url: '/api/business',
         data: {
             name: document.forms['get_biz']['name'].value,
-            lat: document.forms['get_biz']['lat'].value,
-            lon: document.forms['get_biz']['lon'].value,
+            lat: toFloat(document.forms['get_biz']['lat'].value),
+            lon: toFloat(document.forms['get_biz']['lon'].value)
         },
     }).done(success_res).fail(fail_res);
 }
+
 
 function post_biz() {
     $.ajax({
@@ -48,11 +75,12 @@ function post_biz() {
         url: '/api/business',
         data: {
             name: document.forms['post_biz']['name'].value,
-            lat: document.forms['post_biz']['lat'].value,
-            lon: document.forms['post_biz']['lon'].value
+            lat: toFloat(document.forms['post_biz']['lat'].value),
+            lon: toFloat(document.forms['post_biz']['lon'].value)
         },
     }).done(success_res).fail(fail_res);
 }
+
 
 function get_bizid() {
     $.ajax({
@@ -61,6 +89,7 @@ function get_bizid() {
     }).done(success_res).fail(fail_res);
 }
 
+
 function put_bizid() {
     $.ajax({
         type: 'PUT',
@@ -68,12 +97,13 @@ function put_bizid() {
         processData: false,
         contentType: 'text/json',
         data: JSON.stringify({
-            name: document.forms['put_bizid']['naem'].value,
-            lat: document.forms['put_bizid']['lat'].value,
-            lon: document.forms['put_bizid']['lon'].value
+            name: document.forms['put_bizid']['name'].value,
+            lat: toFloat(document.forms['put_bizid']['lat'].value),
+            lon: toFloat(document.forms['put_bizid']['lon'].value)
         })
     }).done(success_res).fail(fail_res);
 }
+
 
 function delete_bizid() {
     $.ajax({
@@ -82,16 +112,18 @@ function delete_bizid() {
     }).done(success_res).fail(fail_res);
 }
 
+
 function get_coup() {
     $.ajax({
         type: 'GET',
         url: '/api/coupon',
         data: {
-            user: document.forms['get_coup']['user'].value,
-            business: document.forms['get_coup']['business'].value
+            user: parseInt(document.forms['get_coup']['user'].value),
+            business: parseInt(document.forms['get_coup']['business'].value)
         }
     }).done(success_res).fail(fail_res);
 }
+
 
 function post_coup() {
     $.ajax({
@@ -99,10 +131,11 @@ function post_coup() {
         url: '/api/coupon',
         data: {
             name: document.forms['post_coup']['name'].value,
-            business: document.forms['post_coup']['business'].value
+            business: parseInt(document.forms['post_coup']['business'].value)
         }
     }).done(success_res).fail(fail_res);
 }
+
 
 function get_coupid() {
     $.ajax({
@@ -110,6 +143,7 @@ function get_coupid() {
         url: '/api/coupon/' + document.forms['get_coupid']['id'].value
     }).done(success_res).fail(fail_res);
 }
+
 
 function put_coupid() {
     $.ajax({
@@ -119,10 +153,11 @@ function put_coupid() {
         contentType: 'text/json',
         data: JSON.stringify({
             name: document.forms['put_coupid']['name'].value,
-            business: document.forms['put_coupid']['business'].value
+            business: parseInt(document.forms['put_coupid']['business'].value)
         })
     }).done(success_res).fail(fail_res);
 }
+
 
 function delete_coupid() {
     $.ajax({
@@ -149,6 +184,7 @@ function post_user() {
     }).done(success_res).fail(fail_res);
 }
 
+
 function get_userid() {
     $.ajax({
         type: 'GET',
@@ -156,15 +192,17 @@ function get_userid() {
     }).done(success_res).fail(fail_res);
 }
 
+
 function post_userid() {
     $.ajax({
         type: 'POST',
         url: '/api/user/' + document.forms['post_userid']['id'].value,
         data: {
-            coupon: document.forms['post_userid']['coupon'].value
+            coupon: parseInt(document.forms['post_userid']['coupon'].value)
         }
     }).done(success_res).fail(fail_res);
 }
+
 
 function put_userid() {
     $.ajax({
@@ -177,6 +215,7 @@ function put_userid() {
         })
     }).done(success_res).fail(fail_res);
 }
+
 
 function delete_userid() {
     $.ajax({
