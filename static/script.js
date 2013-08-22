@@ -1,32 +1,67 @@
-var toInt,
-    toFloat;
-
+var toFloat, toInt,
+    slideUp, slideDown;
 (function() {
-    var _dispatch;
-    _dispatch = function(fn, val, def) {
-        if (!def) {
+    var _numconv,
+        _slide;
+    _numconv = function( fn, val, def ) {
+        if ( !def ) {
             def = '';
         }
-        if (isNaN( val = fn(val) )) {
+        if ( isNaN( val = fn(val) ) ) {
             return def;
         }
         return val;
     }
 
-    toInt = function(val, def) {
-        return _dispatch(parseInt, val, def);
+    _slide = function( e, from, to ) {
+        var rule, old_from, old_to;
+        rule = document.styleSheets[ 1 ].cssRules[ 0 ];
+        old_from = rule.cssRules[ 0 ].style.marginTop;
+        old_to = rule.cssRules[ 1 ].style.marginTop;
+        rule.cssRules[ 0 ].style.marginTop = from;
+        rule.cssRules[ 1 ].style.marginTop = to;
+        if ( from == old_from ) {
+            return false;
+        }
+        e.style.animationDuration = '200ms';
+        /* Run animation */
+        e.style.animationName = '';         /* Unbind already-run animation */
+        e.offsetWidth = e.offsetWidth;      /* Trigger reflow */
+        e.style.animationName = 'slide';    /* Rebind */
+        e.style.marginTop = to;
+        return true;
     }
-    toFloat = function(val, def) {
-        return _dispatch(parseFloat, val, def);
+
+    toInt = function( val, def ) {
+        return _numconv( parseInt, val, def );
+    }
+    toFloat = function( val, def ) {
+        return _numconv( parseFloat, val, def );
+    }
+    slideDown = function( e ) {
+        return _slide( e, String( 0 - e.getBoundingClientRect().height ) + 'px', '0px' );
+    }
+    slideUp = function( e ) {
+        return _slide( e, '0px', String( 0 - e.getBoundingClientRect().height ) + 'px' );
     }
 })();
 
 
-function success_res(data, textStatus, xhr) {
+
+function success_res( data, textStatus, xhr ) {
+    var e, h;
     document.getElementById('status').innerHTML = textStatus;
     document.getElementById('msg').innerHTML = data;
+    e = document.getElementById('res');
+    if( slideUp( e ) ) {
+        e.addEventListener('animationend', h = function() {
+            slideDown( e );
+            e.removeEventListener('animationend', h);
+        }, false);
+    } else {
+        slideDown( e );
+    }
 }
-
 
 function fail_res(xhr, textStatus, errorThrown) {
     var msg,
@@ -41,18 +76,19 @@ function fail_res(xhr, textStatus, errorThrown) {
 
         cell = document.createElement('td');
         cell.innerHTML = i;
-        row.appendChild(cell);
+        row.appendChild( cell );
 
         cell = document.createElement('td');
-        cell.innerHTML = xhr[i];
-        row.appendChild(cell);
+        cell.innerHTML = xhr[ i ];
+        row.appendChild( cell );
 
         table.appendChild(row);
     }
     document.getElementById('status').innerHTML = errorThrown;
     msg = document.getElementById('msg');
     msg.innerHTML = '';
-    msg.appendChild(table);
+    msg.appendChild( table );
+    slideDown( document.getElementById('res') );
 }
 
 
@@ -62,10 +98,10 @@ function get_biz() {
         url: '/api/business',
         data: {
             name: document.forms['get_biz']['name'].value,
-            lat: toFloat(document.forms['get_biz']['lat'].value),
-            lon: toFloat(document.forms['get_biz']['lon'].value)
+            lat: toFloat( document.forms['get_biz']['lat'].value ),
+            lon: toFloat( document.forms['get_biz']['lon'].value )
         },
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -75,10 +111,10 @@ function post_biz() {
         url: '/api/business',
         data: {
             name: document.forms['post_biz']['name'].value,
-            lat: toFloat(document.forms['post_biz']['lat'].value),
-            lon: toFloat(document.forms['post_biz']['lon'].value)
+            lat: toFloat( document.forms['post_biz']['lat'].value ),
+            lon: toFloat( document.forms['post_biz']['lon'].value )
         },
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -86,7 +122,7 @@ function get_bizid() {
     $.ajax({
         type: 'GET',
         url: '/api/business/' + document.forms['get_bizid']['id'].value
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -98,10 +134,10 @@ function put_bizid() {
         contentType: 'text/json',
         data: JSON.stringify({
             name: document.forms['put_bizid']['name'].value,
-            lat: toFloat(document.forms['put_bizid']['lat'].value),
-            lon: toFloat(document.forms['put_bizid']['lon'].value)
+            lat: toFloat( document.forms['put_bizid']['lat'].value ),
+            lon: toFloat( document.forms['put_bizid']['lon'].value )
         })
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -109,7 +145,7 @@ function delete_bizid() {
     $.ajax({
         type: 'DELETE',
         url: '/api/business/' + document.forms['delete_bizid']['id'].value
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -121,7 +157,7 @@ function get_coup() {
             user: parseInt(document.forms['get_coup']['user'].value),
             business: parseInt(document.forms['get_coup']['business'].value)
         }
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -133,7 +169,7 @@ function post_coup() {
             name: document.forms['post_coup']['name'].value,
             business: parseInt(document.forms['post_coup']['business'].value)
         }
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -141,7 +177,7 @@ function get_coupid() {
     $.ajax({
         type: 'GET',
         url: '/api/coupon/' + document.forms['get_coupid']['id'].value
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -155,7 +191,7 @@ function put_coupid() {
             name: document.forms['put_coupid']['name'].value,
             business: parseInt(document.forms['put_coupid']['business'].value)
         })
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -163,7 +199,7 @@ function delete_coupid() {
     $.ajax({
         type: 'DELETE',
         url: '/api/coupon/' + document.forms['delete_coupid']['id'].value
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -171,7 +207,7 @@ function get_user() {
     $.ajax({
         type: 'GET',
         url: '/api/user'
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 function post_user() {
@@ -181,7 +217,7 @@ function post_user() {
         data: {
             name: document.forms['post_user']['name'].value
         }
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -189,7 +225,7 @@ function get_userid() {
     $.ajax({
         type: 'GET',
         url: '/api/user/' + document.forms['get_userid']['id'].value
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -200,7 +236,7 @@ function post_userid() {
         data: {
             coupon: parseInt(document.forms['post_userid']['coupon'].value)
         }
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -213,7 +249,7 @@ function put_userid() {
         data: JSON.stringify({
             name: document.forms['put_userid']['name'].value
         })
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
@@ -221,13 +257,15 @@ function delete_userid() {
     $.ajax({
         type: 'DELETE',
         url: '/api/user/' + document.forms['delete_userid']['id'].value
-    }).done(success_res).fail(fail_res);
+    }).done( success_res ).fail( fail_res );
 }
 
 
-$(document).ready(function() {
+jQuery( document ).ready(function() {
+    var e;
     document.getElementById('clear').addEventListener('click', function() {
-        document.getElementById('status').innerHTML = '';
-        document.getElementById('msg').innerHTML = '';
+        slideUp( document.getElementById('res') );
     }, false)
+    e = document.getElementById('res');
+    e.style.marginTop = String( 0 - e.getBoundingClientRect().height ) + 'px';
 });

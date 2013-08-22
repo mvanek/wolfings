@@ -6,23 +6,26 @@
         <meta charset="UTF-8">
         <script src="/static/jquery-1.10.2.min.js"></script>
         <script src="/static/script.js"></script>
+        <link rel="stylesheet" type="text/css" href="reset.css">
         <link rel="stylesheet" type="text/css" href="style.css">
 
     </head>
     <body>
 
-        <h1>Server Responses</h1>
-        <article id="res">
-            <button id="clear">Clear</button>
-            <h2>Status</h2>
-            <section id="status"></section>
-            <h2>Message</h2>
-            <section id="msg"></section>
-        </article>
+        <section id="res" class="hid">
+            <div>
+                <h1>Response</h1>
+                <h2>Status: <span id="status"></span></h2>
+                <h2>Message</h2>
+                <div id="msg"></div>
+            </div>
+            <button id="clear">Close</button>
+        </section>
 
-        <h1>BusinessHandler</h1>
-        <article id="biz">
-            <section class="get">
+        <section id="handlers">
+            <h1>Handlers</h1>
+            <article id="biz">
+                <header>/api/business</header>
                 <form name="get_biz" action="javascript:get_biz()">
                     <input type="submit" value="GET">
                     <label for="name">Name: </label>
@@ -32,8 +35,6 @@
                     <label for="lon">Lon: </label>
                     <input type="text" name="lon">
                 </form>
-            </section>
-            <section class="post">
                 <form name="post_biz" action="javascript:post_biz()">
                     <input type="submit" value="POST">
                     <label for="name">Name: </label>
@@ -43,19 +44,15 @@
                     <label for="lon">Lon: </label>
                     <input type="text" name="lon">
                 </form>
-            </section>
-        </article>
+            </article>
 
-        <h1>BusinessIDHandler</h1>
-        <article id="bizid">
-            <section class="get">
+            <article id="bizid">
+                <header>/api/business/{id}</header>
                 <form name="get_bizid" action="javascript:get_bizid()">
                     <input type="submit" value="GET">
                     <label for="id">ID: </label>
                     <input type="text" name="id">
                 </form>
-            </section>
-            <section class="put">
                 <form name="put_bizid" action="javascript:put_bizid()">
                     <input type="submit" value="PUT">
                     <label for="id">ID: </label>
@@ -67,42 +64,32 @@
                     <label for="lon">Lon: </label>
                     <input type="text" name="lon">
                 </form>
-            </section>
-            <section class="delete">
                 <form name="delete_bizid" action="javascript:delete_bizid()">
                     <input type="submit" value="DELETE">
                     <label for="id">ID: </label>
                     <input type="text" name="id">
                 </form>
-            </section>
-        </article>
+            </article>
 
-        <h1>UserHandler</h1>
-        <article id="user">
-            <section class="get">
+            <article id="user">
+                <header>/api/user</header>
                 <form name="get_user" action="javascript:get_user()">
                     <input type="submit" value="GET">
                 </form>
-            </section>
-            <section class="post">
                 <form name="post_user" action="javascript:post_user()">
                     <input type="submit" value="POST">
                     <label for="business">Name: </label>
                     <input type="text" name="name">
                 </form>
-            </section>
-        </article>
+            </article>
 
-        <h1>UserIDHandler</h1>
-        <article id="userid">
-            <section class="get">
+            <article id="userid">
+                <header>/api/user/{id}</header>
                 <form name="get_userid" action="javascript:get_userid()">
                     <input type="submit" value="GET">
                     <label for="id">UserID: </label>
                     <input type="text" name="id">
                 </form>
-            </section>
-            <section class="post">
                 <form name="post_userid" action="javascript:post_userid()">
                     <input type="submit" value="POST">
                     <label for="id">UserID: </label>
@@ -110,8 +97,6 @@
                     <label for="CouponID">CouponID: </label>
                     <input type="text" name="coupon">
                 </form>
-            </section>
-            <section class="put">
                 <form name="put_userid" action="javascript:put_userid()">
                     <input type="submit" value="PUT">
                     <label for="id">UserID: </label>
@@ -119,19 +104,15 @@
                     <label for="name">Name: </label>
                     <input type="text" name="name">
                 </form>
-            </section>
-            <section class="delete">
                 <form name="delete_userid" action="javascript:delete_userid()">
                     <input type="submit" value="DELETE">
                     <label for="id">UserID: </label>
                     <input type="text" name="id">
                 </form>
-            </section>
-        </article>
+            </article>
 
-        <h1>CouponHandler</h1>
-        <article id="coup">
-            <section class="get">
+            <article id="coup">
+                <header>/api/coupon</header>
                 <form name="get_coup" action="javascript:get_coup()">
                     <input type="submit" value="GET">
                     <label for="business">BusinessID: </label>
@@ -139,8 +120,6 @@
                     <label for="user">UserID: </label>
                     <input type="text" name="user">
                 </form>
-            </section>
-            <section class="post">
                 <form name="post_coup" action="javascript:post_biz()">
                     <input type="submit" value="POST">
                     <label for="business">Name: </label>
@@ -148,19 +127,15 @@
                     <label for="business">BusinessID: </label>
                     <input type="text" name="business">
                 </form>
-            </section>
-        </article>
+            </article>
 
-        <h1>CouponIDHandler</h1>
-        <article id="coupid">
-            <section class="get">
+            <article id="coupid">
+                <header>/api/coupon/{id}</header>
                 <form name="get_coupid" action="javascript:get_coupid()">
                     <input type="submit" value="GET">
                     <label for="id">CouponID: </label>
                     <input type="text" name="id">
                 </form>
-            </section>
-            <section class="put">
                 <form name="put_coupid" action="javascript:put_coupid()">
                     <input type="submit" value="PUT">
                     <label for="id">CouponID: </label>
@@ -170,15 +145,13 @@
                     <label for="name">Name: </label>
                     <input type="text" name="name">
                 </form>
-            </section>
-            <section class="delete">
                 <form name="delete_coupid" action="javascript:delete_coupid()">
                     <input type="submit" value="DELETE">
                     <label for="id">CouponID: </label>
                     <input type="text" name="id">
                 </form>
-            </section>
-        </article>
+            </article>
+        </section>
 
     </body>
 </html>
