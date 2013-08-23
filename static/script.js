@@ -47,28 +47,57 @@ var toFloat, toInt,
 })();
 
 
-
-function success_res( data, textStatus, xhr ) {
-    var e, h;
-    document.getElementById('status').innerHTML = textStatus;
-    document.getElementById('msg').innerHTML = data;
-    e = document.getElementById('res');
-    if( slideUp( e ) ) {
-        e.addEventListener('animationend', h = function() {
-            slideDown( e );
-            e.removeEventListener('animationend', h);
-        }, false);
-    } else {
-        slideDown( e );
+function delete_stylesheet( num ) {
+    while ( true ) {
+        try {
+            document.styleSheets[ num ].deleteRule( 0 );
+        } catch ( ex ) {
+            break;
+        }
     }
 }
 
+/* Posts data into response and animates the pulldown */
+function post_res( status, data ) {
+    var msg;
+
+    document.getElementById('status').innerHTML = status;
+    msg = document.getElementById('msg');
+    msg.innerHTML = '';
+    try {
+        msg.appendChild( data );
+    } catch ( ex ) {
+        msg.innerHTML = data;
+    }
+    delete_stylesheet( 2 );
+    slideDown( document.getElementById('res') );
+}
+
+/* Pulls up before posting the data */
+function repost_res( status, data ) {
+    var res, h;
+
+    res = document.getElementById('res');
+    if ( slideUp( res ) ) {
+        res.addEventListener('animationend', h = function() {
+            res.removeEventListener( 'animationend', h );
+            post_res( status, data );
+        }, false);
+    } else {
+        post_res( status, data );
+    }
+}
+
+
+function success_res( data, textStatus, xhr ) {
+    repost_res(textStatus, data);
+}
+
+
 function fail_res(xhr, textStatus, errorThrown) {
-    var msg,
-        i,
-        table,
-        row,
-        cell;
+    var i,
+        table, row, cell,
+        post_msg;
 
     table = document.createElement('table');
     for ( i in xhr ) {
@@ -82,13 +111,10 @@ function fail_res(xhr, textStatus, errorThrown) {
         cell.innerHTML = xhr[ i ];
         row.appendChild( cell );
 
-        table.appendChild(row);
+        table.appendChild( row );
     }
-    document.getElementById('status').innerHTML = errorThrown;
-    msg = document.getElementById('msg');
-    msg.innerHTML = '';
-    msg.appendChild( table );
-    slideDown( document.getElementById('res') );
+
+    repost_res( textStatus, table );
 }
 
 

@@ -79,10 +79,19 @@ input[type=submit] {
 
 
 /* Response */
-#msg, td {
+#msg {
     unicode-bidi: embed;
     font-family: monospace;
     white-space: pre;
+
+    overflow: auto;
+}
+pre {
+    unicode-bidi: embed;
+    font-family: monospace;
+    white-space: pre;
+
+    background: rgba(0, 0, 0, 0.2);
 }
 
 
@@ -103,6 +112,6 @@ article > header {
     background: white;
     position: absolute;
     top: -5px;
-    right: 10px;
+    right: 20px;
     padding: 0px 5px;
 }
