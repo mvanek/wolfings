@@ -88,34 +88,3 @@ Map.prototype.nearby = function() {
 
     });
 }
-
-
-Map.prototype.google_nearby = function() {
-    var service;
-    service = new google.maps.places.PlacesService( this.map );
-    service.nearbySearch({
-        location: map.getCenter(),
-        radius: 500
-    }, function( results, status ) {
-        var res, i;
-        if ( status == google.maps.places.PlacesServiceStatus.OK ) {
-            res = document.getElementById('res');
-            res.innerHTML = '';
-            for ( i = 0; i < results.length; i++ ) {
-                (function(i) {
-                    var button;
-                    button = document.createElement('button');
-                    button.innerHTML = results[i].name;
-                    button.addEventListener('click', function() {
-                        service.getDetails( results[ i ], function( place, status ) {
-                            if ( status == google.maps.places.PlacesServiceStatus.OK ) {
-                                console.log( JSON.stringify( place, false, 4 ) );
-                            }
-                        });
-                    }, false);
-                    res.appendChild( button );
-                })(i);
-            }
-        }
-    });
-}
