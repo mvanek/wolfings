@@ -287,6 +287,22 @@ function delete_userid() {
 }
 
 
+function api_init() {
+    $.ajax({
+        type: 'GET',
+        url: '/api/init'
+    }).done( success_res ).fail( fail_res );
+}
+
+
+function api_reinit() {
+    $.ajax({
+        type: 'GET',
+        url: '/api/reinit'
+    }).done( success_res ).fail( fail_res );
+}
+
+
 jQuery( document ).ready(function() {
     var e;
     document.getElementById('clear').addEventListener('click', function() {

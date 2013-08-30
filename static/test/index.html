@@ -5,16 +5,16 @@
         <title>Testing</title>
         <meta charset="UTF-8">
         <script src="/static/jquery-1.10.2.min.js"></script>
-        <script src="/static/script.js"></script>
-        <link rel="stylesheet" type="text/css" href="reset.css">
+        <script src="rest_api.js"></script>
+        <link rel="stylesheet" type="text/css" href="/static/reset.css">
         <link rel="stylesheet" type="text/css" href="style.css">
 
     </head>
     <body>
 
         <section id="res">
+            <header>Response</header>
             <div>
-                <h1>Response</h1>
                 <h2>Status: <span id="status"></span></h2>
                 <h2>Message</h2>
                 <div id="msg"></div>
@@ -23,7 +23,7 @@
         </section>
 
         <section id="handlers">
-            <h1>Handlers</h1>
+            <header>Handlers</header>
             <article id="biz">
                 <header>/api/business</header>
                 <form name="get_biz" action="javascript:get_biz()">
@@ -149,6 +149,20 @@
                     <input type="submit" value="DELETE">
                     <label for="id">CouponID: </label>
                     <input type="text" name="id">
+                </form>
+            </article>
+
+            <article id="init">
+                <header>/api/init</header>
+                <form name="api_init" action="javascript:api_init()">
+                    <input type="submit" value="INIT">
+                </form>
+            </article>
+
+            <article id="reinit">
+                <header>/api/reinit</header>
+                <form name="api_reinit" action="javascript:api_reinit()">
+                    <input type="submit" value="RE-INIT">
                 </form>
             </article>
         </section>

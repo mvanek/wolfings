@@ -18,3 +18,12 @@ class InitHandler(webapp2.RequestHandler):
         for coupon in coupons:
             Coupon(name=coupon, business=business_key).put()
         self.response.status = '204 No Content'
+
+
+class ReInitHandler(webapp2.RequestHandler):
+    def get(self):
+        query = Business.query()
+        for b in query.iter():
+            b.gen_geoboxes()
+            b.put()
+        self.response.status = '204 No Content'

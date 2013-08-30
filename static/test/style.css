@@ -38,9 +38,8 @@ body {
 
 
 /* Headers */
-h1 {
-    font-size: 1.8em;
-    text-align: center;
+section > header {
+    font-size: 1.3em;
 }
 h2 {
     font-size: 1.2em;
@@ -110,8 +109,9 @@ article + article {
 article > header {
     font-size: 1.1em;
     background: white;
+    padding: 0px 5px;
+
     position: absolute;
     top: -5px;
     right: 20px;
-    padding: 0px 5px;
 }

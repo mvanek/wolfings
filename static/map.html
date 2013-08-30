@@ -1,0 +1,186 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Map Testing</title>
+        <meta charset="UTF-8">
+        <script src="/static/jquery-1.10.2.min.js"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBO7uBiTXNj8U1aDVQR5snr4XDd3xitHRE&libraries=places&sensor=false"></script>
+        <script src="/static/utils.js"></script>
+
+<script>
+var Map, Wolf;
+
+
+Wolf = function Wolf() {
+    return this;
+}
+
+
+Wolf.prototype.get_nearby = function ( lat, lon, callback ) {
+    $.ajax({
+        type: 'GET',
+        url: '/api/business',
+        data: {
+            lat: toFloat( lat ),
+            lon: toFloat( lon )
+        }
+    }).done( callback );
+}
+
+
+Wolf.prototype.get_business = function ( id, callback ) {
+    $.ajax({
+        type: 'GET',
+        url: '/api/business/' + id
+    }).done( callback );
+}
+
+
+Map = function Map( container ) {
+    var parent = this;
+
+    google.maps.visualRefresh = true;
+    this.settings = {
+        here: new google.maps.LatLng( 35.960162, -86.802699 ),
+        api_key: 'AIzaSyBO7uBiTXNj8U1aDVQR5snr4XDd3xitHRE'
+    }
+    this.markers = [];
+    this.wolf = new Wolf();
+    this.map = this.init_map( container );
+
+    this.nearby();
+
+    return this;
+}
+
+
+Map.prototype.init_map = function( container ) {
+    var map, parent;
+
+    parent = this;
+
+    map = new google.maps.Map(container, {
+        center: this.settings.here,
+        zoom: 13,
+        mapTypeID: google.maps.MapTypeId.ROADMAP
+    });
+
+    google.maps.event.addDomListener(map, 'center_changed', function() {
+        parent.nearby();
+    });
+
+    return map
+}
+
+
+Map.prototype.add_marker = function( name, lat, lon ) {
+    var marker;
+
+    marker = new google.maps.Marker({
+        map: this.map,
+        position: new google.maps.LatLng( lat, lon ),
+        title: name
+    });
+    google.maps.event.addDomListener(marker, 'click', function() {
+        var w;
+        w = new google.maps.InfoWindow({
+            content: name
+        });
+        w.open(this.map, this);
+        google.maps.event.addDomListener(w, 'closeclick', function() {
+            this.close();
+        });
+    }, false);
+    this.markers.push( marker );
+}
+
+
+Map.prototype.nearby = function() {
+    var here,
+        wolf,
+        map;
+
+    map = this;
+    wolf = this.wolf;
+    here = this.map.getCenter();
+
+    wolf.get_nearby( here.lat(), here.lng(), function( data ) {
+
+        var res,
+            m;
+
+        while ( m = map.markers.pop() ) {
+            m.setMap( null );
+        }
+
+        res = data.split('\n');
+        for ( i = 0; i < res.length - 1; i++ ) {
+            wolf.get_business( res[i], function( data ) {
+
+                var res;
+                res = JSON.parse( data );
+                map.add_marker( res.name, res.lat, res.lon );
+
+            });
+        }
+
+    });
+}
+
+
+Map.prototype.google_nearby = function() {
+    var service;
+    service = new google.maps.places.PlacesService( this.map );
+    service.nearbySearch({
+        location: map.getCenter(),
+        radius: 500
+    }, function( results, status ) {
+        var res, i;
+        if ( status == google.maps.places.PlacesServiceStatus.OK ) {
+            res = document.getElementById('res');
+            res.innerHTML = '';
+            for ( i = 0; i < results.length; i++ ) {
+                (function(i) {
+                    var button;
+                    button = document.createElement('button');
+                    button.innerHTML = results[i].name;
+                    button.addEventListener('click', function() {
+                        service.getDetails( results[ i ], function( place, status ) {
+                            if ( status == google.maps.places.PlacesServiceStatus.OK ) {
+                                console.log( JSON.stringify( place, false, 4 ) );
+                            }
+                        });
+                    }, false);
+                    res.appendChild( button );
+                })(i);
+            }
+        }
+    });
+}
+</script>
+
+
+        <style type="text/css">
+            html { height: 100%; }
+            body { height: 100%; margin: 0; padding:0; }
+            #map-canvas { height:95%; }
+        </style>
+    </head>
+    <body>
+        <div id="map-canvas"></div>
+        <button id="nearby">Find Nearby</button>
+        <div id="res"></div>
+
+<script>
+(function() {
+    var map, nearby;
+    map = new Map( document.getElementById('map-canvas') );
+    nearby = document.getElementById('nearby');
+    nearby.addEventListener('click', function() {
+        map.nearby();
+    }, false);
+})();
+</script>
+
+    </body>
+</html>

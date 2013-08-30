@@ -22,12 +22,12 @@ class Business(ndb.Model):
         '''
         if not query:
             query = Business.query()
-        box = geobox.compute(lat, lon, 8, 25)
+        box = geobox.compute(lat, lon, 1, 1)
         query = query.filter(Business.geoboxes == box)
         return query
 
     def gen_geoboxes(self):
-        self.geoboxes = [geobox.compute(self.lat, self.lon, 8, 25)]
+        self.geoboxes = [geobox.compute(self.lat, self.lon, 1, 1)]
 
     def to_json(self):
         data = self.to_dict()
