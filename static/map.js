@@ -1,42 +1,4 @@
-<!doctype html>
-<html>
-    <head>
-        <title>Map Testing</title>
-        <meta charset="UTF-8">
-        <script src="/static/jquery-1.10.2.min.js"></script>
-        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBO7uBiTXNj8U1aDVQR5snr4XDd3xitHRE&libraries=places&sensor=false"></script>
-        <script src="/static/utils.js"></script>
-
-<script>
-var Map, Wolf;
-
-
-Wolf = function Wolf() {
-    return this;
-}
-
-
-Wolf.prototype.get_nearby = function ( lat, lon, callback ) {
-    $.ajax({
-        type: 'GET',
-        url: '/api/business',
-        data: {
-            lat: toFloat( lat ),
-            lon: toFloat( lon )
-        }
-    }).done( callback );
-}
-
-
-Wolf.prototype.get_business = function ( id, callback ) {
-    $.ajax({
-        type: 'GET',
-        url: '/api/business/' + id
-    }).done( callback );
-}
-
-
-Map = function Map( container ) {
+var Map = function Map( container ) {
     var parent = this;
 
     google.maps.visualRefresh = true;
@@ -157,30 +119,3 @@ Map.prototype.google_nearby = function() {
         }
     });
 }
-</script>
-
-
-        <style type="text/css">
-            html { height: 100%; }
-            body { height: 100%; margin: 0; padding:0; }
-            #map-canvas { height:95%; }
-        </style>
-    </head>
-    <body>
-        <div id="map-canvas"></div>
-        <button id="nearby">Find Nearby</button>
-        <div id="res"></div>
-
-<script>
-(function() {
-    var map, nearby;
-    map = new Map( document.getElementById('map-canvas') );
-    nearby = document.getElementById('nearby');
-    nearby.addEventListener('click', function() {
-        map.nearby();
-    }, false);
-})();
-</script>
-
-    </body>
-</html>
