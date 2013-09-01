@@ -23,7 +23,11 @@
         <script>
             (function() {
                 var map;
-                map = new Map( document.getElementById('map-canvas') );
+                map = new Map({
+                    here: new google.maps.LatLng( 35.960162, -86.802699 ),
+                    api_key: 'AIzaSyBO7uBiTXNj8U1aDVQR5snr4XDd3xitHRE',
+                    container: document.getElementById('map-canvas')
+                });
             })();
         </script>
 

@@ -1,3 +1,27 @@
+/* 
+ * BusinessCollection
+ *  BusinessCollection(filter:Object)
+ *      Constructor
+ *      parameters:
+ *          filter: filters the searched businesses. Valid values:
+ *              - lat, lon: The location near which to search
+ *  get(callback:function)
+ *      Fetches the list of businesses defined in the constructor, and passes the
+ *      array of business ID's to the callback
+ *      parameters:
+ *          callback(businesses:Array): Called when the server responds
+ *
+ * Business
+ *  Business(id:string|int)
+ *      Constructor
+ *      parameters:
+ *          id: the business ID
+ *  get(callback:function)
+ *      Fetches the business defined in the constructor, and passes the
+ *      object representing it to the callback
+ *      parameters:
+ *          callback(business:Object): Called when the server responds
+ */
 var BusinessCollection,
     Business,
     temp;

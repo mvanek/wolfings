@@ -1,13 +1,13 @@
-var Map = function Map( container ) {
+/* 
+ * Implements the Map object, which handles all map-related stuff,
+ * including markers and events
+ */
+var Map = function Map( settings ) {
     var parent = this;
 
     google.maps.visualRefresh = true;
-    this.settings = {
-        here: new google.maps.LatLng( 35.960162, -86.802699 ),
-        api_key: 'AIzaSyBO7uBiTXNj8U1aDVQR5snr4XDd3xitHRE'
-    }
     this.markers = [];
-    this.map = this.init_map( container );
+    this.map = this.init_map( settings.container );
 
     this.nearby();
 
@@ -15,6 +15,7 @@ var Map = function Map( container ) {
 }
 
 
+/* Adds map to the DOM, and adds event listeners for the map itself */
 Map.prototype.init_map = function( container ) {
     var map, parent;
 
