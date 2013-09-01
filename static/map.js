@@ -47,7 +47,7 @@ Map.prototype.add_marker = function( name, lat, lon ) {
         w = new google.maps.InfoWindow({
             content: name
         });
-        w.open(this.map, this);
+        w.open( this.map, this );
         google.maps.event.addDomListener(w, 'closeclick', function() {
             this.close();
         });
@@ -77,7 +77,7 @@ Map.prototype.nearby = function() {
         }
         for ( i = 0; i < businesses.length; i++ ) {
             businesses[i].get(function( b ) {
-                this.add_marker( b.name, b.lat, b.lon );
+                map.add_marker( b.name, b.lat, b.lon );
             });
         }
     });

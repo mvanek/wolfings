@@ -40,7 +40,7 @@ temp = (function() {
 
             cids = res.split('\n');
             coupons = [];
-            for ( i = 0; i < coupons.length; i++ ) {
+            for ( i = 0; i < cids.length; i++ ) {
                 if ( cids[i] ) {
                     coupons.push( Coupon( cids[i] ) );
                 }

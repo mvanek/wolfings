@@ -31,7 +31,7 @@ temp = (function() {
     Business.prototype.get = function( callback ) {
         $.ajax({
             type: 'GET',
-            url: '/api/business' + this.id
+            url: '/api/business/' + this.id
         }).done(function( res ) {
             callback( JSON.parse( res ) );
         });
@@ -57,7 +57,7 @@ temp = (function() {
 
             bids = res.split('\n');
             businesses = [];
-            for ( i = 0; i < businesses.length; i++ ) {
+            for ( i = 0; i < bids.length; i++ ) {
                 if ( bids[i] ) {
                     businesses.push( new Business( bids[i] ) );
                 }
