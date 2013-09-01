@@ -5,7 +5,7 @@ var toFloat, toInt,
         _slide;
     _numconv = function( fn, val, def ) {
         if ( !def ) {
-            def = '';
+            def = undefined;
         }
         if ( isNaN( val = fn(val) ) ) {
             return def;

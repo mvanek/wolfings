@@ -7,7 +7,6 @@ var Map = function Map( container ) {
         api_key: 'AIzaSyBO7uBiTXNj8U1aDVQR5snr4XDd3xitHRE'
     }
     this.markers = [];
-    this.wolf = new Wolf();
     this.map = this.init_map( container );
 
     this.nearby();
@@ -59,32 +58,27 @@ Map.prototype.add_marker = function( name, lat, lon ) {
 
 Map.prototype.nearby = function() {
     var here,
-        wolf,
-        map;
+        map,
+        B;
 
     map = this;
-    wolf = this.wolf;
     here = this.map.getCenter();
 
-    wolf.get_nearby( here.lat(), here.lng(), function( data ) {
-
-        var res,
-            m;
+    B = new BusinessCollection({
+        lat: toFloat(here.lat()),
+        lon: toFloat(here.lng())
+    });
+    B.get(function( businesses ) {
+        var m,
+            i;
 
         while ( m = map.markers.pop() ) {
             m.setMap( null );
         }
-
-        res = data.split('\n');
-        for ( i = 0; i < res.length - 1; i++ ) {
-            wolf.get_business( res[i], function( data ) {
-
-                var res;
-                res = JSON.parse( data );
-                map.add_marker( res.name, res.lat, res.lon );
-
+        for ( i = 0; i < businesses.length; i++ ) {
+            businesses[i].get(function( b ) {
+                this.add_marker( b.name, b.lat, b.lon );
             });
         }
-
     });
 }
