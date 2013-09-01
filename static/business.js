@@ -23,13 +23,9 @@
  *          callback(business:Object): Called when the server responds
  */
 var BusinessCollection,
-    Business,
-    temp;
+    Business;
 
-temp = (function() {
-    var BusinessCollection,
-        Business;
-
+(function() {
     function verify( query ) {
         if ( query['lat'] ) {
             if ( !query['lon'] ) {
@@ -92,6 +88,3 @@ temp = (function() {
 
     return [BusinessCollection, Business];
 })();
-
-BusinessCollection = temp[0];
-Business = temp[1];

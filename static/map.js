@@ -6,6 +6,7 @@ var Map = function Map( settings ) {
     var parent = this;
 
     google.maps.visualRefresh = true;
+    this.settings = settings;
     this.markers = [];
     this.map = this.init_map( settings.container );
 
