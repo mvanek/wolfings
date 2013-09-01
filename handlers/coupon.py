@@ -2,6 +2,7 @@ from google.appengine.ext import ndb
 import webapp2
 import urllib
 import json
+import datetime
 
 from models import Coupon
 
@@ -30,9 +31,16 @@ class CouponHandler(webapp2.RequestHandler):
             user_id = int(urllib.unquote(self.request.get('user')))
         except ValueError:
             user_id = None
+        month = int(urllib.unquote(self.request.get('month')))
+        day = int(urllib.unquote(self.request.get('day')))
+        year = int(urllib.unquote(self.request.get('year')))
+        hour = int(urllib.unquote(self.request.get('hour')))
+        minute = int(urllib.unquote(self.request.get('min')))
+        time = datetime.datetime(year, month, day, hour, minute)
         self.status = '200 OK'
         for key in Coupon.list_coupons(user_id=user_id,
                                        business_id=business_id,
+                                       time=time,
                                        keys_only=True):
             self.response.write(str(key.id()) + '\n')
 

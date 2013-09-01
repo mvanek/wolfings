@@ -180,8 +180,13 @@ function get_coup() {
         type: 'GET',
         url: '/api/coupon',
         data: {
-            user: parseInt(document.forms['get_coup']['user'].value),
-            business: parseInt(document.forms['get_coup']['business'].value)
+            user: toInt(document.forms['get_coup']['user'].value),
+            business: toInt(document.forms['get_coup']['business'].value),
+            year: toInt(document.forms['get_coup']['year'].value),
+            month: toInt(document.forms['get_coup']['month'].value),
+            day: toInt(document.forms['get_coup']['day'].value),
+            hour: toInt(document.forms['get_coup']['hour'].value),
+            min: toInt(document.forms['get_coup']['min'].value)
         }
     }).done( success_res ).fail( fail_res );
 }
@@ -193,7 +198,7 @@ function post_coup() {
         url: '/api/coupon',
         data: {
             name: document.forms['post_coup']['name'].value,
-            business: parseInt(document.forms['post_coup']['business'].value)
+            business: toInt(document.forms['post_coup']['business'].value)
         }
     }).done( success_res ).fail( fail_res );
 }
@@ -215,7 +220,7 @@ function put_coupid() {
         contentType: 'text/json',
         data: JSON.stringify({
             name: document.forms['put_coupid']['name'].value,
-            business: parseInt(document.forms['put_coupid']['business'].value)
+            business: toInt(document.forms['put_coupid']['business'].value)
         })
     }).done( success_res ).fail( fail_res );
 }
@@ -260,7 +265,7 @@ function post_userid() {
         type: 'POST',
         url: '/api/user/' + document.forms['post_userid']['id'].value,
         data: {
-            coupon: parseInt(document.forms['post_userid']['coupon'].value)
+            coupon: toInt(document.forms['post_userid']['coupon'].value)
         }
     }).done( success_res ).fail( fail_res );
 }
