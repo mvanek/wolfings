@@ -26,7 +26,7 @@ Map.prototype.init_map = function( container ) {
         mapTypeID: google.maps.MapTypeId.ROADMAP
     });
 
-    google.maps.event.addDomListener(map, 'center_changed', function() {
+    google.maps.event.addDomListener(map, 'dragend', function() {
         parent.nearby();
     });
 
