@@ -36,7 +36,7 @@ Map.prototype.init_map = function( container ) {
 }
 
 
-Map.prototype.add_marker = function( name, lat, lon ) {
+Map.prototype.add_marker = function( name, content, lat, lon ) {
     var marker;
 
     marker = new google.maps.Marker({
@@ -47,7 +47,7 @@ Map.prototype.add_marker = function( name, lat, lon ) {
     google.maps.event.addDomListener(marker, 'click', function() {
         var w;
         w = new google.maps.InfoWindow({
-            content: name
+            content: content
         });
         w.open( this.map, this );
         google.maps.event.addDomListener(w, 'closeclick', function() {
@@ -67,8 +67,8 @@ Map.prototype.nearby = function() {
     here = this.map.getCenter();
 
     B = new BusinessCollection({
-        lat: toFloat(here.lat()),
-        lon: toFloat(here.lng())
+        lat: toFloat( here.lat() ),
+        lon: toFloat( here.lng() )
     });
     B.get(function( businesses ) {
         var m,
@@ -79,7 +79,13 @@ Map.prototype.nearby = function() {
         }
         for ( i = 0; i < businesses.length; i++ ) {
             businesses[i].get(function( b ) {
-                map.add_marker( b.name, b.lat, b.lon );
+                var content,
+                    i;
+                content = '<h1>'+b.name+'</h1>';
+                for ( i = 0; i < b.coupons.length; i++ ) {
+                    content += b.coupons[i];
+                }
+                map.add_marker( b.name, content, b.lat, b.lon );
             });
         }
     });
