@@ -9,7 +9,7 @@
  *      Fetches the list of businesses defined in the constructor, and passes the
  *      array of business ID's to the callback
  *      parameters:
- *          callback(businesses:Array): Called when the server responds
+ *          callback(business:Object): Called when the server responds for each business
  *
  * Business
  *  Business(id:string|int)
@@ -27,6 +27,9 @@ var BusinessCollection,
 
 (function() {
     function verify( query ) {
+        if ( !query ) {
+            return true;
+        }
         if ( query['lat'] ) {
             if ( !query['lon'] ) {
                 return false;
@@ -72,17 +75,15 @@ var BusinessCollection,
             url: '/api/business',
             data: this.query
         }).done(function( res ) {
-            var bids,
-                businesses;
+            var bids;
 
             bids = res.split('\n');
-            businesses = [];
             for ( i = 0; i < bids.length; i++ ) {
                 if ( bids[i] ) {
-                    businesses.push( new Business( bids[i] ) );
+                    b = new Business( bids[i] );
+                    b.get( callback );
                 }
             }
-            callback( businesses );
         });
     }
 

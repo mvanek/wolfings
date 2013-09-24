@@ -9,7 +9,7 @@
  *      Fetches the list of coupons defined in the constructor, and passes the
  *      array of coupon ID's to the callback
  *      parameters:
- *          callback(businesses:Array): Called when the server responds
+ *          callback(coupon:Object): Called for each coupon
  *
  * Coupon
  *  Coupon(id:string|int)
@@ -55,15 +55,12 @@ CouponCollection.prototype.get = function( callback ) {
         data: this.query
     }).done(function( res ) {
         var cids,
-            coupons;
+            i;
 
         cids = res.split('\n');
-        coupons = [];
         for ( i = 0; i < cids.length; i++ ) {
-            if ( cids[i] ) {
-                coupons.push( Coupon( cids[i] ) );
-            }
+            c = new Coupon( cids[ i ] );
+            c.get( callback );
         }
-        callback( coupons );
     });
 }
