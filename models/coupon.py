@@ -74,6 +74,7 @@ class Coupon(ndb.Model):
 
     def to_json(self):
         data = self.to_dict()
+        data['id'] = self.key.id()
         data['business'] = data['business'].id()
         data['start'] = data['start'].strftime('%Y.%m.%d.%H.%M')
         data['end'] = data['end'].strftime('%Y.%m.%d.%H.%M')
