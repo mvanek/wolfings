@@ -1,0 +1,11 @@
+body {
+    font-family: sans-serif;
+}
+
+body>header {
+    font-size: 1.75em;
+    text-align: center;
+}
+
+
+/* Coupon list view */
