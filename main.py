@@ -1,5 +1,6 @@
 import webapp2
 from handlers import (MainHandler,
+                      AdminHandler,
                       BusinessHandler,
                       BusinessIDHandler,
                       CouponHandler,
@@ -12,6 +13,7 @@ from populate import InitHandler, ReInitHandler
 def main():
     return webapp2.WSGIApplication([
         ('/', MainHandler),
+        ('/admin', AdminHandler),
         ('/api/user', UserHandler),
         ('/api/user/.*', UserIDHandler),
         ('/api/coupon', CouponHandler),
