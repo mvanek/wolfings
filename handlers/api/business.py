@@ -114,29 +114,3 @@ class BusinessIDHandler(webapp2.RequestHandler):
             return
         b.key.delete()
         self.response.status = '204 No Content'
-
-
-class BusinessIDHandler(webapp2.RequestHandler):
-    '''
-    HTTP Request Handler, Entity: /business/[id]
-    '''
-    def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[3]))
-
-    def get_business(self):
-        '''
-        Returns business entity, and aborts with code 404 if there's no entity
-        '''
-        b = Business.get_by_id(self.get_id())
-        if b:
-            return b
-        self.abort(404)
-
-    def get(self):
-        '''
-        Returns business entity
-        '''
-        b = self.get_business()
-        self.response.status = '200 OK'
-        self.response.write(b.to_json())
-
