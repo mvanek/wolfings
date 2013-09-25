@@ -1,4 +1,4 @@
-from google.appengine.ext import ndb
+from google.appengine.ext import ndb, blobstore
 import geobox
 import json
 
@@ -8,6 +8,7 @@ class Business(ndb.Model):
     lat = ndb.FloatProperty('a', required=True)
     lon = ndb.FloatProperty('o', required=True)
     geoboxes = ndb.StringProperty('g', repeated=True)
+    mark = blobstore.BlobReferenceProperty()
 
     @classmethod
     def new(cls, **kwargs):
