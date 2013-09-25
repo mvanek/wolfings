@@ -1,22 +1,30 @@
 import webapp2
-from handlers import (MainHandler,
+from handlers import (SlashHandler,
+                      MainHandler,
                       AdminHandler,
+                      BusinessHandler,
+                      BusinessIDHandler,
+                      BusinessIDAdminHandler,
                       api)
 from populate import InitHandler, ReInitHandler
 
 
 def main():
     return webapp2.WSGIApplication([
+        ('.*[^/]$', SlashHandler),
         ('/', MainHandler),
-        ('/admin', AdminHandler),
-        ('/api/user', api.UserHandler),
+        ('/admin/', AdminHandler),
+        ('/business/', BusinessHandler),
+        ('/business/.*', BusinessIDHandler),
+        ('/business/.*', BusinessIDAdminHandler),
+        ('/api/user/', api.UserHandler),
         ('/api/user/.*', api.UserIDHandler),
         ('/api/coupon', api.CouponHandler),
         ('/api/coupon/.*', api.CouponIDHandler),
-        ('/api/business', api.BusinessHandler),
+        ('/api/business/', api.BusinessHandler),
         ('/api/business/.*', api.BusinessIDHandler),
-        ('/api/init', InitHandler),
-        ('/api/reinit', ReInitHandler)
+        ('/api/init/', InitHandler),
+        ('/api/reinit/', ReInitHandler)
     ], debug=True)
 
 
