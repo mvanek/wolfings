@@ -1,32 +1,27 @@
-<!doctype html>
-<html>
-    <head>
+{% extends "base.html" %}
 
-        <title>{{name}}</title>
-        <meta charset="UTF-8">
-        <script src="/static/jquery-1.10.2.min.js"></script>
-        <link rel="stylesheet" type="text/css" href="/static/style/reset.css">
+
+{% block title %}{{name}}{% endblock title %}
+
+
+{% block head %}{{ super() }}
         <link rel="stylesheet" type="text/css" href="/static/style/business.css">
+{% endblock head %}
 
-    </head>
-    <body>
-        <div id="viewport">
 
-            <section>
-                <header>
+{% block body %}
+        <section>
+            <header>
 {% if mark_url %}
-                    <img class="mark" alt="{{name}}" src="{{mark_url}}">
+                <img class="mark" alt="{{name}}" src="{{mark_url}}">
 {% endif %}
-                    {{name}} Offers
-                </header>
-                <article id="one">
-                    <header>Offer one</header>
-                </article>
-                <article id="two">
-                    <header>Offer two</header>
-                </article>
-            </section>
-
-        </div>
-    </body>
-</html>
+                {{name}} Offers
+            </header>
+            <article id="one">
+                <header>Offer one</header>
+            </article>
+            <article id="two">
+                <header>Offer two</header>
+            </article>
+        </section>
+{% endblock body %}
