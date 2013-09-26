@@ -9,13 +9,13 @@ from models import Business
 
 
 __all__ = ['BusinessHandler', 'BusinessIDHandler',
-           'BusinessIDAdminHandler', 'BusinessIDMarkHandler',
-           'BusinessIDUploadHandler']
+           'BusinessIDAdminHandler', 'BusinessIDUploadHandler']
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.join(
         os.path.dirname(__file__), 'templates')),
-    extensions=['jinja2.ext.autoescape'])
+    extensions=['jinja2.ext.autoescape'],
+    trim_blocks=True)
 
 
 class BusinessHandler(webapp2.RequestHandler):
@@ -68,7 +68,10 @@ class BusinessIDHandler(webapp2.RequestHandler):
         Returns business entity
         '''
         b = self.get_business()
-        mark_url = images.get_serving_url(b.mark, size=200)
+        try:
+            mark_url = images.get_serving_url(b.mark, size=200)
+        except images.BlobKeyRequiredError:
+            mark_url = None
         template = JINJA_ENVIRONMENT.get_template('business.html')
         self.response.status = '200 OK'
         self.response.write(template.render(name=b.name,

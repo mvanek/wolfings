@@ -13,7 +13,12 @@
         <div id="viewport">
 
             <section>
-                <header><img class="mark" alt="{{name}}" src="{{mark_url}}">{{name}} Offers</header>
+                <header>
+{% if mark_url %}
+                    <img class="mark" alt="{{name}}" src="{{mark_url}}">
+{% endif %}
+                    {{name}} Offers
+                </header>
                 <article id="one">
                     <header>Offer one</header>
                 </article>
