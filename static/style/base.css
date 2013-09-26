@@ -1,14 +1,18 @@
 #topbar {
-    margin: 0;
-    padding: 0.5em 0;
-
     width: 100%;
-
-    font-size: 1.25em;
-    font-weight: bold;
-    letter-spacing: 1em;
     text-align: center;
 
     background: #180878;
     color: #ffffff;
+}
+
+#topbar > header {
+    padding: 0.5em 0;
+    margin-right: -1em;
+
+    letter-spacing: 1em;
+    font-size: 1.25em;
+    font-weight: bold;
+
+    display: inline-block;
 }
