@@ -5,26 +5,32 @@ from handlers import (SlashHandler,
                       BusinessHandler,
                       BusinessIDHandler,
                       BusinessIDAdminHandler,
+                      BusinessIDMarkHandler,
+                      BusinessIDUploadHandler,
                       api)
 from populate import InitHandler, ReInitHandler
 
 
 def main():
     return webapp2.WSGIApplication([
-        ('.*[^/]$', SlashHandler),
-        ('/', MainHandler),
-        ('/admin/', AdminHandler),
-        ('/business/', BusinessHandler),
-        ('/business/[0-9]+/', BusinessIDHandler),
-        ('/business/[0-9]+/admin/', BusinessIDAdminHandler),
-        ('/api/user/', api.UserHandler),
-        ('/api/user/.*', api.UserIDHandler),
-        ('/api/coupon', api.CouponHandler),
-        ('/api/coupon/.*', api.CouponIDHandler),
-        ('/api/business/', api.BusinessHandler),
-        ('/api/business/.*', api.BusinessIDHandler),
-        ('/api/init/', InitHandler),
-        ('/api/reinit/', ReInitHandler)
+        ('/api/user/',                  api.UserHandler),
+        ('/api/user/[0-9]+/',           api.UserIDHandler),
+        ('/api/coupon/',                api.CouponHandler),
+        ('/api/coupon/[0-9]+/',         api.CouponIDHandler),
+        ('/api/business/',              api.BusinessHandler),
+        ('/api/business/[0-9]+/',       api.BusinessIDHandler),
+        ('/api/init/',                  InitHandler),
+        ('/api/reinit/',                ReInitHandler),
+
+        ('.*[^/]$',                     SlashHandler),
+        ('/',                           MainHandler),
+        ('/admin/',                     AdminHandler),
+
+        ('/business/',                  BusinessHandler),
+        ('/business/[0-9]+/',           BusinessIDHandler),
+        ('/business/[0-9]+/admin/',     BusinessIDAdminHandler),
+        ('/business/[0-9]+/mark/',      BusinessIDMarkHandler),
+        ('/business/[0-9]+/upload/',    BusinessIDUploadHandler),
     ], debug=True)
 
 

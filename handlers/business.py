@@ -1,11 +1,16 @@
 import webapp2
+from google.appengine.ext.webapp import blobstore_handlers
+from google.appengine.ext import blobstore
+from google.appengine.api import images
 import urllib
 import jinja2
 import os
 from models import Business
 
 
-__all__ = ['BusinessHandler', 'BusinessIDHandler']
+__all__ = ['BusinessHandler', 'BusinessIDHandler',
+           'BusinessIDAdminHandler', 'BusinessIDMarkHandler',
+           'BusinessIDUploadHandler']
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.join(
@@ -63,9 +68,11 @@ class BusinessIDHandler(webapp2.RequestHandler):
         Returns business entity
         '''
         b = self.get_business()
+        mark_url = images.get_serving_url(b.mark, size=200)
         template = JINJA_ENVIRONMENT.get_template('business.html')
         self.response.status = '200 OK'
-        self.response.write(template.render(name=b.name))
+        self.response.write(template.render(name=b.name,
+                                            mark_url=mark_url))
 
 
 class BusinessIDAdminHandler(webapp2.RequestHandler):
@@ -85,10 +92,55 @@ class BusinessIDAdminHandler(webapp2.RequestHandler):
         self.abort(404)
 
     def get(self):
-        '''
-        Returns business entity
-        '''
         b = self.get_business()
         template = JINJA_ENVIRONMENT.get_template('business_admin.html')
+        mark_upload = blobstore.create_upload_url('/business/{}/upload/'
+                                                  .format(self.get_id()))
         self.response.status = '200 OK'
-        self.response.write(template.render(name=b.name))
+        self.response.write(template.render(name=b.name,
+                                            mark_upload=mark_upload))
+
+
+class BusinessIDMarkHandler(webapp2.RequestHandler):
+    '''
+    HTTP Request Handler, Entity: /business/[id]/mark
+    '''
+    def get_id(self):
+        return int(urllib.unquote(self.request.path.split('/')[2]))
+
+    def get_business(self):
+        '''
+        Returns business entity, and aborts with code 404 if there's no entity
+        '''
+        b = Business.get_by_id(self.get_id())
+        if b:
+            return b
+        self.abort(404)
+
+    def get(self):
+        b = self.get_business()
+        self.redirect(images.get_serving_url(b.mark))
+
+
+class BusinessIDUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
+    '''
+    HTTP Request Handler, Entity: /business/[id]/upload
+    '''
+    def get_id(self):
+        return int(urllib.unquote(self.request.path.split('/')[2]))
+
+    def get_business(self):
+        '''
+        Returns business entity, and aborts with code 404 if there's no entity
+        '''
+        b = Business.get_by_id(self.get_id())
+        if b:
+            return b
+        self.abort(404)
+
+    def post(self):
+        blob_info = self.get_uploads('mark')[0]
+        b = self.get_business()
+        b.mark = blob_info.key()
+        b.put()
+        self.redirect('/business/{}/admin/'.format(self.get_id()))

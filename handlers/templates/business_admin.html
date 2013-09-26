@@ -18,7 +18,14 @@
                     <form>
                         <label for="name">Name: </label>
                         <input type="text" name="name" value="{{name}}">
-                        <input type="button" value="submit">
+                        <input type="submit" value="submit">
+                    </form>
+                </article>
+                <article>
+                    <header>Upload Mark</header>
+                    <form action="{{mark_upload}}" method="POST" enctype="multipart/form-data">
+                        <input type="file" name="mark">
+                        <input type="submit" value="submit">
                     </form>
                 </article>
                 <article>
@@ -160,7 +167,7 @@
                             <option value="58">18</option>
                             <option value="59">19</option>
                         </select>
-                        <input type="button" value="submit">
+                        <input type="submit" value="submit">
                     </form>
                 </article>
             </section>

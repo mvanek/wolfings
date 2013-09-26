@@ -41,7 +41,7 @@ h2 {
 
 
 /* Buttons */
-input[type=button],
+input[type=submit],
 button {
     background: #3010ef;
 
@@ -61,11 +61,11 @@ button {
     border-bottom-color:#3010cf;
     border-width:2px;
 }
-input[type=button]:hover,
+input[type=submit]:hover,
 button:hover {
     background: #3010ff;
 }
-input[type=button]:active,
+input[type=submit]:active,
 button:active {
     background: #3010df;
 }
@@ -92,4 +92,10 @@ article > header {
 
 article + article {
     margin-top: 10px;
+}
+
+
+/* Images */
+img.mark {
+    vertical-align: middle;
 }
