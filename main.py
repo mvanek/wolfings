@@ -5,7 +5,6 @@ from handlers import (SlashHandler,
                       BusinessHandler,
                       BusinessIDHandler,
                       BusinessIDAdminHandler,
-                      BusinessIDMarkHandler,
                       BusinessIDUploadHandler,
                       api)
 from populate import InitHandler, ReInitHandler
@@ -29,7 +28,6 @@ def main():
         ('/business/',                  BusinessHandler),
         ('/business/[0-9]+/',           BusinessIDHandler),
         ('/business/[0-9]+/admin/',     BusinessIDAdminHandler),
-        ('/business/[0-9]+/mark/',      BusinessIDMarkHandler),
         ('/business/[0-9]+/upload/',    BusinessIDUploadHandler),
     ], debug=True)
 

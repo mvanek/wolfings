@@ -4,15 +4,13 @@ from admin import AdminHandler
 from business import (BusinessHandler,
                       BusinessIDHandler,
                       BusinessIDAdminHandler,
-                      BusinessIDUploadHandler,
-                      BusinessIDMarkHandler)
+                      BusinessIDUploadHandler)
 import api
 
 __all__ = [
     SlashHandler,
     MainHandler, AdminHandler,
     BusinessHandler, BusinessIDHandler,
-    BusinessIDAdminHandler, BusinessIDMarkHandler,
-    BusinessIDUploadHandler,
+    BusinessIDAdminHandler, BusinessIDUploadHandler,
     api
 ]
