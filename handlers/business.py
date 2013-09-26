@@ -1,4 +1,3 @@
-import logging
 import webapp2
 import urllib
 import jinja2
@@ -90,5 +89,6 @@ class BusinessIDAdminHandler(webapp2.RequestHandler):
         Returns business entity
         '''
         b = self.get_business()
+        template = JINJA_ENVIRONMENT.get_template('business_admin.html')
         self.response.status = '200 OK'
-        self.response.write(b.to_json())
+        self.response.write(template.render(name=b.name))
