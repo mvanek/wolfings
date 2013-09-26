@@ -1,16 +1,15 @@
-<!doctype html>
-<html>
+{% extends "base.html" %}
 
-    <head>
-        <title>Admin Panel</title>
-        <meta charset="UTF-8">
-        <script src="/static/jquery-1.10.2.min.js"></script>
-        <link rel="stylesheet" type="text/css" href="/static/style/reset.css">
+
+{% block title %}{{name}}{% endblock title %}
+
+
+{% block head %}{{ super() }}
         <link rel="stylesheet" type="text/css" href="/static/style/business.css">
-    </head>
+{% endblock head %}
 
-    <body>
-        <div id="viewport">
+
+{% block body %}
             <section>
                 <header>Admin Panel</header>
                 <article>
@@ -171,7 +170,4 @@
                     </form>
                 </article>
             </section>
-        </div>
-    </body>
-
-</html>
+{% endblock body %}

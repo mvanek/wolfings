@@ -1,16 +1,15 @@
-<!doctype html>
-<html>
-    <head>
+{% extends "base.html" %}
 
-        <title>{{name}}</title>
-        <meta charset="UTF-8">
-        <script src="/static/jquery-1.10.2.min.js"></script>
-        <link rel="stylesheet" type="text/css" href="/static/style/reset.css">
+
+{% block title %}{{name}}{% endblock title %}
+
+
+{% block head %}{{ super() }}
         <link rel="stylesheet" type="text/css" href="/static/style/business.css">
+{% endblock head %}
 
-    </head>
-    <body>
-        <div id="viewport">
+
+{% block body %}
             <section id="businesses">
                 <header>Businesses</header>
 {% for b in businesses %}
@@ -19,6 +18,4 @@
                 </p>
 {% endfor %}
             </section>
-        </div>
-    </body>
-</html>
+{% endblock body %}
