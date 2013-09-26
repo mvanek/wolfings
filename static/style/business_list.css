@@ -1,0 +1,86 @@
+/* Animations */
+@keyframes slide
+{
+    from {
+        margin-top: 0px;
+    }
+
+    to {
+        margin-top: 0px;
+    }
+}
+
+
+/* Global */
+body {
+    font-family: sans-serif;
+
+    background: #e0e0e0
+}
+
+
+/* Whitespace around viewport */
+#viewport {
+    padding: 0.75em;
+    margin-right: auto; margin-left: auto;
+
+    max-width: 900px;
+
+    background: white;
+}
+
+
+/* Headers */
+section > header {
+    font-size: 1.3em;
+}
+h2 {
+    font-size: 1.2em;
+    margin-top:1em;
+}
+
+
+/* Buttons */
+button.bigblue {
+    background: #3010ef;
+
+    text-align: center;
+    font-size: 1.2em;
+    color: #ffffff;
+
+    width: 100%;
+    height: 35px;
+
+    border:solid;
+    border-left-color:#4020ff;
+    border-top-color:#4020ff;
+    border-right-color:#3010cf;
+    border-bottom-color:#3010cf;
+    border-width:2px;
+}
+button.bigblue:hover {
+    background: #3010ff;
+}
+button.bigblue:active {
+    background: #3010df;
+}
+
+
+/* Header-separaors */
+article {
+    position: relative;
+
+    border-top: solid;
+    border-width: 1px;
+    padding:10px;
+}
+
+article > header {
+    font-size: 1.1em;
+    background: white;
+    padding: 0px 5px;
+
+    position: absolute;
+    top: -5px;
+    right: 20px;
+}

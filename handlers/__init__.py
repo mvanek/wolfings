@@ -1,14 +1,14 @@
+from slash import SlashHandler
 from root import MainHandler
 from admin import AdminHandler
-from business import BusinessHandler, BusinessIDHandler
-from user import UserHandler, UserIDHandler
-from coupon import CouponHandler, CouponIDHandler
-
+from business import (BusinessHandler,
+                      BusinessIDHandler,
+                      BusinessIDAdminHandler)
+import api
 
 __all__ = [
-    MainHandler,
-    AdminHandler,
-    BusinessHandler, BusinessIDHandler,
-    UserHandler, UserIDHandler,
-    CouponHandler, CouponIDHandler,
+    SlashHandler,
+    MainHandler, AdminHandler,
+    BusinessHandler, BusinessIDHandler, BusinessIDAdminHandler,
+    api
 ]
