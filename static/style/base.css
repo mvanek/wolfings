@@ -1,8 +1,11 @@
+body {
+    min-width: 40em;
+}
+
 #topbar {
     position: relative;
 
     width: 100%;
-    min-width: 30em;
 
     background: #180878;
     color: #ffffff;
