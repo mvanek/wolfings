@@ -11,39 +11,10 @@
 }
 
 
-/* Global */
-body {
-    font-family: sans-serif;
-
-    background: #e0e0e0
-}
-
-
-/* Whitespace around viewport */
-#viewport {
-    padding: 0.75em;
-    margin-right: auto; margin-left: auto;
-
-    max-width: 900px;
-
-    background: white;
-}
-
-
-/* Headers */
-section > header {
-    font-size: 1.3em;
-}
-h2 {
-    font-size: 1.2em;
-    margin-top:1em;
-}
-
-
 /* Buttons */
 input[type=submit],
 button {
-    background: #3010ef;
+    background: #180878;
 
     display: block;
     margin-left: auto;
@@ -55,47 +26,37 @@ button {
     color: #ffffff;
 
     border:solid;
-    border-left-color:#4020ff;
-    border-top-color:#4020ff;
-    border-right-color:#3010cf;
-    border-bottom-color:#3010cf;
+    border-left-color:#201088;
+    border-top-color:#201088;
+    border-right-color:#180868;
+    border-bottom-color:#180868;
     border-width:2px;
 }
 input[type=submit]:hover,
 button:hover {
-    background: #3010ff;
+    background: #1808a8;
 }
 input[type=submit]:active,
 button:active {
-    background: #3010df;
-}
-
-
-/* Header-separaors */
-article {
-    position: relative;
-
-    border-top: solid;
-    border-width: 1px;
-    padding:10px;
-}
-
-article > header {
-    font-size: 1.1em;
-    background: white;
-    padding: 0px 5px;
-
-    position: absolute;
-    top: -5px;
-    right: 20px;
-}
-
-article + article {
-    margin-top: 10px;
+    background: #180868;
 }
 
 
 /* Images */
 img.mark {
     vertical-align: middle;
+}
+
+
+article {
+    border-top: solid;
+    border-width: 1px;
+    border-color: #c0c0c0;
+
+    padding-top: 0.25em;
+}
+
+
+.coupon .right {
+    top: 0.25em;
 }
