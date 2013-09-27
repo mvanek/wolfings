@@ -3,9 +3,7 @@ import webapp2
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
-        with open('index.html') as f:
-            lines = f.readlines()
-        self.response.write(lines)
+        self.redirect('/business/')
 
     def put(self):
         self.response.write('Hello put!')
