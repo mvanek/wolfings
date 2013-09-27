@@ -5,7 +5,7 @@ from google.appengine.api import images
 import urllib
 import jinja2
 import os
-from models import Business
+from models import Business, Coupon
 
 
 __all__ = ['BusinessHandler', 'BusinessIDHandler',
@@ -68,6 +68,7 @@ class BusinessIDHandler(webapp2.RequestHandler):
         Returns business entity
         '''
         b = self.get_business()
+        coupons = [c.dict() for c in Coupon.get_by_business(b.key.id())]
         try:
             mark_url = images.get_serving_url(b.mark, size=200)
         except images.BlobKeyRequiredError:
@@ -75,7 +76,8 @@ class BusinessIDHandler(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('business.html')
         self.response.status = '200 OK'
         self.response.write(template.render(name=b.name,
-                                            mark_url=mark_url))
+                                            mark_url=mark_url,
+                                            coupons=coupons))
 
 
 class BusinessIDAdminHandler(webapp2.RequestHandler):

@@ -12,16 +12,24 @@
 {% block body %}
         <section>
             <header>
-{% if mark_url %}
+    {% if mark_url %}
                 <img class="mark" alt="{{name}}" src="{{mark_url}}">
-{% endif %}
-                {{name}} Offers
+    {% endif %}
+                {{name}}
             </header>
-            <article id="one">
-                <header>Offer one</header>
-            </article>
-            <article id="two">
-                <header>Offer two</header>
-            </article>
         </section>
+    {% if coupons %}
+        <section id="coupons">
+            <header>Offers</header>
+        {% for c in coupons %}
+            <article class="coupon" id="c{{c.id}}">
+                <header>{{c.name}}</header>
+                <p>From {{c.start}} to {{c.end}}</p>
+                <div class="right">
+                    <button>CLAIM</button>
+                </div>
+            </article>
+        {% endfor %}
+        </section>
+    {% endif %}
 {% endblock body %}
