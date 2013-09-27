@@ -43,7 +43,8 @@ class Coupon(ndb.Model):
             return ndb.get_multi(coupon_keys)
 
     @classmethod
-    def get_by_user_and_business(cls, user_id, business_id, time=None, keys_only=False):
+    def get_by_user_and_business(cls, user_id, business_id, time=None,
+                                 keys_only=False):
         '''
         Returns a list of all coupons
         '''
@@ -54,7 +55,8 @@ class Coupon(ndb.Model):
         return user_coupons & business_coupons
 
     @classmethod
-    def list_coupons(cls, user_id=None, business_id=None, time=None, keys_only=False):
+    def list_coupons(cls, user_id=None, business_id=None, time=None,
+                     keys_only=False):
         '''
         Filters by provided parameters
         '''
@@ -72,13 +74,16 @@ class Coupon(ndb.Model):
                                        keys_only=keys_only)
         return cls.get_all(time=time, keys_only=keys_only)
 
-    def to_json(self):
+    def dict(self):
         data = self.to_dict()
         data['id'] = self.key.id()
         data['business'] = data['business'].id()
         data['start'] = data['start'].strftime('%Y.%m.%d.%H.%M')
         data['end'] = data['end'].strftime('%Y.%m.%d.%H.%M')
-        return json.dumps(data)
+        return data
+
+    def json(self):
+        return json.dumps(self.dict())
 
     def delete(self):
         users = User.query(User.held_coupons == self.key)

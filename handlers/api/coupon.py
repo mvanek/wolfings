@@ -79,7 +79,7 @@ class CouponIDHandler(webapp2.RequestHandler):
         Returns JSON representation of coupon
         '''
         self.status = '200 OK'
-        self.response.write(self.get_coupon().to_json())
+        self.response.write(self.get_coupon().json())
 
     def put(self):
         '''
