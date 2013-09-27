@@ -1,17 +1,49 @@
 #topbar {
+    position: relative;
+
     width: 100%;
+    min-width: 30em;
 
     background: #180878;
     color: #ffffff;
 }
 
-#topbar > header {
+#topbar header {
     padding: 0.5em 1em;
     margin-right: -1em;
+
+    line-height: 1.25em;
 
     letter-spacing: 1em;
     font-size: 1.25em;
     font-weight: bold;
 
     display: inline-block;
+}
+
+#topbar a,
+#topbar a:hover,
+#topbar a:active,
+#topbar a:visited {
+    padding: 0.388em 1em;
+    text-decoration: none;
+    color: #ffffff;
+}
+#topbar a:hover {
+    border-top: solid;
+    border-width: 0.2em;
+    border-color: #ffffff;
+}
+
+.right {
+    position: absolute;
+    right: 0;
+    top: 0;
+
+    padding: 0.5em 0;
+
+    line-height: 1.25em;
+
+    font-size: 1.25em;
+    font-weight: bold;
 }
