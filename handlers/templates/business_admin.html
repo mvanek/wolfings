@@ -11,6 +11,7 @@
     <link href="/static/style/business.css" rel="stylesheet" type="text/css">
     <link href="/static/style/business_admin.css" rel="stylesheet" type="text/css">
     <script src="/static/lib/jquery-ui/js/jquery-ui-1.10.3.custom.js"></script>
+    <script src="/static/js/utils.js"></script>
     <script src="/static/js/business_admin.js"></script>
 
 {% endblock head %}
@@ -68,8 +69,8 @@
                 <input type="submit" value="submit">
             </form>
             <script>
-                $( document.getElementById('start') ).datepicker();
-                $( document.getElementById('end') ).datepicker();
+                $( document.getElementById('sdate') ).datepicker();
+                $( document.getElementById('edate') ).datepicker();
             </script>
         </article>
     </section>

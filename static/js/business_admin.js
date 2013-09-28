@@ -26,20 +26,20 @@ function post_coupon() {
     startDateString = form['sdate'].value + ' ' +
                       form['shour'].value + ':' +
                       form['smin'].value;
-    endDateString = form['sdate'].value + ' ' +
-                    form['shour'].value + ':' +
-                    form['smin'].value;
+    endDateString = form['edate'].value + ' ' +
+                    form['ehour'].value + ':' +
+                    form['emin'].value;
 
     jQuery.ajax({
         type: 'POST',
-        url: '/api/coupon',
+        url: '/api/coupon/',
         processData: false,
         contentType: 'text/json',
         data: JSON.stringify({
             business: biz_id(),
             name: document.forms['newcoup']['name'].value,
-            start: new Date( startDateString );
-            end: new Date( endDateString );
+            start: new Date( startDateString ),
+            end: new Date( endDateString )
         })
     }).done(function( res ) {
         window.location = res.slice(4);

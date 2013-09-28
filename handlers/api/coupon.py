@@ -10,6 +10,11 @@ from models import Coupon
 __all__ = ['CouponHandler', 'CouponIDHandler']
 
 
+def str_to_datetime(s):
+    return datetime.datetime.strptime(s.replace('Z', '000'),
+                                      '%Y-%m-%dT%H:%M:%S.%f')
+
+
 class CouponHandler(webapp2.RequestHandler):
     '''
     HTTP Request Handler: /api/coupon
@@ -53,10 +58,15 @@ class CouponHandler(webapp2.RequestHandler):
         Creates new coupon
         '''
         data = json.loads(urllib.unquote(self.request.body))
-        coupon = Coupon(**data)
+        data['start'] = str_to_datetime(data['start'])
+        data['end'] = str_to_datetime(data['end'])
+        coupon = Coupon(name=data['name'],
+                        business=ndb.Key('Business', data['business']),
+                        start=data['start'],
+                        end=data['end'])
         key = coupon.put()
         self.status = '200 OK'
-        self.response.write('/api/coupon/' + key.id())
+        self.response.write('/api/coupon/' + str(key.id()))
 
 
 class CouponIDHandler(webapp2.RequestHandler):
