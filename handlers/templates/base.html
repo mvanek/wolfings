@@ -1,19 +1,18 @@
 <!doctype html>
 <html>
     <head>
-{% block head %}
+    {% block head %}
         <title>{% block title %}{% endblock title %}</title>
         <meta charset="UTF-8">
         <script src="/static/jquery-1.10.2.min.js"></script>
         <link rel="stylesheet" type="text/css" href="/static/style/reset.css">
         <link rel="stylesheet" type="text/css" href="/static/style/base.css">
-{% endblock head %}
+    {% endblock head %}
     </head>
     <body>
-{% include "topbar.html" %}
+        {% block header %}{% include "topbar.html" %}{% endblock header %}
         <div id="viewport">
-{% block body %}
-{% endblock body %}
+            {% block body %} {% endblock body %}
         </div>
     </body>
 </html>

@@ -4,13 +4,15 @@
 {% block title %}Admin Panel{% endblock title %}
 
 
-{% block head %}{{ super() }}
+{% block head %}
+        <link rel="stylesheet" type="text/css" href="/static/style/reset.css">
         <link rel="stylesheet" type="text/css" href="/static/style/admin.css">
+        <script src="/static/jquery-1.10.2.min.js"></script>
         <script src="/static/rest_api.js"></script>
 {% endblock head %}
 
 
-{% block body %}
+{% block header %}
         <section id="res">
             <header>Response</header>
             <div>
@@ -20,7 +22,9 @@
             </div>
             <button id="clear">Close</button>
         </section>
+{% endblock header %}
 
+{% block body %}
         <section id="handlers">
             <header>Handlers</header>
             <article id="biz">
