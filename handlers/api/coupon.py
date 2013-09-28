@@ -52,9 +52,8 @@ class CouponHandler(webapp2.RequestHandler):
         HTTP POST Method Handler
         Creates new coupon
         '''
-        name = urllib.unquote(self.request.get('name'))
-        business = urllib.unquote(self.request.get('business'))
-        coupon = Coupon(name=name, business=business)
+        data = json.loads(urllib.unquote(self.request.body))
+        coupon = Coupon(**data)
         key = coupon.put()
         self.status = '200 OK'
         self.response.write('/api/coupon/' + key.id())
@@ -93,7 +92,7 @@ class CouponIDHandler(webapp2.RequestHandler):
         except ValueError:
             self.abort(400)
         except KeyError:
-            pass
+            self.abort(400)
         for key, value in data.iteritems():
             setattr(coupon, key, value)
         key = coupon.put()
