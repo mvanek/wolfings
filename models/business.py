@@ -34,7 +34,10 @@ class Business(ndb.Model):
     def dict(self):
         data = self.to_dict()
         data['id'] = self.key.id()
-        data['mark'] = images.get_serving_url(self.mark, 200)
+        try:
+            data['mark'] = images.get_serving_url(self.mark, 200)
+        except BlobKeyRequiredError:
+            data['mark'] = None
         del data['geoboxes']
         return data
 
