@@ -149,21 +149,23 @@ function post_biz() {
 function get_bizid() {
     $.ajax({
         type: 'GET',
-        url: '/api/business/' + document.forms['get_bizid']['id'].value
+        url: '/api/business/' + document.forms['get_bizid']['id'].value,
+        dataType: 'text'
     }).done( success_res ).fail( fail_res );
 }
 
 
 function put_bizid() {
+    var form = document.forms['put_bizid'];
     $.ajax({
         type: 'PUT',
-        url: '/api/business/' + document.forms['put_bizid']['id'].value,
-        processData: false,
+        url: '/api/business/' + form['id'].value,
         contentType: 'text/json',
+        processData: false,
         data: JSON.stringify({
-            name: document.forms['put_bizid']['name'].value,
-            lat: toFloat( document.forms['put_bizid']['lat'].value ),
-            lon: toFloat( document.forms['put_bizid']['lon'].value )
+            name: form['name'].value,
+            lat: toFloat( form['lat'].value ),
+            lon: toFloat( form['lon'].value )
         })
     }).done( success_res ).fail( fail_res );
 }
