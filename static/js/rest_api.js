@@ -73,6 +73,7 @@ function post_res( status, data ) {
     slideDown( document.getElementById('res') );
 }
 
+
 /* Pulls up before posting the data */
 function repost_res( status, data ) {
     var res, h;

@@ -30,7 +30,8 @@ body {
 
     width: 100%;
 
-    font-size: 0.9em;
+    font-size: 1.125em;
+    font-weight: bold;
 
     background: #180878;
     color: #ffffff;
@@ -43,8 +44,6 @@ body {
     line-height: 1.25em;
 
     letter-spacing: 1em;
-    font-size: 1.25em;
-    font-weight: bold;
 
     display: inline-block;
 
@@ -74,9 +73,6 @@ body {
     padding: 0.5em 0;
 
     line-height: 1.25em;
-
-    font-size: 1.25em;
-    font-weight: bold;
 }
 
 
@@ -84,30 +80,26 @@ body {
 section > header {
     font-size: 1.3em;
 }
-h2 {
-    font-size: 1.2em;
-    margin-top:1em;
-}
-
-
-/* Sections and articles */
-section + section {
-    margin-top: 1em;
-}
-
-article {
-    position: relative;
-}
-
 article > header {
     font-size: 1.1em;
+}
+
+
+/* Section and article spacing */
+article {
+    position: relative;
 }
 
 article + article {
     margin-top: 0.75em;
 }
 
+section + section {
+    margin-top: 1em;
+}
 
+
+/* Un-highlightable text */
 .unselectable {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
