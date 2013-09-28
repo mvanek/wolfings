@@ -1,4 +1,5 @@
 from google.appengine.ext import ndb
+from google.appengine.api import images
 import geobox
 import json
 
@@ -30,8 +31,12 @@ class Business(ndb.Model):
     def gen_geoboxes(self):
         self.geoboxes = [geobox.compute(self.lat, self.lon, 1, 1)]
 
-    def to_json(self):
+    def dict(self):
         data = self.to_dict()
         data['id'] = self.key.id()
+        data['mark'] = images.get_serving_url(self.mark, 200)
         del data['geoboxes']
-        return json.dumps(data)
+        return data
+
+    def json(self):
+        return json.dumps(self.dict())

@@ -81,7 +81,7 @@ class BusinessIDHandler(webapp2.RequestHandler):
         '''
         b = self.get_business()
         self.response.status = '200 OK'
-        self.response.write(b.to_json())
+        self.response.write(b.json())
 
     def put(self):
         '''
