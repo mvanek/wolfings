@@ -4,9 +4,16 @@
 {% block title %}{{name}}{% endblock title %}
 
 
-{% block head %}{{ super() }}
-    <link rel="stylesheet" type="text/css" href="/static/style/business.css">
-    <script src="/static/business_admin.js"></script>
+{% block head %}
+
+    {{ super() }}
+    <link href="/static/lib/jquery-ui/css/dot-luv/jquery-ui-1.10.3.custom.css" rel="stylesheet" type="text/css">
+    <link href="/static/style/business.css" rel="stylesheet" type="text/css">
+    <link href="/static/style/business_admin.css" rel="stylesheet" type="text/css">
+    <script src="/static/lib/jquery-ui/js/jquery-ui-1.10.3.custom.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/business_admin.js"></script>
+
 {% endblock head %}
 
 
@@ -34,10 +41,37 @@
             <form name="newcoup" action="javascript:post_coupon()">
                 <label for="name">Name: </label>
                 <input type="text" name="name" value="">
+
                 <br>
-                <label>Date: </label>
+
+                <label for="sdate">Start time: </label>
+                <input name="sdate" id="sdate"></input>
+                <select name="shour">
+                    {% include "hour_options.html" %}
+                </select>
+                :
+                <select name="smin">
+                    {% include "minute_options.html" %}
+                </select>
+
+                <br>
+
+                <label for="edate">End time: </label>
+                <input name="edate" id="edate"></input>
+                <select name="ehour">
+                    {% include "hour_options.html" %}
+                </select>
+                :
+                <select name="emin">
+                    {% include "minute_options.html" %}
+                </select>
+
                 <input type="submit" value="submit">
             </form>
+            <script>
+                $( document.getElementById('sdate') ).datepicker();
+                $( document.getElementById('edate') ).datepicker();
+            </script>
         </article>
     </section>
 

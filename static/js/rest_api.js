@@ -73,6 +73,7 @@ function post_res( status, data ) {
     slideDown( document.getElementById('res') );
 }
 
+
 /* Pulls up before posting the data */
 function repost_res( status, data ) {
     var res, h;
@@ -119,87 +120,99 @@ function fail_res(xhr, textStatus, errorThrown) {
 
 
 function get_biz() {
+    var form = document.forms['get_biz'];
     $.ajax({
         type: 'GET',
-        url: '/api/business',
+        url: '/api/business/',
         data: {
-            name: document.forms['get_biz']['name'].value,
-            lat: toFloat( document.forms['get_biz']['lat'].value ),
-            lon: toFloat( document.forms['get_biz']['lon'].value )
-        },
+            name: form['name'].value,
+            lat: toFloat( form['lat'].value ),
+            lon: toFloat( form['lon'].value )
+        }
     }).done( success_res ).fail( fail_res );
 }
 
 
 function post_biz() {
+    var form = document.forms['post_biz'];
     $.ajax({
         type: 'POST',
-        url: '/api/business',
-        data: {
-            name: document.forms['post_biz']['name'].value,
-            lat: toFloat( document.forms['post_biz']['lat'].value ),
-            lon: toFloat( document.forms['post_biz']['lon'].value )
-        },
+        url: '/api/business/',
+        contentType: 'application/json',
+        processData: false,
+        data: JSON.stringify({
+            name: form['name'].value,
+            lat: toFloat( form['lat'].value ),
+            lon: toFloat( form['lon'].value )
+        })
     }).done( success_res ).fail( fail_res );
 }
 
 
 function get_bizid() {
+    var form = document.forms['get_bizid'];
     $.ajax({
-        type: 'GET',
-        url: '/api/business/' + document.forms['get_bizid']['id'].value
+        type:     'GET',
+        url:      '/api/business/' + form['id'].value,
+        dataType: 'text'
     }).done( success_res ).fail( fail_res );
 }
 
 
 function put_bizid() {
+    var form = document.forms['put_bizid'];
     $.ajax({
-        type: 'PUT',
-        url: '/api/business/' + document.forms['put_bizid']['id'].value,
-        processData: false,
+        type:        'PUT',
+        url:         '/api/business/' + form['id'].value,
         contentType: 'text/json',
-        data: JSON.stringify({
-            name: document.forms['put_bizid']['name'].value,
-            lat: toFloat( document.forms['put_bizid']['lat'].value ),
-            lon: toFloat( document.forms['put_bizid']['lon'].value )
+        processData: false,
+        data:        JSON.stringify({
+            name: form['name'].value,
+            lat:  toFloat( form['lat'].value ),
+            lon:  toFloat( form['lon'].value )
         })
     }).done( success_res ).fail( fail_res );
 }
 
 
 function delete_bizid() {
+    var form = document.forms['delete_bizid'];
     $.ajax({
         type: 'DELETE',
-        url: '/api/business/' + document.forms['delete_bizid']['id'].value
+        url:  '/api/business/' + form['id'].value
     }).done( success_res ).fail( fail_res );
 }
 
 
 function get_coup() {
+    var form = document.forms['get_coup'];
     $.ajax({
         type: 'GET',
-        url: '/api/coupon',
+        url:  '/api/coupon/',
         data: {
-            user: toInt(document.forms['get_coup']['user'].value),
-            business: toInt(document.forms['get_coup']['business'].value),
-            year: toInt(document.forms['get_coup']['year'].value),
-            month: toInt(document.forms['get_coup']['month'].value),
-            day: toInt(document.forms['get_coup']['day'].value),
-            hour: toInt(document.forms['get_coup']['hour'].value),
-            min: toInt(document.forms['get_coup']['min'].value)
+            user:     toInt( form['user'].value ),
+            business: toInt( form['business'].value ),
+            year:     toInt( form['year'].value ),
+            month:    toInt( form['month'].value ),
+            day:      toInt( form['day'].value ),
+            hour:     toInt( form['hour'].value ),
+            min:      toInt( form['min'].value )
         }
     }).done( success_res ).fail( fail_res );
 }
 
 
 function post_coup() {
+    var form = document.forms['post_coup']
     $.ajax({
-        type: 'POST',
-        url: '/api/coupon',
-        data: {
-            name: document.forms['post_coup']['name'].value,
-            business: toInt(document.forms['post_coup']['business'].value)
-        }
+        type:        'POST',
+        url:         '/api/coupon',
+        contentType: 'application/json',
+        processData: false,
+        data:        JSON.stringify({
+            name:     form['name'].value,
+            business: toInt( form['business'].value )
+        })
     }).done( success_res ).fail( fail_res );
 }
 
@@ -207,29 +220,32 @@ function post_coup() {
 function get_coupid() {
     $.ajax({
         type: 'GET',
-        url: '/api/coupon/' + document.forms['get_coupid']['id'].value
+        url: '/api/coupon/' + document.forms['get_coupid']['id'].value,
+        dataType: 'text'
     }).done( success_res ).fail( fail_res );
 }
 
 
 function put_coupid() {
+    var form = document.forms['put_coupid'];
     $.ajax({
-        type: 'PUT',
-        url: '/api/coupon/' + document.forms['put_coupid']['id'].value,
+        type:        'PUT',
+        url:         '/api/coupon/' + form['id'].value,
         processData: false,
         contentType: 'text/json',
-        data: JSON.stringify({
-            name: document.forms['put_coupid']['name'].value,
-            business: toInt(document.forms['put_coupid']['business'].value)
+        data:        JSON.stringify({
+            name:     form['name'].value,
+            business: toInt( form['business'].value )
         })
     }).done( success_res ).fail( fail_res );
 }
 
 
 function delete_coupid() {
+    var form = document.forms['delete_coupid']
     $.ajax({
         type: 'DELETE',
-        url: '/api/coupon/' + document.forms['delete_coupid']['id'].value
+        url:  '/api/coupon/' + form['id'].value
     }).done( success_res ).fail( fail_res );
 }
 
@@ -237,57 +253,62 @@ function delete_coupid() {
 function get_user() {
     $.ajax({
         type: 'GET',
-        url: '/api/user'
+        url:  '/api/user'
     }).done( success_res ).fail( fail_res );
 }
 
 function post_user() {
+    var form = document.forms['post_user'];
     $.ajax({
         type: 'POST',
-        url: '/api/user',
+        url:  '/api/user',
         data: {
-            name: document.forms['post_user']['name'].value
+            name: form['name'].value
         }
     }).done( success_res ).fail( fail_res );
 }
 
 
 function get_userid() {
+    var form = document.forms['get_userid'];
     $.ajax({
         type: 'GET',
-        url: '/api/user/' + document.forms['get_userid']['id'].value
+        url:  '/api/user/' + form['id'].value
     }).done( success_res ).fail( fail_res );
 }
 
 
 function post_userid() {
+    var form = document.forms['post_userid'];
     $.ajax({
         type: 'POST',
-        url: '/api/user/' + document.forms['post_userid']['id'].value,
+        url:  '/api/user/' + form['id'].value,
         data: {
-            coupon: toInt(document.forms['post_userid']['coupon'].value)
+            coupon: toInt( form['coupon'].value )
         }
     }).done( success_res ).fail( fail_res );
 }
 
 
 function put_userid() {
+    var form = document.forms['put_userid'];
     $.ajax({
-        type: 'PUT',
-        url: '/api/user/' + document.forms['put_userid']['id'].value,
+        type:        'PUT',
+        url:         '/api/user/' + form['id'].value,
         processData: false,
         contentType: 'text/json',
-        data: JSON.stringify({
-            name: document.forms['put_userid']['name'].value
+        data:        JSON.stringify({
+            name: form['name'].value
         })
     }).done( success_res ).fail( fail_res );
 }
 
 
 function delete_userid() {
+    var form = document.forms['delete_userid'];
     $.ajax({
         type: 'DELETE',
-        url: '/api/user/' + document.forms['delete_userid']['id'].value
+        url:  '/api/user/' + form['id'].value
     }).done( success_res ).fail( fail_res );
 }
 

@@ -46,11 +46,12 @@ class BusinessHandler(webapp2.RequestHandler):
             lon - Longitude of the business
         '''
         try:
-            lat = float(urllib.unquote(self.request.get('lat')))
-            lon = float(urllib.unquote(self.request.get('lon')))
-            name = urllib.unquote(self.request.get('name'))
+            data = json.loads(self.request.body)
+            lat = float(data['lat'])
+            lon = float(data['lon'])
+            name = data['name']
         except ValueError:
-            self.abort(500)
+            self.abort(400)
 
         b = Business.new(lat=lat, lon=lon, name=name)
         key = b.put()
@@ -73,7 +74,7 @@ class BusinessIDHandler(webapp2.RequestHandler):
         b = Business.get_by_id(self.get_id())
         if b:
             return b
-        self.abort(404)
+        return Business(id=self.get_id())
 
     def get(self):
         '''
@@ -81,6 +82,7 @@ class BusinessIDHandler(webapp2.RequestHandler):
         '''
         b = self.get_business()
         self.response.status = '200 OK'
+        self.response.content_type = 'application/json'
         self.response.write(b.json())
 
     def put(self):
@@ -88,11 +90,11 @@ class BusinessIDHandler(webapp2.RequestHandler):
         Modifies business entity at the specified URI from JSON data in
         request body
         '''
+        b = self.get_business()
         try:
-            b = self.get_business()
-        except webapp2.HTTPException:
-            b = Business(id=self.get_id())
-        data = json.loads(self.request.body)
+            data = json.loads(self.request.body)
+        except ValueError:
+            self.abort(400)
         for key, value in data.iteritems():
             if value:
                 setattr(b, key, value)
@@ -110,7 +112,7 @@ class BusinessIDHandler(webapp2.RequestHandler):
         if coupons:
             self.response.status = '409 Conflict'
             for c in coupons:
-                self.response.write('/api/business/{}\n'.format(c.id()))
+                self.response.write('/api/coupon/{}\n'.format(c.id()))
             return
         b.key.delete()
         self.response.status = '204 No Content'
