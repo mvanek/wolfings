@@ -45,9 +45,10 @@ class BusinessHandler(webapp2.RequestHandler):
             lat - Lattitude of the business
             lon - Longitude of the business
         '''
+        data = json.loads(self.request.body)
         try:
-            lat = float(urllib.unquote(self.request.get('lat')))
-            lon = float(urllib.unquote(self.request.get('lon')))
+            lat = float(data['lat'])
+            lon = float(data['lon'])
             name = urllib.unquote(self.request.get('name'))
         except ValueError:
             self.abort(500)

@@ -122,12 +122,12 @@ function fail_res(xhr, textStatus, errorThrown) {
 function get_biz() {
     $.ajax({
         type: 'GET',
-        url: '/api/business',
+        url: '/api/business/',
         data: {
             name: document.forms['get_biz']['name'].value,
             lat: toFloat( document.forms['get_biz']['lat'].value ),
             lon: toFloat( document.forms['get_biz']['lon'].value )
-        },
+        }
     }).done( success_res ).fail( fail_res );
 }
 
@@ -135,12 +135,13 @@ function get_biz() {
 function post_biz() {
     $.ajax({
         type: 'POST',
-        url: '/api/business',
-        data: {
+        url: '/api/business/',
+        processData: false,
+        data: JSON.stringify({
             name: document.forms['post_biz']['name'].value,
             lat: toFloat( document.forms['post_biz']['lat'].value ),
             lon: toFloat( document.forms['post_biz']['lon'].value )
-        },
+        })
     }).done( success_res ).fail( fail_res );
 }
 
