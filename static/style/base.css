@@ -3,7 +3,13 @@ body {
 
     font-family: sans-serif;
 
-    background: #e0e0e0
+    background-color: #a0a0a0;
+    background-image:
+    repeating-linear-gradient(120deg, rgba(255,255,255,.1), rgba(255,255,255,.1) 1px, transparent 1px, transparent 60px),
+    repeating-linear-gradient(60deg, rgba(255,255,255,.1), rgba(255,255,255,.1) 1px, transparent 1px, transparent 60px),
+    linear-gradient(60deg, rgba(0,0,0,.1) 25%, transparent 0%, transparent 75%, rgba(0,0,0,.1) 75%, rgba(0,0,0,.1)),
+    linear-gradient(120deg, rgba(0,0,0,.1) 25%, transparent 25%, transparent 75%, rgba(0,0,0,.1) 75%, rgba(0,0,0,.1));
+    background-size: 70px 120px;
 }
 
 
@@ -14,7 +20,7 @@ body {
 
     max-width: 900px;
 
-    background: white;
+    background: rgba(255, 255, 255, 0.80);
 }
 
 
@@ -41,6 +47,8 @@ body {
     font-weight: bold;
 
     display: inline-block;
+
+    cursor: default;
 }
 
 #topbar a,
@@ -82,7 +90,11 @@ h2 {
 }
 
 
-/* Header-separaors */
+/* Sections and articles */
+section + section {
+    margin-top: 1em;
+}
+
 article {
     position: relative;
 }
@@ -92,5 +104,15 @@ article > header {
 }
 
 article + article {
-    margin-top: 10px;
+    margin-top: 0.75em;
+}
+
+
+.unselectable {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
