@@ -33,11 +33,11 @@ class Business(ndb.Model):
 
     def dict(self):
         data = self.to_dict()
-        data['id'] = self.key.id()
         try:
             data['mark'] = images.get_serving_url(self.mark, 200)
         except images.BlobKeyRequiredError:
             data['mark'] = None
+        data['id'] = self.key.id()
         del data['geoboxes']
         return data
 

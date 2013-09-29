@@ -22,14 +22,7 @@
         <section id="coupons">
             <header>Offers</header>
         {% for c in coupons %}
-            <article class="coupon" id="c{{c.id}}">
-                <header>{{c.name}}</header>
-                <p>Available in {{c.start.days}} days, {{c.start.hours}} hours, {{c.start.minutes}} minutes, and {{c.start.seconds}} seconds</p>
-                <p>for {{c.end.days}} days, {{c.end.hours}} hours, {{c.end.minutes}} minutes, and {{c.end.seconds}} seconds</p>
-                <div class="right">
-                    <button>CLAIM</button>
-                </div>
-            </article>
+        {% include "coupon_snip.html" %}
         {% endfor %}
         </section>
     {% endif %}

@@ -2,6 +2,8 @@ import webapp2
 from handlers import (SlashHandler,
                       MainHandler,
                       AdminHandler,
+                      CouponHandler,
+                      CouponIDHandler,
                       BusinessHandler,
                       BusinessIDHandler,
                       BusinessIDAdminHandler,
@@ -25,6 +27,8 @@ def main():
         ('/',                           MainHandler),
         ('/admin/',                     AdminHandler),
 
+        ('/coupon/',                    CouponHandler),
+        ('/coupon/[0-9]+/',             CouponIDHandler),
         ('/business/',                  BusinessHandler),
         ('/business/[0-9]+/',           BusinessIDHandler),
         ('/business/[0-9]+/admin/',     BusinessIDAdminHandler),
