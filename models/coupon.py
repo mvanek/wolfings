@@ -78,12 +78,13 @@ class Coupon(ndb.Model):
         data = self.to_dict()
         data['id'] = self.key.id()
         data['business'] = data['business'].id()
-        data['start'] = data['start'].strftime('%Y-%m-%dT%H:%M:%S.000Z')
-        data['end'] = data['end'].strftime('%Y-%m-%dT%H:%M:%S.000Z')
         return data
 
     def json(self):
-        return json.dumps(self.dict())
+        data = self.dict()
+        data['start'] = data['start'].strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        data['end'] = data['end'].strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        return json.dumps(data)
 
     def delete(self):
         users = User.query(User.held_coupons == self.key)

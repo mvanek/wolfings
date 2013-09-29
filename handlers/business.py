@@ -5,6 +5,7 @@ from google.appengine.api import images
 import urllib
 import jinja2
 import os
+import datetime
 from models import Business, Coupon
 
 
@@ -68,7 +69,24 @@ class BusinessIDHandler(webapp2.RequestHandler):
         Returns business entity
         '''
         b = self.get_business()
-        coupons = [c.dict() for c in Coupon.get_by_business(b.key.id())]
+        coupons = []
+        for c in Coupon.get_by_business(b.key.id()):
+            c = c.dict()
+            c['end'] = c['end'] - c['start']
+            c['end'] = {
+                'days': c['end'].days,
+                'hours': c['end'].seconds/3600,
+                'minutes': (c['end'].seconds - 3600*(c['end'].seconds/3600))/60,
+                'seconds': c['end'].seconds - 60*(c['end'].seconds/60)
+            }
+            c['start'] = c['start'] - datetime.datetime.now()
+            c['start'] = {
+                'days': c['start'].days,
+                'hours': c['start'].seconds/3600,
+                'minutes': (c['start'].seconds - 3600*(c['start'].seconds/3600))/60,
+                'seconds': c['start'].seconds - 60*(c['start'].seconds/60)
+            }
+            coupons.append(c)
         try:
             mark_url = images.get_serving_url(b.mark, size=200)
         except images.BlobKeyRequiredError:
