@@ -1,0 +1,50 @@
+article.coupon {
+    border: solid;
+    border-width: 1px;
+    border-color: #180878;
+    padding: 0.5em;
+    color:black;
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: 3px 3px 5px #bbb;
+}
+
+article.coupon a {
+    color: black;
+    text-decoration: none;
+}
+article.coupon p {
+    font-size: 0.8em;
+}
+article.coupon .right {
+    right:0.5em;
+    top:0.5em;
+}
+
+input[type=submit],
+button {
+    background: #180878;
+
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0.25em 1em;
+
+    text-align: center;
+    font-size: 0.75em;
+    color: #ffffff;
+
+    border:solid;
+    border-left-color:#201088;
+    border-top-color:#201088;
+    border-right-color:#180868;
+    border-bottom-color:#180868;
+    border-width:2px;
+}
+input[type=submit]:hover,
+button:hover {
+    background: #1808a8;
+}
+input[type=submit]:active,
+button:active {
+    background: #180868;
+}

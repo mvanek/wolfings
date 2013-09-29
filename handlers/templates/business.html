@@ -6,6 +6,7 @@
 
 {% block head %}{{ super() }}
         <link rel="stylesheet" type="text/css" href="/static/style/business.css">
+        <link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
 {% endblock head %}
 
 
@@ -20,10 +21,9 @@
         </section>
     {% if coupons %}
         <section id="coupons">
-            <header>Offers</header>
-        {% for c in coupons %}
-        {% include "coupon_snip.html" %}
-        {% endfor %}
+            {% for c in coupons %}
+            {% include "coupon_snip.html" %}
+            {% endfor %}
         </section>
     {% endif %}
 {% endblock body %}

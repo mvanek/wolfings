@@ -41,7 +41,7 @@ body {
     padding: 0.5em 1em;
     margin-right: -1em;
 
-    line-height: 1.25em;
+    line-height: 1.25;
 
     letter-spacing: 1em;
 
@@ -50,13 +50,16 @@ body {
     cursor: default;
 }
 
+/* Duplicate padding on both anchor and container
+   2*padding = 2.25em - fontsize - borderwidth */
 #topbar a,
 #topbar a:hover,
 #topbar a:active,
 #topbar a:visited {
-    padding: 0.388em 1em;
+    padding: 0.625em 1em;
     text-decoration: none;
     color: #ffffff;
+    font-size:0.8em;
 }
 #topbar a:hover {
     border-top: solid;
@@ -64,15 +67,16 @@ body {
     border-color: #ffffff;
 }
 
+#topbar .right {
+    padding: 0.625em 0;
+}
+
+
+/* Right-align */
 .right {
     position: absolute;
     right: 0;
     top: 0;
-}
-#topbar .right {
-    padding: 0.5em 0;
-
-    line-height: 1.25em;
 }
 
 
