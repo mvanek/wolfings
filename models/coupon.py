@@ -1,5 +1,6 @@
 from google.appengine.ext import ndb
 import json
+import datetime
 from business import Business
 from user import User
 
@@ -75,10 +76,20 @@ class Coupon(ndb.Model):
         return cls.get_all(time=time, keys_only=keys_only)
 
     def dict(self):
-        data = self.to_dict()
-        data['id'] = self.key.id()
-        data['business'] = data['business'].id()
-        return data
+        def useful_timediff(t):
+            r = {}
+            r['days'] = t.days
+            r['hours'] = t.seconds/3600
+            r['minutes'] = (t.seconds - 3600*r['hours'])/60
+            r['seconds'] = t.seconds - 3600*r['hours'] - 60*r['minutes']
+            return r
+
+        c = self.to_dict()
+        c['id'] = self.key.id()
+        c['business'] = c['business'].id()
+        c['to_end'] = useful_timediff(c['end'] - c['start'])
+        c['to_start'] = useful_timediff(c['start'] - datetime.datetime.now())
+        return c
 
     def json(self):
         data = self.dict()

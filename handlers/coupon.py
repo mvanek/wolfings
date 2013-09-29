@@ -3,7 +3,6 @@ from google.appengine.api import images
 import urllib
 import jinja2
 import os
-import datetime
 import logging
 from models import Business, Coupon
 
@@ -21,7 +20,8 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 def collection_callback(business):
     coupons = []
     for c in Coupon.get_by_business(business.key.id()):
-        c.business_name = business.name
+        c = c.dict()
+        c['business_name'] = business.name
         coupons.append(c)
     return coupons
 
@@ -69,45 +69,26 @@ class CouponIDHandler(webapp2.RequestHandler):
         '''
         Returns business entity, and aborts with code 404 if there's no entity
         '''
-        b = Coupon.get_by_id(self.get_id())
-        if b:
-            return b
+        c = Coupon.get_by_id(self.get_id())
+        if c:
+            return c
         self.abort(404)
 
     def get(self):
         '''
         Returns business entity
         '''
-        b = self.get_coupon()
-        coupons = []
-        for c in Coupon.get_by_business(b.key.id()):
-            c = c.dict()
-            c['end'] = c['end'] - c['start']
-            c['end'] = {
-                'days': c['end'].days,
-                'hours': c['end'].seconds/3600,
-                'minutes': ((c['end'].seconds -
-                            3600*(c['end'].seconds/3600))/60),
-                'seconds': c['end'].seconds - 60*(c['end'].seconds/60)
-            }
-            c['start'] = c['start'] - datetime.datetime.now()
-            c['start'] = {
-                'days': c['start'].days,
-                'hours': c['start'].seconds/3600,
-                'minutes': ((c['start'].seconds -
-                            3600*(c['start'].seconds/3600))/60),
-                'seconds': c['start'].seconds - 60*(c['start'].seconds/60)
-            }
-            coupons.append(c)
+        c = self.get_coupon()
+        b = c.business.get()
         try:
             mark_url = images.get_serving_url(b.mark, size=200)
         except images.BlobKeyRequiredError:
             mark_url = None
-        template = JINJA_ENVIRONMENT.get_template('business.html')
+        template = JINJA_ENVIRONMENT.get_template('coupon.html')
         self.response.status = '200 OK'
-        self.response.write(template.render(name=b.name,
-                                            mark_url=mark_url,
-                                            coupons=coupons))
+        self.response.write(template.render(name=c.name,
+                                            bname=b.name,
+                                            mark_url=mark_url))
 
 
 class CouponIDAdminHandler(webapp2.RequestHandler):
