@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+
+{% block title %}Coupons{% endblock title %}
+
+
+{% block head %}{{ super() }}
+    <link rel="stylesheet" type="text/css" href="/static/style/coupon.css">
+{% endblock head %}
+
+
+{% block body %}
+    <section id="coupons">
+        <header>Coupons</header>
+
+        {% for c in coupons %}
+        {% include "coupon_snip.html" %}
+        {% endfor %}
+
+    </section>
+{% endblock body %}

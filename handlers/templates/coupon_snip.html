@@ -1,0 +1,15 @@
+<article class="coupon" id="c{{c.id}}">
+    <header>
+        <a href="/coupon/{{c.id}}/">
+            {% if c.business_name %}
+                {{c.business_name}} -
+            {% endif %}
+            {{c.name}}
+        </a>
+    </header>
+    <p>Available in {{c.start.days}} days, {{c.start.hours}} hours, {{c.start.minutes}} minutes, and {{c.start.seconds}} seconds</p>
+    <p>for {{c.end.days}} days, {{c.end.hours}} hours, {{c.end.minutes}} minutes, and {{c.end.seconds}} seconds</p>
+    <div class="right">
+        <button>CLAIM</button>
+    </div>
+</article>

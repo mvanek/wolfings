@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+
+{% block title %}{{cname}} | {{bname}}{% endblock title %}
+
+
+{% block head %}{{ super() }}
+        <link rel="stylesheet" type="text/css" href="/static/style/coupon.css">
+{% endblock head %}
+
+
+{% block body %}
+        <section>
+            <header>
+    {% if mark_url %}
+                <img class="mark" alt="{{bname}}" src="{{mark_url}}">
+    {% endif %}
+                {{name}}
+            </header>
+        </section>
+        <section id="coupon">
+            <header>Offers</header>
+            <article class="coupon" id="c{{cid}}">
+                <header>{{cname}}</header>
+                <p>From {{start}} to {{end}}</p>
+                <div class="right">
+                    <button>CLAIM</button>
+                </div>
+            </article>
+        </section>
+{% endblock body %}
