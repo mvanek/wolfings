@@ -21,7 +21,7 @@
 
         coupon = e.target.parentNode.parentNode;
         coupon_id = coupon.id.slice(1);
-        user_id = '4504699138998272';
+        user_id = '5050056906375168';
         claim_coupon(user_id, coupon_id);
     }
 

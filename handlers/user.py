@@ -2,7 +2,7 @@ import webapp2
 import urllib
 import jinja2
 import os
-from models import User, Coupon
+from models import User
 
 
 __all__ = ['UserHandler', 'UserIDHandler',
@@ -56,7 +56,13 @@ class UserIDHandler(webapp2.RequestHandler):
         Returns business entity
         '''
         u = self.get_user()
-        coupons = [c.dict() for c in Coupon.get_by_user(u.key.id())]
+        coupons = []
+        for key in u.held_coupons:
+            c = key.get()
+            b = c.business.get()
+            c = c.dict()
+            c['business_name'] = b.name
+            coupons.append(c)
         template = JINJA_ENVIRONMENT.get_template('user.html')
         self.response.status = '200 OK'
         self.response.write(template.render(name=u.name,
