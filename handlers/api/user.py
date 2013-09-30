@@ -67,7 +67,7 @@ class UserIDHandler(webapp2.RequestHandler):
         '''
         user = User.get_by_id(self.get_id())
         self.response.status = '200 OK'
-        self.response.write(user.to_json())
+        self.response.write(user.json())
 
     def put(self):
         '''
