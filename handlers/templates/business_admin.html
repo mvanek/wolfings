@@ -1,5 +1,28 @@
 {% extends "base.html" %}
 
+{% macro input_datetime(name, label=None) %}
+    {% if label %}
+        <label for="{{ name }}_date">{{ label }}</label>
+    {% endif %}
+
+    <input name="{{ name }}_date" id="{{ name }}_date"></input>
+    <script>
+        $( document.getElementById('{{ name }}_date') ).datepicker();
+    </script>
+
+    <select name="{{ name }}_hour">
+        {% for i in range(24) %}
+            <option value="{{ i }}">{{ '{:02}'.format(i) }}</option>
+        {% endfor %}
+    </select>
+    :
+    <select name="{{ name }}_min">
+        {% for i in range(60) %}
+            <option value="{{ i }}">{{ '{:02}'.format(i) }}</option>
+        {% endfor %}
+    </select>
+{% endmacro %}
+
 
 {% block title %}{{name}}{% endblock title %}
 
@@ -40,38 +63,11 @@
             <header>New Coupon</header>
             <form name="newcoup" action="javascript:post_coupon()">
                 <label for="name">Name: </label>
-                <input type="text" name="name" value="">
-
-                <br>
-
-                <label for="sdate">Start time: </label>
-                <input name="sdate" id="sdate"></input>
-                <select name="shour">
-                    {% include "hour_options.html" %}
-                </select>
-                :
-                <select name="smin">
-                    {% include "minute_options.html" %}
-                </select>
-
-                <br>
-
-                <label for="edate">End time: </label>
-                <input name="edate" id="edate"></input>
-                <select name="ehour">
-                    {% include "hour_options.html" %}
-                </select>
-                :
-                <select name="emin">
-                    {% include "minute_options.html" %}
-                </select>
-
+                <input type="text" name="name" value=""> <br>
+                {{ input_datetime('start', 'Start time:') }} <br>
+                {{ input_datetime('end', 'End time:') }}
                 <input type="submit" value="submit">
             </form>
-            <script>
-                $( document.getElementById('sdate') ).datepicker();
-                $( document.getElementById('edate') ).datepicker();
-            </script>
         </article>
     </section>
 
