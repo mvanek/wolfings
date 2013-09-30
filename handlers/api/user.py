@@ -2,7 +2,8 @@ import webapp2
 import urllib
 import json
 
-from models import User
+from google.appengine.ext import ndb
+from models import User, Coupon
 
 
 __all__ = ['UserHandler', 'UserIDHandler']
@@ -55,12 +56,17 @@ class UserIDHandler(webapp2.RequestHandler):
         Creates new user at the requested URI
         '''
         data = json.loads(self.request.body)
+        try:
+            data['held_coupons'] = [ndb.Key('Coupon', i) for i in
+                                    data['held_coupons']]
+        except KeyError:
+            pass
         user = User.get_by_id(self.get_id())
         for key, value in data.iteritems():
             setattr(user, key, value)
         key = user.put()
         self.response.status = '200 OK'
-        self.response.write('/api/user/' + key.id())
+        self.response.write('/api/user/' + str(key.id()))
 
     def delete(self):
         '''
@@ -70,3 +76,31 @@ class UserIDHandler(webapp2.RequestHandler):
         user = User.get_by_id(self.get_id())
         user.key.delete()
         self.response.status = '204 No Content'
+
+
+class UserIDCouponHandler(webapp2.RequestHandler):
+    '''
+    HTTP Request Handler: /api/user/[id]/coupons/
+    '''
+    def get_uid(self):
+        return int(urllib.unquote(self.request.path.split('/')[3]))
+
+    def get_cid(self):
+        return int(urllib.unquote(self.request.get('coupon')))
+
+    def post(self):
+        '''
+        HTTP GET Method Handler
+        Returns JSON representation of coupon
+        '''
+        coupon = Coupon.get_by_id(self.get_cid())
+        if not coupon:
+            self.abort(400)
+        user = User.get_by_id(self.get_uid())
+        if not user:
+            self.abort(400)
+        if coupon.key not in user.held_coupons:
+            user.held_coupons.append(coupon.key)
+            user.put()
+        self.response.status = '200 OK'
+        self.response.write('/api/user/' + str(user.key.id()))

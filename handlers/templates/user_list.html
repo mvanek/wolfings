@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+
+{% block title %}{{name}}{% endblock title %}
+
+
+{% block head %}{{ super() }}
+        <link rel="stylesheet" type="text/css" href="/static/style/business.css">
+{% endblock head %}
+
+
+{% block body %}
+            <section id="users">
+                <header>Users</header>
+{% for u in users %}
+                <p id="u{{u.id}}">
+                    <a href="/user/{{u.id}}/">{{u.name}}</a>
+                </p>
+{% endfor %}
+            </section>
+{% endblock body %}

@@ -8,6 +8,9 @@ from handlers import (SlashHandler,
                       BusinessIDHandler,
                       BusinessIDAdminHandler,
                       BusinessIDUploadHandler,
+                      UserHandler,
+                      UserIDHandler,
+                      UserIDAdminHandler,
                       api)
 from populate import InitHandler, ReInitHandler
 
@@ -16,6 +19,7 @@ def main():
     return webapp2.WSGIApplication([
         ('/api/user/',                  api.UserHandler),
         ('/api/user/[0-9]+',            api.UserIDHandler),
+        ('/api/user/[0-9]+/coupons/',   api.UserIDCouponHandler),
         ('/api/coupon/',                api.CouponHandler),
         ('/api/coupon/[0-9]+',          api.CouponIDHandler),
         ('/api/business/',              api.BusinessHandler),
@@ -33,6 +37,9 @@ def main():
         ('/business/[0-9]+/',           BusinessIDHandler),
         ('/business/[0-9]+/admin/',     BusinessIDAdminHandler),
         ('/business/[0-9]+/upload/',    BusinessIDUploadHandler),
+        ('/user/',                      UserHandler),
+        ('/user/[0-9]+/',               UserIDHandler),
+        ('/user/[0-9]+/admin/',         UserIDAdminHandler)
     ], debug=True)
 
 

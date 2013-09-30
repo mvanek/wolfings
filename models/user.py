@@ -11,7 +11,14 @@ class User(ndb.Model):
         query = cls.query()
         return [user for user in query.iter(keys_only=keys_only)]
 
-    def to_json(self):
+    def dict(self):
         data = self.to_dict()
-        data['held_coupons'] = [key.id() for key in data['held_coupons']]
-        return json.dumps(data)
+        data['id'] = self.key.id()
+        try:
+            data['held_coupons'] = [key.id() for key in self.held_coupons]
+        except ndb.UnprojectedPropertyError:
+            pass
+        return data
+
+    def json(self):
+        return json.dumps(self.dict())

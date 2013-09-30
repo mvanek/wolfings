@@ -7,6 +7,9 @@ from business import (BusinessHandler,
                       BusinessIDHandler,
                       BusinessIDAdminHandler,
                       BusinessIDUploadHandler)
+from user import (UserHandler,
+                  UserIDHandler,
+                  UserIDAdminHandler)
 import api
 
 __all__ = [
@@ -15,5 +18,7 @@ __all__ = [
     CouponHandler, CouponIDHandler,
     BusinessHandler, BusinessIDHandler,
     BusinessIDAdminHandler, BusinessIDUploadHandler,
+    UserHandler, UserIDHandler,
+    UserIDAdminHandler,
     api
 ]
