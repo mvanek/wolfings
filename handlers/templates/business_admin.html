@@ -69,6 +69,23 @@
                 <input type="submit" value="submit">
             </form>
         </article>
+        <article>
+            <header>User Lookup</header>
+            <form name="user" action="javascript:lookup_user()">
+                <label for="name">Name:</label>
+                <input name="name" type="text" value=""> <br>
+                <label for="address">Address:</label>
+                <input name="address" type="text" value=""> <br>
+                <label for="city">City:</label>
+                <input name="city" type="text" value=""> <br>
+                <label for="zip">Zip Code:</label>
+                <input name="zip" type="text" value=""> <br>
+                <label for="phone">Phone:</label>
+                <input name="phone" type="text" value=""> <br>
+                <input type="submit" value="submit">
+            </form>
+        </article>
+        <article id="user_list"> </article>
     </section>
 
 {% endblock body %}

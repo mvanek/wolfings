@@ -45,3 +45,45 @@ function post_coupon() {
         window.location = res.slice(4);
     })
 }
+
+function lookup_user() {
+    var form;
+
+    form = document.forms['user'];
+    jQuery.ajax({
+        type: 'GET',
+        url: '/api/user/',
+        data: {
+            name: form['name'].value,
+            address: form['address'].value,
+            city: form['city'].value,
+            zip: form['zip'].value,
+            phone: form['phone'].value
+        }
+    }).done(function( res ) {
+        var user_ids,
+            i;
+
+        user_ids = res.split('\n');
+        for ( i = 0; i < user_ids.length; i++ ) {
+            if ( !user_ids[i] ) {
+                continue;
+            }
+
+            jQuery.ajax({
+                type: 'GET',
+                url: '/api/user/' + user_ids[i]
+            }).done(function( res ) {
+                var data,
+                    dest,
+                    e;
+                data = JSON.parse( res );
+                dest = document.getElementById('user_list');
+                e = document.createElement('div');
+                e.innerHTML = res;
+                e.className = 'pre';
+                dest.appendChild(e);
+            });
+        }
+    })
+}
