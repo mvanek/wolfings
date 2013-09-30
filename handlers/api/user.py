@@ -12,21 +12,39 @@ __all__ = ['UserHandler', 'UserIDHandler',
 
 class UserHandler(webapp2.RequestHandler):
     '''
-    HTTP Request Handler: /api/coupon
+    HTTP Request Handler: /api/user
     '''
+    def filter_by(self, query, key, value, type=str):
+        try:
+            value = type(urllib.unquote(self.request.get(value)))
+        except ValueError:
+            return query
+        if not value:
+            return query
+        return query.filter(key == value)
+
     def get(self):
         '''
         HTTP GET Method Handler
         Returns a list of user URI's
         '''
+        q = User.query()
+        q = self.filter_by(q, User.name, 'name')
+        q = self.filter_by(q, User.address.number, 'number', int)
+        q = self.filter_by(q, User.address.street, 'street')
+        q = self.filter_by(q, User.address.city, 'city')
+        q = self.filter_by(q, User.address.zip, 'zip', int)
+        q = self.filter_by(q, User.address.country, 'country')
+        q = self.filter_by(q, User.phone, 'phone', int)
+
         self.response.status = '200 OK'
-        for key in User.list_users(keys_only=True):
+        for key in q.iter(keys_only=True):
             self.response.write(str(key.id()) + '\n')
 
     def post(self):
         '''
         HTTP POST Method Handler
-        Creates new user
+        Creates new user from JSON representation
         '''
         name = urllib.unquote(self.request.get('name'))
         user = User(name=name)
@@ -37,7 +55,7 @@ class UserHandler(webapp2.RequestHandler):
 
 class UserIDHandler(webapp2.RequestHandler):
     '''
-    HTTP Request Handler: /api/coupon/[id]
+    HTTP Request Handler: /api/user/[id]
     '''
     def get_id(self):
         return int(urllib.unquote(self.request.path.split('/')[3]))

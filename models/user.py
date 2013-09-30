@@ -2,8 +2,18 @@ from google.appengine.ext import ndb
 import json
 
 
+class Address(ndb.Model):
+    number = ndb.IntegerProperty()
+    street = ndb.StringProperty()
+    city = ndb.StringProperty()
+    zip = ndb.StringProperty()
+    country = ndb.StringProperty()
+
+
 class User(ndb.Model):
     name = ndb.StringProperty('n', required=True)
+    address = ndb.StructuredProperty(Address)
+    phone = ndb.IntegerProperty('p')
     held_coupons = ndb.KeyProperty('c', kind='Coupon', repeated=True)
 
     @classmethod
