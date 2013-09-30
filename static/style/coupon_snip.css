@@ -1,7 +1,6 @@
 article.coupon {
     border: solid;
     border-width: 1px;
-    border-color: #180878;
     padding: 0.5em;
     box-shadow: 3px 3px 5px #bbb;
 }
@@ -19,18 +18,25 @@ article.coupon .right {
 
 
 /* Coupon classes */
+article.coupon.active {
+    background: rgba(255, 255, 255, 0.7);
+}
 article.coupon.active,
 article.coupon.active a {
     color: #000000;
-    background: rgba(255, 255, 255, 0.7);
+    border-color: #180878;
 }
 
+article.coupon.expired,
+article.coupon.inactive {
+    background: rgba(200, 200, 200, 0.7);
+}
 article.coupon.expired,
 article.coupon.inactive,
 article.coupon.expired a,
 article.coupon.inactive a {
     color: #606060;
-    background: rgba(200, 200, 200, 0.7);
+    border-color: #606060;
 }
 
 
