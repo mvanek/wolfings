@@ -3,13 +3,10 @@ article.coupon {
     border-width: 1px;
     border-color: #180878;
     padding: 0.5em;
-    color:black;
-    background: rgba(255, 255, 255, 0.7);
     box-shadow: 3px 3px 5px #bbb;
 }
 
 article.coupon a {
-    color: black;
     text-decoration: none;
 }
 article.coupon p {
@@ -20,7 +17,24 @@ article.coupon .right {
     top:0.5em;
 }
 
-input[type=submit],
+
+/* Coupon classes */
+article.coupon.active,
+article.coupon.active a {
+    color: #000000;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+article.coupon.expired,
+article.coupon.inactive,
+article.coupon.expired a,
+article.coupon.inactive a {
+    color: #606060;
+    background: rgba(200, 200, 200, 0.7);
+}
+
+
+/* Buttons */
 button {
     background: #180878;
 
@@ -40,11 +54,9 @@ button {
     border-bottom-color:#180868;
     border-width:2px;
 }
-input[type=submit]:hover,
 button:hover {
     background: #1808a8;
 }
-input[type=submit]:active,
 button:active {
     background: #180868;
 }
