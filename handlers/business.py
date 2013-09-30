@@ -6,7 +6,7 @@ import urllib
 import jinja2
 import os
 import datetime
-from models import Business, Coupon
+from models import Business, Coupon, User
 
 
 __all__ = ['BusinessHandler', 'BusinessIDHandler',
@@ -45,7 +45,8 @@ class BusinessHandler(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('business_list.html')
         businesses = query.fetch_page(20, projection=[Business.name])[0]
         self.response.status = '200 OK'
-        self.response.write(template.render(businesses=businesses))
+        self.response.write(template.render(businesses=businesses,
+                                            user=User.query(User.name == 'Dick').get()))
 
 
 class BusinessIDHandler(webapp2.RequestHandler):
@@ -69,9 +70,7 @@ class BusinessIDHandler(webapp2.RequestHandler):
         Returns business entity
         '''
         b = self.get_business()
-        coupons = []
-        for c in Coupon.get_by_business(b.key.id()):
-            coupons.append(c.dict())
+        coupons = Coupon.get_by_business(b.key.id())
         try:
             mark_url = images.get_serving_url(b.mark, size=200)
         except images.BlobKeyRequiredError:
@@ -80,7 +79,9 @@ class BusinessIDHandler(webapp2.RequestHandler):
         self.response.status = '200 OK'
         self.response.write(template.render(name=b.name,
                                             mark_url=mark_url,
-                                            coupons=coupons))
+                                            coupons=coupons,
+                                            now=datetime.datetime.now(),
+                                            user=User.query(User.name == 'Dick').get()))
 
 
 class BusinessIDAdminHandler(webapp2.RequestHandler):
@@ -106,7 +107,8 @@ class BusinessIDAdminHandler(webapp2.RequestHandler):
                                                   .format(self.get_id()))
         self.response.status = '200 OK'
         self.response.write(template.render(name=b.name,
-                                            mark_upload=mark_upload))
+                                            mark_upload=mark_upload,
+                                            user=User.query(User.name == 'Dick').get()))
 
 
 class BusinessIDUploadHandler(blobstore_handlers.BlobstoreUploadHandler):

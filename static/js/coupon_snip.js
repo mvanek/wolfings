@@ -25,7 +25,7 @@
         claim_coupon(user_id, coupon_id);
     }
 
-    coupon_buttons = $('.coupon button')
+    coupon_buttons = $('.coupon button.claim')
     coupon_buttons.click(claim_handler);
 
 })();

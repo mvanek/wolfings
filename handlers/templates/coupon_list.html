@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "coupon_snip.html" import coupon_snip %}
 
 
 {% block title %}Coupons{% endblock title %}
@@ -15,7 +16,7 @@
         <header>Coupons</header>
 
         {% for c in coupons %}
-            {% include "coupon_snip.html" %}
+            {{ coupon_snip(c, now, user) }}
         {% endfor %}
 
     </section>

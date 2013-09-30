@@ -1,16 +1,70 @@
-<article class="coupon" id="c{{c.id}}">
-    <header>
-        <a href="/coupon/{{c.id}}/">
-            {% if c.business_name %}
-                {{c.business_name}} -
+{% macro timediff(t1, t2) %}
+    {% set t = t1 - t2 %}
+    {% set days = t.days %}
+    {% set hours = t.seconds//3600 %}
+    {% set minutes = (t.seconds - 3600*hours)//60 %}
+    {% set seconds = t.seconds - 60*minutes - 3600*hours %}
+
+    {% if days %}
+        {{ days }} days
+    {% endif %}
+
+    {% if hours %}
+        {{ hours }} hours
+    {% endif %}
+
+    {% if minutes %}
+        {{ minutes }} minutes
+    {% endif %}
+
+    {% if seconds %}
+        {{ seconds }} seconds
+    {% endif %}
+{% endmacro %}
+
+{% macro coupon_snip(c, now, user=None, editable=False) %}
+    {% set business = c.business.get() %}
+
+    {% if c.start < now and now < c.end %}
+        {% set class='active' %}
+    {% elif now < c.start %}
+        {% set class='inactive' %}
+    {% else %}
+        {% set class='expired' %}
+    {% endif %}
+
+    <article class="{{class}} coupon" id="c{{c.key.id()}}">
+
+        <header>
+            <a href="/coupon/{{c.key.id()}}/">
+                {% if business.name %}
+                    {{ business.name }} -
+                {% endif %}
+                {{ c.name }}
+            </a>
+        </header>
+        <p>{{ c.start.strftime('%c') }} - {{ c.end.strftime('%c') }}</p>
+
+        <div class="right">
+        {% if editable %}
+            <button class="trash">TRASH</button>
+        {% elif user %}
+            {% if c.key not in user.held_coupons %}
+                <button class="claim">CLAIM</button>
+            {% else %}
+                <button class="inactive">CLAIMED</button>
             {% endif %}
-            {{c.name}}
-        </a>
-    </header>
-    <p>Available in {{c.to_start.days}} days, {{c.to_start.hours}} hours, {{c.to_start.minutes}} minutes, and {{c.to_start.seconds}} seconds</p>
-    <p>for {{c.to_end.days}} days, {{c.to_end.hours}} hours, {{c.to_end.minutes}} minutes, and {{c.to_end.seconds}} seconds</p>
-    <div class="right">
-        <button>CLAIM</button>
-    </div>
-    <script src="/static/js/coupon_snip.js"></script>
-</article>
+        {% endif %}
+        </div>
+        {% if c.start < now and now < c.end %}
+            <p>Available for {{ timediff(c.end, now) }}</p>
+        {% elif now < c.start %}
+            <p>Available in {{ timediff(c.start, now) }} for {{ timediff(c.end, c.start) }}</p>
+        {% else %}
+            <p>Offer has expired</p>
+        {% endif %}
+
+        <script src="/static/js/coupon_snip.js"></script>
+
+    </article>
+{% endmacro %}

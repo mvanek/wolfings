@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "coupon_snip.html" import coupon_snip %}
 
 
 {% block title %}{{name}}{% endblock title %}
@@ -22,7 +23,7 @@
     {% if coupons %}
         <section id="coupons">
             {% for c in coupons %}
-            {% include "coupon_snip.html" %}
+                {{ coupon_snip(c, now, user) }}
             {% endfor %}
         </section>
     {% endif %}

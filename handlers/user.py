@@ -2,6 +2,7 @@ import webapp2
 import urllib
 import jinja2
 import os
+import datetime
 from models import User
 
 
@@ -32,7 +33,8 @@ class UserHandler(webapp2.RequestHandler):
         users = [u.dict() for u in
                  query.fetch_page(20, projection=[User.name])[0]]
         self.response.status = '200 OK'
-        self.response.write(template.render(users=users))
+        self.response.write(template.render(users=users,
+                                            user=User.query(User.name == 'Dick').get()))
 
 
 class UserIDHandler(webapp2.RequestHandler):
@@ -56,17 +58,13 @@ class UserIDHandler(webapp2.RequestHandler):
         Returns business entity
         '''
         u = self.get_user()
-        coupons = []
-        for key in u.held_coupons:
-            c = key.get()
-            b = c.business.get()
-            c = c.dict()
-            c['business_name'] = b.name
-            coupons.append(c)
+        coupons = [key.get() for key in u.held_coupons]
         template = JINJA_ENVIRONMENT.get_template('user.html')
         self.response.status = '200 OK'
         self.response.write(template.render(name=u.name,
-                                            coupons=coupons))
+                                            coupons=coupons,
+                                            now=datetime.datetime.now(),
+                                            user=User.query(User.name == 'Dick').get()))
 
 
 class UserIDAdminHandler(webapp2.RequestHandler):
@@ -89,4 +87,5 @@ class UserIDAdminHandler(webapp2.RequestHandler):
         u = self.get_business()
         template = JINJA_ENVIRONMENT.get_template('user_admin.html')
         self.response.status = '200 OK'
-        self.response.write(template.render(name=u.name))
+        self.response.write(template.render(name=u.name,
+                                            user=User.query(User.name == 'Dick').get()))

@@ -83,10 +83,16 @@ class UserIDCouponHandler(webapp2.RequestHandler):
     HTTP Request Handler: /api/user/[id]/coupons/
     '''
     def get_uid(self):
-        return int(urllib.unquote(self.request.path.split('/')[3]))
+        try:
+            return int(urllib.unquote(self.request.path.split('/')[3]))
+        except ValueError:
+            self.abort(404)
 
     def get_cid(self):
-        return int(urllib.unquote(self.request.get('coupon')))
+        try:
+            return int(urllib.unquote(self.request.get('coupon')))
+        except ValueError:
+            self.abort(400)
 
     def post(self):
         '''

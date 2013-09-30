@@ -1,9 +1,14 @@
+{% macro topbar(user=None) %}
 <div id="topbar">
     <header class="unselectable">WOLFINGS</header>
     <div class="right">
-        <a href="/user/5050056906375168/">Your Coupons (3)</a>
         <a href="/coupon/">Coupons</a>
         <a href="/business/">Restaurants</a>
-        <a href="/">Log in</a>
+        {% if user %}
+            <a href="/user/{{ user.key.id() }}/">Your Coupons</a>
+        {% else %}
+            <a href="/">Log in</a>
+        {% endif %}
     </div>
 </div>
+{% endmacro %}

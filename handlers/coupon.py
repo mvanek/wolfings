@@ -3,8 +3,8 @@ from google.appengine.api import images
 import urllib
 import jinja2
 import os
-import logging
-from models import Business, Coupon
+import datetime
+from models import Business, Coupon, User
 
 
 __all__ = ['CouponHandler', 'CouponIDHandler',
@@ -18,12 +18,7 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 
 
 def collection_callback(business):
-    coupons = []
-    for c in Coupon.get_by_business(business.key.id()):
-        c = c.dict()
-        c['business_name'] = business.name
-        coupons.append(c)
-    return coupons
+    return Coupon.get_by_business(business.key.id())
 
 
 class CouponHandler(webapp2.RequestHandler):
@@ -48,14 +43,15 @@ class CouponHandler(webapp2.RequestHandler):
         name = urllib.unquote(self.request.get('name'))
         if name:
             query = query.filter(Business.name == name)
-        coupons = [c
-                   for business in query.map(collection_callback)
+        coupons = [c for business in query.map(collection_callback)
                    for c in business]
+        coupons = sorted(coupons, lambda x, y: cmp(x.end, y.end))
 
-        logging.info(coupons)
         template = JINJA_ENVIRONMENT.get_template('coupon_list.html')
         self.response.status = '200 OK'
-        self.response.write(template.render(coupons=coupons))
+        self.response.write(template.render(coupons=coupons,
+                                            now=datetime.datetime.now(),
+                                            user=User.query(User.name == 'Dick').get()))
 
 
 class CouponIDHandler(webapp2.RequestHandler):
@@ -87,7 +83,8 @@ class CouponIDHandler(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('coupon.html')
         self.response.status = '200 OK'
         self.response.write(template.render(c=c.dict(), b=b.dict(),
-                                            mark_url=mark_url))
+                                            mark_url=mark_url,
+                                            user=User.query(User.name == 'Dick').get()))
 
 
 class CouponIDAdminHandler(webapp2.RequestHandler):
@@ -110,4 +107,5 @@ class CouponIDAdminHandler(webapp2.RequestHandler):
         b = self.get_coupon()
         template = JINJA_ENVIRONMENT.get_template('coupon_admin.html')
         self.response.status = '200 OK'
-        self.response.write(template.render(name=b.name))
+        self.response.write(template.render(name=b.name,
+                                            user=User.query(User.name == 'Dick').get()))

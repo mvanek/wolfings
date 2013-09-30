@@ -48,3 +48,31 @@ input[type=submit]:active,
 button:active {
     background: #180868;
 }
+
+button.trash {
+    background: #781808;
+    border-left-color:#882010;
+    border-top-color:#882010;
+    border-right-color:#681808;
+    border-bottom-color:#681808;
+}
+button.trash:hover {
+    background: #a81808;
+}
+button.trash:active {
+    background: #681808;
+}
+
+button.inactive {
+    background: #787878;
+    border-left-color:#888888;
+    border-top-color:#888888;
+    border-right-color:#686868;
+    border-bottom-color:#686868;
+}
+button.inactive:hover {
+    background: #787878;
+}
+button.inactive:active {
+    background: #787878;
+}
