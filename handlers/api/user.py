@@ -6,7 +6,8 @@ from google.appengine.ext import ndb
 from models import User, Coupon
 
 
-__all__ = ['UserHandler', 'UserIDHandler']
+__all__ = ['UserHandler', 'UserIDHandler',
+           'UserIDCouponHandler', 'UserIDCouponIDHandler']
 
 
 class UserHandler(webapp2.RequestHandler):
@@ -96,8 +97,8 @@ class UserIDCouponHandler(webapp2.RequestHandler):
 
     def post(self):
         '''
-        HTTP GET Method Handler
-        Returns JSON representation of coupon
+        HTTP POST Method Handler
+        Gives user a coupon
         '''
         coupon = Coupon.get_by_id(self.get_cid())
         if not coupon:
@@ -110,3 +111,32 @@ class UserIDCouponHandler(webapp2.RequestHandler):
             user.put()
         self.response.status = '200 OK'
         self.response.write('/api/user/' + str(user.key.id()))
+
+
+class UserIDCouponIDHandler(webapp2.RequestHandler):
+    '''
+    HTTP Request Handler: /api/user/[id]/coupons/
+    '''
+    def get_uid(self):
+        try:
+            return int(urllib.unquote(self.request.path.split('/')[3]))
+        except ValueError:
+            self.abort(404)
+
+    def get_cid(self):
+        try:
+            return int(urllib.unquote(self.request.path.split('/')[5]))
+        except ValueError:
+            self.abort(404)
+
+    def delete(self):
+        '''
+        HTTP DELETE Method Handler
+        Takes coupon away from user
+        '''
+        user = User.get_by_id(self.get_uid())
+        if not user:
+            self.abort(400)
+        user.held_coupons.remove(ndb.Key('Coupon', self.get_cid()))
+        user.put()
+        self.response.status = '204 No Content'
