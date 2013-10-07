@@ -74,16 +74,33 @@ function lookup_user() {
                 type: 'GET',
                 url: '/api/user/' + user_ids[i]
             }).done(function( res ) {
-                var data,
-                    dest,
-                    e;
-                data = JSON.parse( res );
-                dest = document.getElementById('user_list');
-                e = document.createElement('div');
-                e.innerHTML = res;
-                e.className = 'pre';
-                dest.appendChild(e);
+                post_user( JSON.parse( res ) );
             });
         }
     })
+}
+
+function post_user( user ) {
+    var dest,
+        e,
+        get_coupons;
+    get_coupons = document.createElement('button');
+    get_coupons.innerHTML = user.name;
+    get_coupons.addEventListener('click', function() {
+        jQuery.ajax({
+            type: 'GET',
+            url: '/api/user/' + user.id + '/coupons/',
+            data: {
+                business: window.location.pathname.split('/')[2]
+            }
+        }).done(function( res ) {
+            var c = document.createElement('div');
+            c.innerHTML = res;
+            e.appendChild( c );
+        });
+    }, false);
+    e = document.createElement('div');
+    e.appendChild( get_coupons );
+    dest = document.getElementById('user_list');
+    dest.appendChild(e);
 }

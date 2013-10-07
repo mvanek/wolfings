@@ -29,7 +29,7 @@ class UserHandler(webapp2.RequestHandler):
         '''
         query = User.query()
 
-        template = JINJA_ENVIRONMENT.get_template('user_list.html')
+        template = JINJA_ENVIRONMENT.get_template('user_list.jinja')
         users = [u.dict() for u in
                  query.fetch_page(20, projection=[User.name])[0]]
         self.response.status = '200 OK'
@@ -59,7 +59,7 @@ class UserIDHandler(webapp2.RequestHandler):
         '''
         u = self.get_user()
         coupons = [key.get() for key in u.held_coupons]
-        template = JINJA_ENVIRONMENT.get_template('user.html')
+        template = JINJA_ENVIRONMENT.get_template('user.jinja')
         self.response.status = '200 OK'
         self.response.write(template.render(name=u.name,
                                             coupons=coupons,
@@ -85,7 +85,7 @@ class UserIDAdminHandler(webapp2.RequestHandler):
 
     def get(self):
         u = self.get_business()
-        template = JINJA_ENVIRONMENT.get_template('user_admin.html')
+        template = JINJA_ENVIRONMENT.get_template('user_admin.jinja')
         self.response.status = '200 OK'
         self.response.write(template.render(name=u.name,
                                             user=User.query(User.name == 'Dick').get()))

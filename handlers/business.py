@@ -42,7 +42,7 @@ class BusinessHandler(webapp2.RequestHandler):
         if name:
             query = query.filter(Business.name == name)
 
-        template = JINJA_ENVIRONMENT.get_template('business_list.html')
+        template = JINJA_ENVIRONMENT.get_template('business_list.jinja')
         businesses = query.fetch_page(20, projection=[Business.name])[0]
         self.response.status = '200 OK'
         self.response.write(template.render(businesses=businesses,
@@ -75,7 +75,7 @@ class BusinessIDHandler(webapp2.RequestHandler):
             mark_url = images.get_serving_url(b.mark, size=200)
         except images.BlobKeyRequiredError:
             mark_url = None
-        template = JINJA_ENVIRONMENT.get_template('business.html')
+        template = JINJA_ENVIRONMENT.get_template('business.jinja')
         self.response.status = '200 OK'
         self.response.write(template.render(name=b.name,
                                             mark_url=mark_url,
@@ -102,7 +102,7 @@ class BusinessIDAdminHandler(webapp2.RequestHandler):
 
     def get(self):
         b = self.get_business()
-        template = JINJA_ENVIRONMENT.get_template('business_admin.html')
+        template = JINJA_ENVIRONMENT.get_template('business_admin.jinja')
         mark_upload = blobstore.create_upload_url('/business/{}/upload/'
                                                   .format(self.get_id()))
         self.response.status = '200 OK'

@@ -1,8 +1,12 @@
 import webapp2
+from models import User
 
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
+
+        self.response.set_cookie('user_id')
+
         self.redirect('/business/')
 
     def put(self):

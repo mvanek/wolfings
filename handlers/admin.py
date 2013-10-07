@@ -20,6 +20,6 @@ class AdminHandler(webapp2.RequestHandler):
         HTTP GET Method Handler
         Parameters: None
         '''
-        template = JINJA_ENVIRONMENT.get_template('admin.html')
+        template = JINJA_ENVIRONMENT.get_template('admin.jinja')
         self.status = '200 OK'
         self.response.write(template.render())

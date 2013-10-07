@@ -47,7 +47,7 @@ class CouponHandler(webapp2.RequestHandler):
                    for c in business]
         coupons = sorted(coupons, lambda x, y: cmp(x.end, y.end))
 
-        template = JINJA_ENVIRONMENT.get_template('coupon_list.html')
+        template = JINJA_ENVIRONMENT.get_template('coupon_list.jinja')
         self.response.status = '200 OK'
         self.response.write(template.render(coupons=coupons,
                                             now=datetime.datetime.now(),
@@ -80,7 +80,7 @@ class CouponIDHandler(webapp2.RequestHandler):
             mark_url = images.get_serving_url(b.mark, size=200)
         except images.BlobKeyRequiredError:
             mark_url = None
-        template = JINJA_ENVIRONMENT.get_template('coupon.html')
+        template = JINJA_ENVIRONMENT.get_template('coupon.jinja')
         self.response.status = '200 OK'
         self.response.write(template.render(c=c.dict(), b=b.dict(),
                                             mark_url=mark_url,
@@ -105,7 +105,7 @@ class CouponIDAdminHandler(webapp2.RequestHandler):
 
     def get(self):
         b = self.get_coupon()
-        template = JINJA_ENVIRONMENT.get_template('coupon_admin.html')
+        template = JINJA_ENVIRONMENT.get_template('coupon_admin.jinja')
         self.response.status = '200 OK'
         self.response.write(template.render(name=b.name,
                                             user=User.query(User.name == 'Dick').get()))

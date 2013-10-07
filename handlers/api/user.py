@@ -107,11 +107,28 @@ class UserIDCouponHandler(webapp2.RequestHandler):
         except ValueError:
             self.abort(404)
 
+    def get_bid(self):
+        try:
+            return int(urllib.unquote(self.request.get('business')))
+        except ValueError:
+            self.abort(400)
+
     def get_cid(self):
         try:
             return int(urllib.unquote(self.request.get('coupon')))
         except ValueError:
             self.abort(400)
+
+    def get(self):
+        '''
+        HTTP POST Method Handler
+        Searches user's coupons
+        '''
+        self.response.status = '200 OK'
+        for k in Coupon.get_by_user_and_business(self.get_uid(),
+                                                 self.get_bid(),
+                                                 keys_only=True):
+            self.response.write(str(k.id()) + '\n')
 
     def post(self):
         '''
