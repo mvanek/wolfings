@@ -82,8 +82,8 @@ class CouponIDHandler(webapp2.RequestHandler):
             mark_url = None
         template = JINJA_ENVIRONMENT.get_template('coupon.jinja')
         self.response.status = '200 OK'
-        self.response.write(template.render(c=c.dict(), b=b.dict(),
-                                            mark_url=mark_url,
+        self.response.write(template.render(c=c, b=b, mark_url=mark_url,
+                                            now=datetime.datetime.now(),
                                             user=User.query(User.name == 'Dick').get()))
 
 

@@ -1,9 +1,8 @@
 {% extends "base.jinja" %}
+{% from "coupon_snip.jinja" import coupon_snip %}
 
 
-{% block title %}{{c.name}} | {{b.name}}{% endblock title %}
-
-
+{% block title %}{{ c.name }} | {{ b.name }}{% endblock title %}
 {% block head %}{{ super() }}
         <link rel="stylesheet" type="text/css" href="/static/style/coupon.css">
         <link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
@@ -14,18 +13,13 @@
         <section>
             <header>
     {% if mark_url %}
-                <img class="mark" alt="{{b.name}}" src="{{mark_url}}">
+                <img class="mark" alt="{{ b.name }}" src="{{ mark_url }}">
     {% endif %}
-                {{b.name}} - {{c.name}}
+                {{ b.name }} - {{ c.name }}
             </header>
         </section>
         <section id="coupon">
-            <article class="coupon" id="c{{c.id}}">
-                <p>Available in {{c.to_start.days}} days, {{c.to_start.hours}} hours, {{c.to_start.minutes}} minutes, and {{c.to_start.seconds}} seconds</p>
-                <p>for {{c.to_end.days}} days, {{c.to_end.hours}} hours, {{c.to_end.minutes}} minutes, and {{c.to_end.seconds}} seconds</p>
-                <div class="right">
-                    <button>CLAIM</button>
-                </div>
-            </article>
+            {{ coupon_snip(c, now, user) }}
         </section>
+        <script src="/static/js/coupon_snip.js"></script>
 {% endblock body %}
