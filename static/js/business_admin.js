@@ -23,12 +23,12 @@ function post_coupon() {
         endDateString;
 
     form = document.forms['newcoup'];
-    startDateString = form['sdate'].value + ' ' +
-                      form['shour'].value + ':' +
-                      form['smin'].value;
-    endDateString = form['edate'].value + ' ' +
-                    form['ehour'].value + ':' +
-                    form['emin'].value;
+    startDateString = form['start_date'].value + ' ' +
+                      form['start_hour'].value + ':' +
+                      form['start_min'].value;
+    endDateString = form['end_date'].value + ' ' +
+                    form['end_hour'].value + ':' +
+                    form['end_min'].value;
 
     jQuery.ajax({
         type: 'POST',

@@ -49,10 +49,10 @@
         {% if editable %}
             <button class="trash">TRASH</button>
         {% elif user %}
-            {% if c.key not in user.held_coupons %}
-                <button class="claim">CLAIM</button>
-            {% else %}
+            {% if c.key in user.held_coupons %}
                 <button class="inactive">CLAIMED</button>
+            {% elif c.start < now and now < c.end %}
+                <button class="claim">CLAIM</button>
             {% endif %}
         {% endif %}
         </div>
