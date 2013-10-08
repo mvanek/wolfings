@@ -1,14 +1,25 @@
 var WOLFINGS = (function() {
-    var obj = function() {
-        this.namespace = {};
-    }
+    var obj,
+        namespace;
+
+    obj = function() {}
 
     obj.prototype.get = function( key ) {
-        return this.namespace[key];
+        return this.namespace[ key ];
     }
 
     obj.prototype.set = function( key, value ) {
-        return this.namespace[key] = value;
+        return this.namespace[ key ] = value;
+    }
+
+    
+    obj.prototype.import = function( path, callback ) {
+        var script;
+        
+        script = document.createElement('script');
+        script.src = path;
+        document.appendChild( script );
+        callback();
     }
 
 
@@ -25,18 +36,14 @@ var WOLFINGS = (function() {
                     data: {
                         coupon: coupon_id
                     }
-                }).done(function( res ) {
-                    callback();
-                });
+                }).done( callback( res ) );
             }
 
             user.prototype.trash_coupon = function( user_id, coupon_id , callback ) {
                 jQuery.ajax({
                     type: 'DELETE',
                     url: '/api/user/'+user_id+'/coupons/'+coupon_id
-                }).done(function( res ) {
-                    callback();
-                })
+                }).done( callback( res ) );
             }
 
             return new user();

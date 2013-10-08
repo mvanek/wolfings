@@ -47,12 +47,24 @@
 
         <div class="right">
         {% if editable %}
-            <button class="trash">TRASH</button>
+            <button class="trash" id="button_c{{ c.key.id() }}">TRASH</button>
+            <script>
+                WOLFINGS.import('coupon_snip', function() {
+                    var button = document.getElementById('button_c{{ c.key.id() }}');
+                    WOLFINGS.handlers.click_trash_coupon( button );
+                });
+            </script>
         {% elif user %}
             {% if c.key in user.held_coupons %}
                 <button class="inactive">CLAIMED</button>
-            {% elif c.start < now and now < c.end %}
-                <button class="claim">CLAIM</button>
+            {% elif now < c.end %}
+                <button class="claim" id="button_c{{ c.key.id() }}">CLAIM</button>
+                <script>
+                    WOLFINGS.import('coupon_snip', function() {
+                        var button = document.getElementById('button_c{{ c.key.id() }}');
+                        WOLFINGS.handlers.click_claim_coupon( button );
+                    });
+                </script>
             {% endif %}
         {% endif %}
         </div>
