@@ -4,12 +4,20 @@ import geobox
 import json
 
 
+def mark_url(b):
+    try:
+        mark_url = images.get_serving_url(b.mark, size=200)
+    except images.BlobKeyRequiredError:
+        mark_url = None
+
+
 class Business(ndb.Model):
     name = ndb.StringProperty('n', required=True)
     lat = ndb.FloatProperty('a', required=True)
     lon = ndb.FloatProperty('o', required=True)
     geoboxes = ndb.StringProperty('g', repeated=True)
     mark = ndb.BlobKeyProperty('m')
+    mark_url = ndb.ComputedProperty(mark_url, 'u')
 
     @classmethod
     def new(cls, **kwargs):

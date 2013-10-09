@@ -75,6 +75,13 @@ class Coupon(ndb.Model):
                                        keys_only=keys_only)
         return cls.get_all(time=time, keys_only=keys_only)
 
+    def get_holders(self, keys_only=False):
+        '''
+        Returns a list of users that are holding this coupon
+        '''
+        qry = User.query(User.held_coupons == self.key)
+        return [u for u in qry.iter()]
+
     def dict(self):
         def useful_timediff(t):
             r = {}

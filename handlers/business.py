@@ -9,8 +9,11 @@ import datetime
 from models import Business, Coupon, User
 
 
-__all__ = ['BusinessHandler', 'BusinessIDHandler',
-           'BusinessIDAdminHandler', 'BusinessIDUploadHandler']
+__all__ = ['BusinessHandler',
+           'BusinessIDHandler',
+           'BusinessIDAdminHandler',
+           'BusinessIDAdminCouponHandler',
+           'BusinessIDUploadHandler']
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.join(
@@ -108,6 +111,34 @@ class BusinessIDAdminHandler(webapp2.RequestHandler):
         self.response.status = '200 OK'
         self.response.write(template.render(name=b.name,
                                             mark_upload=mark_upload,
+                                            user=User.query(User.name == 'Dick').get()))
+
+
+class BusinessIDAdminCouponHandler(webapp2.RequestHandler):
+    '''
+    HTTP Request Handler, Entity: /business/[id]/admin
+    '''
+    def get_id(self):
+        return int(urllib.unquote(self.request.path.split('/')[2]))
+
+    def get_business(self):
+        '''
+        Returns business entity, and aborts with code 404 if there's no entity
+        '''
+        b = Business.get_by_id(self.get_id())
+        if b:
+            return b
+        self.abort(404)
+
+    def get(self):
+        b = self.get_business()
+        coupons = Coupon.get_by_business(self.get_id())
+        template = JINJA_ENVIRONMENT.get_template('business_admin_coupon.jinja')
+        self.response.status = '200 OK'
+        self.response.write(template.render(name=b.name,
+                                            mark_url=b.mark_url,
+                                            coupons=coupons,
+                                            now=datetime.datetime.now(),
                                             user=User.query(User.name == 'Dick').get()))
 
 

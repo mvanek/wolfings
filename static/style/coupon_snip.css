@@ -9,12 +9,22 @@ article.coupon {
 article.coupon a {
     text-decoration: none;
 }
-article.coupon p {
-    font-size: 0.8em;
-}
 article.coupon .right {
     right:0.5em;
     top:0.5em;
+}
+
+article.coupon div.time {
+    font-size: 0.8em;
+}
+
+article.coupon ul.holders {
+    margin-top: 0.5em;
+}
+article.coupon ul.holders li {
+    font-size: 0.8em;
+    list-style-type: disc;
+    margin-left: 1.25em;
 }
 
 

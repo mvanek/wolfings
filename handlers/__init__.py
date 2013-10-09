@@ -6,6 +6,7 @@ from coupon import (CouponHandler,
 from business import (BusinessHandler,
                       BusinessIDHandler,
                       BusinessIDAdminHandler,
+                      BusinessIDAdminCouponHandler,
                       BusinessIDUploadHandler)
 from user import (UserHandler,
                   UserIDHandler,
@@ -14,11 +15,21 @@ import api
 
 __all__ = [
     SlashHandler,
-    MainHandler, AdminHandler,
-    CouponHandler, CouponIDHandler,
-    BusinessHandler, BusinessIDHandler,
-    BusinessIDAdminHandler, BusinessIDUploadHandler,
-    UserHandler, UserIDHandler,
+    MainHandler,
+    AdminHandler,
+
+    CouponHandler,
+    CouponIDHandler,
+
+    BusinessHandler,
+    BusinessIDHandler,
+    BusinessIDAdminHandler,
+    BusinessIDAdminHandler,
+    BusinessIDUploadHandler,
+
+    UserHandler,
+    UserIDHandler,
     UserIDAdminHandler,
+
     api
 ]
