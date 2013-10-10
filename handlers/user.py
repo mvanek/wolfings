@@ -6,8 +6,10 @@ import datetime
 from models import User
 
 
-__all__ = ['UserHandler', 'UserIDHandler',
+__all__ = ['UserHandler',
+           'UserIDHandler',
            'UserIDAdminHandler']
+
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.join(

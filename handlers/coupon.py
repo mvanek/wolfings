@@ -7,8 +7,10 @@ import datetime
 from models import Business, Coupon, User
 
 
-__all__ = ['CouponHandler', 'CouponIDHandler',
+__all__ = ['CouponHandler',
+           'CouponIDHandler',
            'CouponIDAdminHandler']
+
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.join(

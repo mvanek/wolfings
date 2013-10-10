@@ -1,18 +1,5 @@
 import webapp2
-from handlers import (SlashHandler,
-                      MainHandler,
-                      AdminHandler,
-                      CouponHandler,
-                      CouponIDHandler,
-                      BusinessHandler,
-                      BusinessIDHandler,
-                      BusinessIDAdminHandler,
-                      BusinessIDAdminCouponHandler,
-                      BusinessIDUploadHandler,
-                      UserHandler,
-                      UserIDHandler,
-                      UserIDAdminHandler,
-                      api)
+from handlers import *
 from populate import InitHandler, ReInitHandler
 
 
