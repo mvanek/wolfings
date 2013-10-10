@@ -1,3 +1,6 @@
+@import url("/static/style/buttons.css");
+@import url("/static/style/business.css");
+
 label {
     display: inline-block;
     width: 75px;

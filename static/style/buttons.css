@@ -1,0 +1,31 @@
+/* Blue button */
+input[type=submit].blue,
+button.blue {
+    background: #180878;
+
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0.25em 1em;
+
+    text-align: center;
+    font-size: 0.75em;
+    color: #ffffff;
+
+    border:solid;
+    border-left-color:#201088;
+    border-top-color:#201088;
+    border-right-color:#180868;
+    border-bottom-color:#180868;
+    border-width:2px;
+}
+input[type=submit]:hover.blue,
+button:hover.blue {
+    background: #1808a8;
+}
+input[type=submit]:active.blue,
+button:active.blue {
+    background: #180868;
+}
+
+

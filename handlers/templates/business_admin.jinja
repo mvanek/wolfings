@@ -24,14 +24,13 @@
 {% endmacro %}
 
 
-{% block title %}{{name}}{% endblock title %}
+{% block title %}{{ b.name }}{% endblock title %}
 
 
 {% block head %}
 
     {{ super() }}
     <link href="/static/lib/jquery-ui/css/dot-luv/jquery-ui-1.10.3.custom.css" rel="stylesheet" type="text/css">
-    <link href="/static/style/business.css" rel="stylesheet" type="text/css">
     <link href="/static/style/business_admin.css" rel="stylesheet" type="text/css">
     <script src="/static/lib/jquery-ui/js/jquery-ui-1.10.3.custom.js"></script>
     <script src="/static/js/utils.js"></script>
@@ -48,15 +47,16 @@
             <header>Update Details</header>
             <form name="update" action="javascript:put_business()">
                 <label for="name">Name: </label>
-                <input type="text" name="name" value="{{name}}">
-                <input type="submit" value="submit">
+                <input type="text" name="name" value="{{b.name}}">
+                <input type="submit" class="blue" value="submit">
             </form>
         </article>
         <article>
             <header>Upload Mark</header>
-            <form action="{{mark_upload}}" method="POST" enctype="multipart/form-data">
+            <img src="{{ b.mark_url }}">
+            <form action="{{ mark_upload }}" method="POST" enctype="multipart/form-data">
                 <input type="file" name="mark">
-                <input type="submit" value="submit">
+                <input type="submit" class="blue" value="submit">
             </form>
         </article>
         <article>
@@ -66,7 +66,7 @@
                 <input type="text" name="name" value=""> <br>
                 {{ input_datetime('start', 'Start time:') }} <br>
                 {{ input_datetime('end', 'End time:') }}
-                <input type="submit" value="submit">
+                <input type="submit" class="blue" value="submit">
             </form>
         </article>
         <article>
@@ -82,7 +82,7 @@
                 <input name="zip" type="text" value=""> <br>
                 <label for="phone">Phone:</label>
                 <input name="phone" type="text" value=""> <br>
-                <input type="submit" value="submit">
+                <input type="submit" class="blue" value="submit">
             </form>
         </article>
         <article id="user_list"> </article>

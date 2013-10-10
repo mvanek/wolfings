@@ -97,7 +97,7 @@ class BusinessIDAdminHandler(webapp2.RequestHandler):
 
         template = JINJA_ENVIRONMENT.get_template('business_admin.jinja')
         self.response.status = '200 OK'
-        self.response.write(template.render(name=b.name,
+        self.response.write(template.render(b=b,
                                             mark_upload=mark_upload,
                                             user=User.query(User.name == 'Dick').get()))
 
