@@ -92,7 +92,7 @@ class BusinessIDAdminHandler(webapp2.RequestHandler):
     '''
     def get(self):
         mark_upload = blobstore.create_upload_url('/business/{}/upload/'
-                                                  .format(self.get_id()))
+                                                  .format(get_id(self.request)))
         b = get_business(self.request)
 
         template = JINJA_ENVIRONMENT.get_template('business_admin.jinja')
@@ -108,12 +108,11 @@ class BusinessIDAdminCouponHandler(webapp2.RequestHandler):
     '''
     def get(self):
         b = get_business(self.request)
-        coupons = Coupon.get_by_business(self.get_id())
+        coupons = Coupon.get_by_business(get_id(self.request))
 
         template = JINJA_ENVIRONMENT.get_template('business_admin_coupon.jinja')
         self.response.status = '200 OK'
-        self.response.write(template.render(name=b.name,
-                                            mark_url=b.mark_url,
+        self.response.write(template.render(b=b,
                                             coupons=coupons,
                                             now=datetime.datetime.now(),
                                             user=User.query(User.name == 'Dick').get()))
@@ -129,4 +128,4 @@ class BusinessIDUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         b.mark = blob_info.key()
         b.put()
 
-        self.redirect('/business/{}/admin/'.format(self.get_id()))
+        self.redirect('/business/{}/admin/'.format(get_id(self.request)))

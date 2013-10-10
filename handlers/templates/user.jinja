@@ -22,7 +22,7 @@
     {% if coupons %}
     <section id="coupons">
         {% for c in coupons %}
-            {{ coupon_snip(c, now, user, True) }}
+            {{ coupon_snip(c, now, user=user, img=True, editable=True) }}
         {% endfor %}
     </section>
     {% endif %}

@@ -6,19 +6,19 @@
 
 
 {% block head %}{{ super() }}
-    <link rel="stylesheet" type="text/css" href="/static/style/coupon.css">
-    <link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
+<link rel="stylesheet" type="text/css" href="/static/style/coupon.css">
+<link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
 {% endblock head %}
 
 
 {% block body %}
-    <section id="coupons">
-        <header>Coupons</header>
+<section id="coupons">
+    <header>Coupons</header>
 
-        {% for c in coupons %}
-            {{ coupon_snip(c, now, user) }}
-        {% endfor %}
+    {% for c in coupons %}
+    {{ coupon_snip(c, now, img=True, user=user) }}
+    {% endfor %}
 
-    </section>
-    <script src="/static/js/coupon_snip.js"></script>
+</section>
+<script src="/static/js/coupon_snip.js"></script>
 {% endblock body %}

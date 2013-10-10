@@ -7,8 +7,7 @@ from models import User
 
 
 __all__ = ['UserHandler',
-           'UserIDHandler',
-           'UserIDAdminHandler']
+           'UserIDHandler']
 
 
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -18,16 +17,30 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     trim_blocks=True)
 
 
+def get_id(request):
+    return int(urllib.unquote(request.path.split('/')[2]))
+
+
+def get_user(request):
+    '''
+    Returns user entity, and aborts with code 404 if there's no entity
+    '''
+    u = User.get_by_id(get_id(request))
+    if u:
+        return u
+    webapp2.abort(404)
+
+
 class UserHandler(webapp2.RequestHandler):
     '''
-    HTTP Request Handler, Collection: /business
+    HTTP Request Handler, Collection: /user/
     '''
     def get(self):
         '''
-        Lists businesses, filtered by optional parameters
+        Lists useres, filtered by optional parameters
         Parameters:
-            name - Name of the business
-            lat,lon - Location of the business
+            name - Name of the user
+            lat,lon - Location of the user
         '''
         query = User.query()
 
@@ -41,53 +54,17 @@ class UserHandler(webapp2.RequestHandler):
 
 class UserIDHandler(webapp2.RequestHandler):
     '''
-    HTTP Request Handler, Entity: /business/[id]
+    HTTP Request Handler, Entity: /user/[id]
     '''
-    def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[2]))
-
-    def get_user(self):
-        '''
-        Returns business entity, and aborts with code 404 if there's no entity
-        '''
-        u = User.get_by_id(self.get_id())
-        if u:
-            return u
-        self.abort(404)
-
     def get(self):
         '''
-        Returns business entity
+        Returns user entity
         '''
-        u = self.get_user()
+        u = get_user(self.request)
         coupons = [key.get() for key in u.held_coupons]
         template = JINJA_ENVIRONMENT.get_template('user.jinja')
         self.response.status = '200 OK'
         self.response.write(template.render(name=u.name,
                                             coupons=coupons,
                                             now=datetime.datetime.now(),
-                                            user=User.query(User.name == 'Dick').get()))
-
-
-class UserIDAdminHandler(webapp2.RequestHandler):
-    '''
-    HTTP Request Handler, Entity: /business/[id]/admin
-    '''
-    def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[2]))
-
-    def get_business(self):
-        '''
-        Returns business entity, and aborts with code 404 if there's no entity
-        '''
-        u = User.get_by_id(self.get_id())
-        if u:
-            return u
-        self.abort(404)
-
-    def get(self):
-        u = self.get_business()
-        template = JINJA_ENVIRONMENT.get_template('user_admin.jinja')
-        self.response.status = '200 OK'
-        self.response.write(template.render(name=u.name,
                                             user=User.query(User.name == 'Dick').get()))

@@ -8,8 +8,7 @@ from models import Business, Coupon, User
 
 
 __all__ = ['CouponHandler',
-           'CouponIDHandler',
-           'CouponIDAdminHandler']
+           'CouponIDHandler']
 
 
 JINJA_ENVIRONMENT = jinja2.Environment(

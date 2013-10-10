@@ -28,8 +28,7 @@ def main():
         ('/business/[0-9]+/admin/coupons/', BusinessIDAdminCouponHandler),
         ('/business/[0-9]+/upload/',        BusinessIDUploadHandler),
         ('/user/',                          UserHandler),
-        ('/user/[0-9]+/',                   UserIDHandler),
-        ('/user/[0-9]+/admin/',             UserIDAdminHandler)
+        ('/user/[0-9]+/',                   UserIDHandler)
     ], debug=True)
 
 
