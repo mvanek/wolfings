@@ -36,3 +36,6 @@ nosetests.xml
 
 # Vim files
 *.swp
+
+# OS X system files
+.DS_Store
