@@ -22,8 +22,9 @@
 {% endif %}
 {% endmacro %}
 
+
 {% macro coupon_snip(c, now, user=None, editable=False, show_holders=False, admin=False) %}
-{% set business = c.business.get() %}
+{% set b = c.business.get() %}
 
 {% if c.start < now and now < c.end %}
 {% set class='active' %}
@@ -33,17 +34,12 @@
 {% set class='expired' %}
 {% endif %}
 
-<article class="{{class}} coupon" id="c{{c.key.id()}}">
+<article class="{{ class }} coupon" id="c{{ c.key.id() }}">
 
     <header>
-        <a href="/coupon/{{c.key.id()}}/">
-            {% if business.name %}
-            {{ business.name }} -
-            {% endif %}
-            {{ c.name }}
-        </a>
+        <a href="/business/{{ b.key.id() }}/">{{ b.name }}</a> -
+        <a href="/coupon/{{ c.key.id() }}/">{{ c.name }}</a>
     </header>
-    <div class="time">{{ c.start.strftime('%c') }} - {{ c.end.strftime('%c') }}</div>
 
     <div class="right">
         {% if admin %}
@@ -76,13 +72,17 @@
         {% endif %}
         {% endif %}
     </div>
-    {% if c.start < now and now < c.end %}
-    <div class="time">Available for {{ timediff(c.end, now) }}</div>
-    {% elif now < c.start %}
-    <div class="time">Available in {{ timediff(c.start, now) }} for {{ timediff(c.end, c.start) }}</div>
-    {% else %}
-    <div class="time">Offer has expired</div>
-    {% endif %}
+
+    <div class="time">{{ c.start.strftime('%c') }} - {{ c.end.strftime('%c') }}</div>
+    <div class="time">
+        {% if c.start < now and now < c.end %}
+        Available for {{ timediff(c.end, now) }}
+        {% elif now < c.start %}
+        Available in {{ timediff(c.start, now) }} for {{ timediff(c.end, c.start) }}
+        {% else %}
+        Offer has expired
+        {% endif %}
+    </div>
 
     {% if show_holders %}
     <ul class="holders">
@@ -96,5 +96,6 @@
         {% endfor %}
     </ul>
     {% endif %}
+
     </article>
 {% endmacro %}
