@@ -23,9 +23,8 @@
 {% endmacro %}
 
 
-{% macro coupon_snip(c, now, user=None, img=False, editable=False, show_holders=False, admin=False) %}
+{% macro coupon_snip(c, show_img=False, held=False) %}
 {% set b = c.business.get() %}
-
 {% if c.start < now and now < c.end %}
 {% set class='active' %}
 {% elif now < c.start %}
@@ -36,7 +35,7 @@
 
 <article class="{{ class }} coupon" id="c{{ c.key.id() }}">
 
-    {% if img %}
+    {% if show_img %}
     <div style="float:left; width:50px; text-align: center; margin-right:0.5em;">
         <img src="{{ b.icon_url }}">
     </div>
@@ -58,35 +57,36 @@
             {% endif %}
         </div>
 
-        {% if show_holders %}
+        {% if is_admin(b) %}
         <ul class="holders">
             <header>Holders</header>
-            {% set users = c.get_holders() %}
-            {% if not users %}
+            {% set holders = c.get_holders() %}
+            {% if not holders %}
             <li>None</li>
-            {% endif %}
-            {% for u in c.get_holders() %}
+            {% else %}
+            {% for u in holders %}
             <li>{{ u.name }}</li>
             {% endfor %}
+            {% endif %}
         </ul>
         {% endif %}
     </div>
 
     <div class="right">
-        {% if admin %}
+        {% if is_admin(b) %}
         <button class="edit" id="button_c{{ c.key.id() }}">EDIT</button>
         <script>
-            WOLFINGS.import('coupon_admin', function() {
+            WOLFINGS.import('handlers.coupon', function() {
                 var button = document.getElementById('button_c{{ c.key.id() }}');
-                WOLFINGS.handlers.click_edit_coupon( button );
+                WOLFINGS.handlers.coupon.click_edit_coupon( button );
             });
         </script>
-        {% elif editable %}
+        {% elif held %}
         <button class="trash" id="button_c{{ c.key.id() }}">TRASH</button>
         <script>
-            WOLFINGS.import('coupon_snip', function() {
+            WOLFINGS.import('handlers.coupon', function() {
                 var button = document.getElementById('button_c{{ c.key.id() }}');
-                WOLFINGS.handlers.click_trash_coupon( button );
+                WOLFINGS.handlers.coupon.click_trash_coupon( button );
             });
         </script>
         {% elif user %}
@@ -95,9 +95,9 @@
         {% elif now < c.end %}
         <button class="claim" id="button_c{{ c.key.id() }}">CLAIM</button>
         <script>
-            WOLFINGS.import('coupon_snip', function() {
+            WOLFINGS.import('handlers.coupon', function() {
                 var button = document.getElementById('button_c{{ c.key.id() }}');
-                WOLFINGS.handlers.click_claim_coupon( button );
+                WOLFINGS.handlers.coupon.click_claim_coupon( button );
             });
         </script>
         {% endif %}

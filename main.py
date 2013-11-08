@@ -20,15 +20,16 @@ def main():
         ('/',       MainHandler),
         ('/admin/', AdminHandler),
 
-        ('/coupon/',                        CouponHandler),
-        ('/coupon/[0-9]+/',                 CouponIDHandler),
-        ('/business/',                      BusinessHandler),
-        ('/business/[0-9]+/',               BusinessIDHandler),
-        ('/business/[0-9]+/admin/',         BusinessIDAdminHandler),
-        ('/business/[0-9]+/admin/coupons/', BusinessIDAdminCouponHandler),
-        ('/business/[0-9]+/upload/',        BusinessIDUploadHandler),
-        ('/user/',                          UserHandler),
-        ('/user/[0-9]+/',                   UserIDHandler)
+        ('/login/',                     LoginHandler),
+        ('/logout/',                    LogoutHandler),
+        ('/coupon/',                    CouponHandler),
+        ('/coupon/[0-9]+/',             CouponIDHandler),
+        ('/business/',                  BusinessHandler),
+        ('/business/[0-9]+/',           BusinessIDHandler),
+        ('/business/[0-9]+/admin/',     BusinessIDAdminHandler),
+        ('/business/[0-9]+/upload/',    BusinessIDUploadHandler),
+        ('/user/',                      UserHandler),
+        ('/user/[0-9]+/',               UserIDHandler)
     ], debug=True)
 
 

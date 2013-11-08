@@ -11,6 +11,7 @@ class Business(ndb.Model):
     lon = ndb.FloatProperty('o', required=True)
     geoboxes = ndb.StringProperty('g', repeated=True)
     mark = ndb.BlobKeyProperty('m')
+    admins = ndb.KeyProperty('adm', repeated=True)
 
     @property
     def mark_url(self):

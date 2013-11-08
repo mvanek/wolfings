@@ -1,23 +1,23 @@
+{# /coupon/
+Parameters:
+    - coupons: Iterable of all coupons
+Globals:
+    - user: The logged-in user's entity
+    - is_admin(business): Verifies user has rights to modify the entity
+#}
 {% extends "base.jinja" %}
 {% from "coupon_snip.jinja" import coupon_snip %}
 
-
 {% block title %}Coupons{% endblock title %}
-
-
 {% block head %}{{ super() }}
 <link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
 {% endblock head %}
 
-
 {% block body %}
 <section id="coupons">
     <header>Coupons</header>
-
     {% for c in coupons %}
-    {{ coupon_snip(c, now, img=True, user=user) }}
+    {{ coupon_snip(c, show_img=True) }}
     {% endfor %}
-
 </section>
-<script src="/static/js/coupon_snip.js"></script>
 {% endblock body %}

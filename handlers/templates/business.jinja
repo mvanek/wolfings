@@ -1,32 +1,38 @@
+{# /business/[id]/
+Parameters:
+    - b: The business entity referred to by the page ID
+    - coupons: All coupon entities owned by the business
+Globals:
+    - user: The logged-in user's entity
+    - is_admin(business): Verifies user has rights to modify the entity
+#}
 {% extends "base.jinja" %}
 {% from "coupon_snip.jinja" import coupon_snip %}
 
 
-{% block title %}{{name}}{% endblock title %}
-
+{% block title %}{{ name }}{% endblock title %}
 
 {% block head %}{{ super() }}
 <link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
 {% endblock head %}
 
-
 {% block body %}
-
+{% if is_admin(b) %}
+<a class="adminlink" href="admin">Admin Panel</a>
+{% endif %}
 <section>
     <header>
         {% if b.mark_url %}
-        <img class="mark" alt="{{b.name}}" src="{{b.mark_url}}">
+        <img class="mark" alt="{{ b.name }}" src="{{ b.mark_url }}">
         {% endif %}
-        {{b.name}}
+        {{ b.name }}
     </header>
 </section>
-
 {% if coupons %}
 <section id="coupons">
     {% for c in coupons %}
-    {{ coupon_snip(c, now, user=user) }}
+    {{ coupon_snip(c, show_img=True) }}
     {% endfor %}
 </section>
 {% endif %}
-
 {% endblock body %}

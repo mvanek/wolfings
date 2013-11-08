@@ -1,91 +1,116 @@
+{# /business/[id]/admin/
+Parameters:
+    - b: The Business entity referred to by the page ID
+    - admins: The User entities that administrate the business
+    - mark_upload: A uniquely-generated blobstore upload URL
+#}
 {% extends "base.jinja" %}
 
+
 {% macro input_datetime(name, label=None) %}
-    {% if label %}
-        <label for="{{ name }}_date">{{ label }}</label>
-    {% endif %}
-
-    <input name="{{ name }}_date" id="{{ name }}_date"></input>
-    <script>
-        $( document.getElementById('{{ name }}_date') ).datepicker();
-    </script>
-
-    <select name="{{ name }}_hour">
-        {% for i in range(24) %}
-            <option value="{{ i }}">{{ '{:02}'.format(i) }}</option>
-        {% endfor %}
-    </select>
-    :
-    <select name="{{ name }}_min">
-        {% for i in range(60) %}
-            <option value="{{ i }}">{{ '{:02}'.format(i) }}</option>
-        {% endfor %}
-    </select>
+{# Parameters:
+    - name: A unique string to identify the input field
+    - label: An optional string to be used as a label for the input field
+#}
+{% if label %}
+<label for="{{ name }}_date">{{ label }}</label>
+{% endif %}
+<input name="{{ name }}_date" id="{{ name }}_date"></input>
+<select name="{{ name }}_hour">
+    {% for i in range(24) %}
+    <option value="{{ i }}">{{ '{:02}'.format(i) }}</option>
+    {% endfor %}
+</select> : <select name="{{ name }}_min">
+    {% for i in range(60) %}
+    <option value="{{ i }}">{{ '{:02}'.format(i) }}</option>
+    {% endfor %}
+</select>
+<script>
+    jQuery( document.getElementById('{{ name }}_date') ).datepicker();
+</script>
 {% endmacro %}
 
 
 {% block title %}{{ b.name }}{% endblock title %}
 
-
 {% block head %}
-
-    {{ super() }}
-    <link href="/static/lib/jquery-ui/css/dot-luv/jquery-ui-1.10.3.custom.css" rel="stylesheet" type="text/css">
-    <link href="/static/style/business_admin.css" rel="stylesheet" type="text/css">
-    <script src="/static/lib/jquery-ui/js/jquery-ui-1.10.3.custom.js"></script>
-    <script src="/static/js/utils.js"></script>
-    <script src="/static/js/business_admin.js"></script>
-
+{{ super() }}
+<link href="/static/lib/jquery-ui/css/dot-luv/jquery-ui-1.10.3.custom.css" rel="stylesheet" type="text/css">
+<link href="/static/style/business_admin.css" rel="stylesheet" type="text/css">
+<script src="/static/lib/jquery-ui/js/jquery-ui-1.10.3.custom.js"></script>
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/business_admin.js"></script>
 {% endblock head %}
 
-
 {% block body %}
-
-    <section>
-        <header>Admin Panel</header>
-        <article>
-            <header>Update Details</header>
-            <form name="update" action="javascript:put_business()">
-                <label for="name">Name: </label>
-                <input type="text" name="name" value="{{b.name}}">
-                <input type="submit" class="blue" value="submit">
-            </form>
-        </article>
-        <article>
-            <header>Upload Mark</header>
-            <img src="{{ b.mark_url }}">
-            <form action="{{ mark_upload }}" method="POST" enctype="multipart/form-data">
-                <input type="file" name="mark">
-                <input type="submit" class="blue" value="submit">
-            </form>
-        </article>
-        <article>
-            <header>New Coupon</header>
-            <form name="newcoup" action="javascript:post_coupon()">
-                <label for="name">Name: </label>
-                <input type="text" name="name" value=""> <br>
-                {{ input_datetime('start', 'Start time:') }} <br>
-                {{ input_datetime('end', 'End time:') }}
-                <input type="submit" class="blue" value="submit">
-            </form>
-        </article>
-        <article>
-            <header>User Lookup</header>
-            <form name="user" action="javascript:lookup_user()">
-                <label for="name">Name:</label>
-                <input name="name" type="text" value=""> <br>
-                <label for="address">Address:</label>
-                <input name="address" type="text" value=""> <br>
-                <label for="city">City:</label>
-                <input name="city" type="text" value=""> <br>
-                <label for="zip">Zip Code:</label>
-                <input name="zip" type="text" value=""> <br>
-                <label for="phone">Phone:</label>
-                <input name="phone" type="text" value=""> <br>
-                <input type="submit" class="blue" value="submit">
-            </form>
-        </article>
-        <article id="user_list"> </article>
-    </section>
-
+<section>
+    <header>Admin Panel</header>
+    <article>
+        <header>Update Details</header>
+        <form name="update" action="javascript:put_business()">
+            <label for="name">Name: </label>
+            <input type="text" name="name" value="{{b.name}}">
+            <input type="submit" class="blue" value="submit">
+        </form>
+    </article>
+    <article>
+        <header>Upload Mark</header>
+        <img src="{{ b.mark_url }}">
+        <form action="{{ mark_upload }}" method="POST" enctype="multipart/form-data">
+            <input type="file" name="mark">
+            <input type="submit" class="blue" value="submit">
+        </form>
+    </article>
+    <article>
+        <header>Administrators</header>
+        <form name="admins" action="javascript:put_admins()">
+            {% for a in admins %}
+            <input type="checkbox" checked="true" name="a{{ a.key.id() }}">
+            <span>{{ a.name }} ({{ a.email }})</label>
+            <br>
+            {% endfor %}
+            <input type="submit" class="blue" value="submit">
+        </form>
+    </article>
+    <article>
+        <header>Add admin</header>
+        <form name="adminsearch" action="javascript:lookup_admin()">
+            <label for="uid">ID:</label>
+            <input name="uid" type="text" value=""><br>
+            <label for="name">Name:</label>
+            <input name="name" type="text" value=""><br>
+            <label for="email">Email:</label>
+            <input name="email" type="text" value=""><br>
+            <input type="submit" class="blue" value="search">
+        </form>
+        <div id="admin_list"> </article>
+    </article>
+    <article>
+        <header>New Coupon</header>
+        <form name="newcoup" action="javascript:post_coupon()">
+            <label for="name">Name: </label>
+            <input type="text" name="name" value=""> <br>
+            {{ input_datetime('start', 'Start time:') }} <br>
+            {{ input_datetime('end', 'End time:') }}
+            <input type="submit" class="blue" value="submit">
+        </form>
+    </article>
+    <article>
+        <header>User Lookup</header>
+        <form name="user" action="javascript:lookup_user()">
+            <label for="name">Name:</label>
+            <input name="name" type="text" value=""> <br>
+            <label for="address">Address:</label>
+            <input name="address" type="text" value=""> <br>
+            <label for="city">City:</label>
+            <input name="city" type="text" value=""> <br>
+            <label for="zip">Zip Code:</label>
+            <input name="zip" type="text" value=""> <br>
+            <label for="phone">Phone:</label>
+            <input name="phone" type="text" value=""> <br>
+            <input type="submit" class="blue" value="search">
+        </form>
+    </article>
+    <article id="user_list"> </article>
+</section>
 {% endblock body %}

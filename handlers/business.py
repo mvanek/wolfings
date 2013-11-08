@@ -1,7 +1,10 @@
 import webapp2
+from RequestHandler import RequestHandler, get_cur_user
 from google.appengine.ext.webapp import blobstore_handlers
 from google.appengine.ext import blobstore
+from google.appengine.ext import ndb
 from google.appengine.api import images
+from google.appengine.api import users
 import urllib
 import jinja2
 import os
@@ -12,35 +15,26 @@ from models import Business, Coupon, User
 __all__ = ['BusinessHandler',
            'BusinessIDHandler',
            'BusinessIDAdminHandler',
-           'BusinessIDAdminCouponHandler',
            'BusinessIDUploadHandler']
 
 
-JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.join(
-        os.path.dirname(__file__), 'templates')),
-    extensions=['jinja2.ext.autoescape'],
-    trim_blocks=True)
-
-
-def get_id(request):
-    return int(urllib.unquote(request.path.split('/')[2]))
-
-
-def get_business(request):
-    '''
-    Returns business entity, and aborts with code 404 if there's no entity
-    '''
-    b = Business.get_by_id(get_id(request))
+def is_admin(b=None):
+    if users.is_current_user_admin():
+        return True
     if b:
-        return b
-    webapp2.abort(404)
+        return ndb.Key('User', users.get_current_user().user_id()) in b.admins
+    return False
 
 
-class BusinessHandler(webapp2.RequestHandler):
+class BusinessHandler(RequestHandler):
     '''
     HTTP Request Handler, Collection: /business
     '''
+    def __init__(self, *args, **kwargs):
+        super(BusinessHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('business_list.jinja')
+        self.idtype = int
+
     def get(self):
         '''
         Lists businesses, filtered by optional parameters
@@ -55,67 +49,62 @@ class BusinessHandler(webapp2.RequestHandler):
             query = Business.query()
         else:
             query = Business.query_location(lat=lat, lon=lon)
-
         name = urllib.unquote(self.request.get('name'))
         if name:
             query = query.filter(Business.name == name)
         businesses = query.fetch_page(20, projection=[Business.name])[0]
-
-        template = JINJA_ENVIRONMENT.get_template('business_list.jinja')
         self.response.status = '200 OK'
-        self.response.write(template.render(businesses=businesses,
-                                            user=User.query(User.name == 'Dick').get()))
+        self.response.write(self.template.render(
+            businesses=businesses
+        ))
 
 
-class BusinessIDHandler(webapp2.RequestHandler):
+class BusinessIDHandler(RequestHandler):
     '''
     HTTP Request Handler, Entity: /business/[id]
     '''
+    def __init__(self, *args, **kwargs):
+        super(BusinessIDHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('business.jinja')
+        self.idtype = int
+
     def get(self):
         '''
         Returns business entity
         '''
-        b = get_business(self.request)
-        coupons = Coupon.get_by_business(b.key.id())
-
-        template = JINJA_ENVIRONMENT.get_template('business.jinja')
+        key = self.get_page_key()
+        coupons = Coupon.get_by_business(key.id())
         self.response.status = '200 OK'
-        self.response.write(template.render(b=b,
-                                            coupons=coupons,
-                                            now=datetime.datetime.now(),
-                                            user=User.query(User.name == 'Dick').get()))
+        self.response.write(self.template.render(
+            b=key.get(),
+            coupons=coupons
+        ))
 
 
-class BusinessIDAdminHandler(webapp2.RequestHandler):
+class BusinessIDAdminHandler(RequestHandler):
     '''
     HTTP Request Handler, Entity: /business/[id]/admin
     '''
+    def __init__(self, *args, **kwargs):
+        super(BusinessIDAdminHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('business_admin.jinja')
+        self.idtype = int
+
     def get(self):
-        mark_upload = blobstore.create_upload_url('/business/{}/upload/'
-                                                  .format(get_id(self.request)))
-        b = get_business(self.request)
-
-        template = JINJA_ENVIRONMENT.get_template('business_admin.jinja')
+        key = self.get_page_key()
+        b = key.get()
+        if not is_admin(b):
+            self.abort(401)
+        admins = ndb.get_multi(b.admins)
+        mark_upload = blobstore.create_upload_url(
+                '/business/{}/upload/'.format(key.id())
+        )
         self.response.status = '200 OK'
-        self.response.write(template.render(b=b,
-                                            mark_upload=mark_upload,
-                                            user=User.query(User.name == 'Dick').get()))
-
-
-class BusinessIDAdminCouponHandler(webapp2.RequestHandler):
-    '''
-    HTTP Request Handler, Entity: /business/[id]/admin
-    '''
-    def get(self):
-        b = get_business(self.request)
-        coupons = Coupon.get_by_business(get_id(self.request))
-
-        template = JINJA_ENVIRONMENT.get_template('business_admin_coupon.jinja')
-        self.response.status = '200 OK'
-        self.response.write(template.render(b=b,
-                                            coupons=coupons,
-                                            now=datetime.datetime.now(),
-                                            user=User.query(User.name == 'Dick').get()))
+        self.response.write(self.template.render(
+            b=b,
+            admins=admins,
+            mark_upload=mark_upload
+        ))
 
 
 class BusinessIDUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
@@ -124,8 +113,10 @@ class BusinessIDUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     '''
     def post(self):
         blob_info = self.get_uploads('mark')[0]
-        b = get_business(self.request)
+        key = self.get_page_key()
+        b = key.get()
+        if not is_admin(b):
+            self.abort(401)
         b.mark = blob_info.key()
         b.put()
-
-        self.redirect('/business/{}/admin/'.format(get_id(self.request)))
+        self.redirect('/business/{}/admin/'.format(key.id()))
