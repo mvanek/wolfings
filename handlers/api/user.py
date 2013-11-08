@@ -1,10 +1,9 @@
 import webapp2
-import urllib
-import json
+from APIHandler import APIHandler
 
 from google.appengine.ext import ndb
 from google.appengine.api import users
-from models import User, Coupon, Business
+from models import Address, User, Coupon, Business
 
 
 __all__ = ['UserHandler', 'UserIDHandler',
@@ -28,36 +27,50 @@ def authenticate(uid=None, bid=None):
         webapp2.abort(401)
 
 
-class UserHandler(webapp2.RequestHandler):
+class UserHandler(APIHandler):
     '''
     HTTP Request Handler: /api/user
     '''
-    def filter_by(self, query, key, value, type=str):
-        try:
-            value = type(urllib.unquote(self.request.get(value)))
-        except ValueError:
-            return query
-        if not value:
-            return query
-        return query.filter(key == value)
+    def __init__(self, *args, **kwargs):
+        super(UserHandler, self).__init__(User, *args, idtype=str, **kwargs)
 
     def get(self):
         '''
         HTTP GET Method Handler
         Returns a list of user URI's
         '''
+        params = self.load_http_params({
+            'name': (str, False),
+            'email': (str, False),
+            'phone': (str, False),
+            'number': (str, False),
+            'street': (str, False),
+            'city': (str, False),
+            'zip': (int, False),
+            'country': (str, False)
+        })
+        param2prop = {
+            'name': User.name,
+            'email': User.email,
+            'phone': User.phone,
+            'number': User.address.number,
+            'street': User.address.street,
+            'city': User.address.city,
+            'zip': User.address.zip,
+            'country': User.address.country
+        }
         q = User.query()
-        q = self.filter_by(q, User.name, 'name')
-        q = self.filter_by(q, User.address.number, 'number', int)
-        q = self.filter_by(q, User.address.street, 'street')
-        q = self.filter_by(q, User.address.city, 'city')
-        q = self.filter_by(q, User.address.zip, 'zip', int)
-        q = self.filter_by(q, User.address.country, 'country')
-        q = self.filter_by(q, User.phone, 'phone', int)
+        for k,v in params.iteritems():
+            q = q.filter(param2prop[k] == v)
 
         self.response.status = '200 OK'
+        flag = False
         for key in q.iter(keys_only=True):
-            self.response.write(str(key.id()) + '\n')
+            if flag:
+                self.response.write('\n')
+            else:
+                flag = True
+            self.response.write(str(key.id()))
 
     def post(self):
         '''
@@ -65,19 +78,23 @@ class UserHandler(webapp2.RequestHandler):
         Creates new user from JSON representation
         '''
         authenticate()
-        name = urllib.unquote(self.request.get('name'))
-        user = User(name=name)
-        key = user.put()
+        key = User(**self.load_json_params({
+            'name': (str, True),
+            'email': (str, True),
+            'phone': (str, False),
+            'address': (lambda d: Address(**d), False),
+            'held_coupons': (lambda l: [ndb.Key('Coupon', int(c)) for c in list(l)], False),
+        })).put()
         self.response.status = '200 OK'
         self.response.write('/api/user/' + key.id())
 
 
-class UserIDHandler(webapp2.RequestHandler):
+class UserIDHandler(APIHandler):
     '''
     HTTP Request Handler: /api/user/[id]
     '''
-    def get_id(self):
-        return urllib.unquote(self.request.path.split('/')[3])
+    def __init__(self, *args, **kwargs):
+        super(UserIDHandler, self).__init__(User, *args, idtype=str, **kwargs)
 
     def get(self):
         '''
@@ -93,15 +110,17 @@ class UserIDHandler(webapp2.RequestHandler):
         HTTP PUT Method Handler
         Creates new user at the requested URI
         '''
-        authenticate(self.get_uid())
-        data = json.loads(self.request.body)
-        try:
-            data['held_coupons'] = [ndb.Key('Coupon', i) for i in
-                                    data['held_coupons']]
-        except KeyError:
-            pass
-        user = User.get_by_id(self.get_id())
-        for key, value in data.iteritems():
+        uid = self.get_id()
+        authenticate(uid)
+        params = self.load_json_params({
+            'name': (str, True),
+            'email': (str, True),
+            'phone': (str, False),
+            'address': (lambda d: Address(**d), False),
+            'held_coupons': (lambda l: [ndb.Key('Coupon', int(c)) for c in list(l)], False),
+        })
+        user = User.get_by_id(uid)
+        for key, value in params.iteritems():
             setattr(user, key, value)
         key = user.put()
         self.response.status = '200 OK'

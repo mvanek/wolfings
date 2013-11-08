@@ -8,8 +8,13 @@ __all__ = ['APIHandler']
 
 class APIHandler(webapp2.RequestHandler):
     def __init__(self, entity, *args, **kwargs):
-        super(APIHandler, self).__init__(*args, **kwargs)
         self.entity = entity
+        if 'idtype' in kwargs:
+            self.idtype = kwargs['idtype']
+            del kwargs['idtype']
+        else:
+            self.idtype = int
+        super(APIHandler, self).__init__(*args, **kwargs)
 
     def _load_params(self, data, param_info, use_default):
         params = {}
@@ -40,7 +45,7 @@ class APIHandler(webapp2.RequestHandler):
         try:
             return self.eid
         except AttributeError:
-            self.eid = int(urllib.unquote(self.request.path.split('/')[3]))
+            self.eid = self.idtype(urllib.unquote(self.request.path.split('/')[3]))
         return self.eid
 
     def get_entity(self):
@@ -52,5 +57,5 @@ class APIHandler(webapp2.RequestHandler):
         except AttributeError:
             self.b = self.entity.get_by_id(self.get_id())
         if not self.b:
-            self.b = self.entity(id=self.get_id())
+            self.abort(404)
         return self.b

@@ -1,10 +1,10 @@
 from business import Business
 from coupon import Coupon
-from user import User
+from user import User, Address
 
 
 __all__ = [
     Business,
-    User,
+    User, Address,
     Coupon
 ]

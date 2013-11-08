@@ -12,8 +12,9 @@ class Address(ndb.Model):
 
 class User(ndb.Model):
     name = ndb.StringProperty('n', required=True)
+    email = ndb.StringProperty('e', required=True)
+    phone = ndb.StringProperty('p')
     address = ndb.StructuredProperty(Address)
-    phone = ndb.IntegerProperty('p')
     held_coupons = ndb.KeyProperty('c', kind='Coupon', repeated=True)
 
     @classmethod
