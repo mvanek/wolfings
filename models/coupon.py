@@ -82,6 +82,12 @@ class Coupon(ndb.Model):
         qry = User.query(User.held_coupons == self.key)
         return [u for u in qry.iter()]
 
+    def delete(self):
+        users = User.query(User.held_coupons == self.key)
+        users.held_coupons.remove(self.key)
+        users.put()
+        self.key.delete()
+
     def dict(self):
         def useful_timediff(t):
             r = {}
@@ -103,9 +109,3 @@ class Coupon(ndb.Model):
         data['start'] = data['start'].strftime('%Y-%m-%dT%H:%M:%S.000Z')
         data['end'] = data['end'].strftime('%Y-%m-%dT%H:%M:%S.000Z')
         return json.dumps(data)
-
-    def delete(self):
-        users = User.query(User.held_coupons == self.key)
-        users.held_coupons.remove(self.key)
-        users.put()
-        self.key.delete()

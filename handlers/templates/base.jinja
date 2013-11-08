@@ -1,7 +1,8 @@
-{% from 'topbar.jinja' import topbar %}
+{# Top level template #}
 <!doctype html>
 <html>
     <head>
+
     {% block head %}
         <title>{% block title %}{% endblock title %}</title>
         <meta charset="UTF-8">
@@ -10,11 +11,32 @@
         <link rel="stylesheet" type="text/css" href="/static/style/reset.css">
         <link rel="stylesheet" type="text/css" href="/static/style/base.css">
     {% endblock head %}
+
     </head>
     <body>
-        {% block header %} {{ topbar(user) }} {% endblock header %}
+
+        {% block header %}
+        <div id="topbar">
+            <header class="unselectable">WOLFINGS</header>
+            <div class="right">
+                <a href="/coupon/">Coupons</a>
+                <a href="/business/">Restaurants</a>
+                {% if user %}
+                <a href="/user/{{ user.key.id() }}/">{{ user.name }}</a>
+                <a href="/logout/">Log out</a>
+                <script>WOLFINGS.set('user_id', '{{ user.key.id() }}');</script>
+                {% else %}
+                <a href="/login/">Log in</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endblock header %}
+
         <div id="viewport">
-            {% block body %} {% endblock body %}
+
+            {% block body %}
+            {% endblock body %}
+
         </div>
     </body>
 </html>

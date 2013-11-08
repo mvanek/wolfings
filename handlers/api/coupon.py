@@ -1,4 +1,5 @@
 from google.appengine.ext import ndb
+from google.appengine.api import users
 import webapp2
 import urllib
 import json
@@ -13,6 +14,20 @@ __all__ = ['CouponHandler', 'CouponIDHandler']
 def str_to_datetime(s):
     return datetime.datetime.strptime(s.replace('Z', '000'),
                                       '%Y-%m-%dT%H:%M:%S.%f')
+
+
+def is_admin(b=None):
+    if users.is_current_user_admin():
+        return True
+    if b:
+        logging.info('\nUSER: {}\nADMINS: {}'.format(ndb.Key('User', users.get_current_user().user_id()), b.admins))
+        return ndb.Key('User', users.get_current_user().user_id()) in b.admins
+    return False
+
+
+def authenticate(b=None):
+    if not is_admin(b):
+        webapp2.abort(401)
 
 
 class CouponHandler(webapp2.RequestHandler):
@@ -60,8 +75,10 @@ class CouponHandler(webapp2.RequestHandler):
         data = json.loads(urllib.unquote(self.request.body))
         data['start'] = str_to_datetime(data['start'])
         data['end'] = str_to_datetime(data['end'])
+        business_key = ndb.Key('Business', data['business'])
+        authenticate(business_key.get())
         coupon = Coupon(name=data['name'],
-                        business=ndb.Key('Business', data['business']),
+                        business=business_key,
                         start=data['start'],
                         end=data['end'])
         key = coupon.put()
@@ -96,6 +113,7 @@ class CouponIDHandler(webapp2.RequestHandler):
         Creates new coupon at the requested URI
         '''
         coupon = self.get_coupon()
+        authenticate(coupon.business.get())
         data = json.loads(self.request.body)
         try:
             data['business'] = ndb.Key('Business', int(data['business']))
@@ -115,5 +133,6 @@ class CouponIDHandler(webapp2.RequestHandler):
         Deletes exiting coupon
         '''
         coupon = self.get_coupon()
+        authenticate(coupon.business.get())
         coupon.key.delete()
         self.status = '204 No Content'

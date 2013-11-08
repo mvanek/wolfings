@@ -1,5 +1,7 @@
 import webapp2
+from RequestHandler import RequestHandler
 from google.appengine.api import images
+from google.appengine.api import users
 import urllib
 import jinja2
 import os
@@ -7,24 +9,24 @@ import datetime
 from models import Business, Coupon, User
 
 
-__all__ = ['CouponHandler', 'CouponIDHandler',
+__all__ = ['CouponHandler',
+           'CouponIDHandler',
            'CouponIDAdminHandler']
-
-JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.join(
-        os.path.dirname(__file__), 'templates')),
-    extensions=['jinja2.ext.autoescape'],
-    trim_blocks=True)
 
 
 def collection_callback(business):
     return Coupon.get_by_business(business.key.id())
 
 
-class CouponHandler(webapp2.RequestHandler):
+class CouponHandler(RequestHandler):
     '''
     HTTP Request Handler, Collection: /coupon/
     '''
+    def __init__(self, *args, **kwargs):
+        super(CouponHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('coupon_list.jinja')
+        self.idtype = int
+
     def get(self):
         '''
         Lists coupons, filtered by optional parameters
@@ -47,65 +49,48 @@ class CouponHandler(webapp2.RequestHandler):
                    for c in business]
         coupons = sorted(coupons, lambda x, y: cmp(x.end, y.end))
 
-        template = JINJA_ENVIRONMENT.get_template('coupon_list.jinja')
         self.response.status = '200 OK'
-        self.response.write(template.render(coupons=coupons,
-                                            now=datetime.datetime.now(),
-                                            user=User.query(User.name == 'Dick').get()))
+        self.response.write(self.template.render(
+            coupons=coupons
+        ))
 
 
-class CouponIDHandler(webapp2.RequestHandler):
+class CouponIDHandler(RequestHandler):
     '''
     HTTP Request Handler, Entity: /coupon/[id]/
     '''
-    def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[2]))
-
-    def get_coupon(self):
-        '''
-        Returns business entity, and aborts with code 404 if there's no entity
-        '''
-        c = Coupon.get_by_id(self.get_id())
-        if c:
-            return c
-        self.abort(404)
+    def __init__(self, *args, **kwargs):
+        super(CouponIDHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('coupon.jinja')
+        self.idtype = int
 
     def get(self):
         '''
         Returns business entity
         '''
-        c = self.get_coupon()
+        c = self.get_page_entity()
         b = c.business.get()
-        try:
-            mark_url = images.get_serving_url(b.mark, size=200)
-        except images.BlobKeyRequiredError:
-            mark_url = None
-        template = JINJA_ENVIRONMENT.get_template('coupon.jinja')
         self.response.status = '200 OK'
-        self.response.write(template.render(c=c, b=b, mark_url=mark_url,
-                                            now=datetime.datetime.now(),
-                                            user=User.query(User.name == 'Dick').get()))
+        self.response.write(self.template.render(
+            c=c,
+            b=b
+        ))
 
 
-class CouponIDAdminHandler(webapp2.RequestHandler):
+class CouponIDAdminHandler(RequestHandler):
     '''
     HTTP Request Handler, Entity: /coupon/[id]/admin/
     '''
-    def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[2]))
-
-    def get_coupon(self):
-        '''
-        Returns business entity, and aborts with code 404 if there's no entity
-        '''
-        b = Coupon.get_by_id(self.get_id())
-        if b:
-            return b
-        self.abort(404)
+    def __init__(self, *args, **kwargs):
+        super(CouponIDAdminHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('coupon_admin.jinja')
+        self.idtype = int
 
     def get(self):
-        b = self.get_coupon()
-        template = JINJA_ENVIRONMENT.get_template('coupon_admin.jinja')
+        c = self.get_page_entity()
+        b = c.business.get()
+        if not is_admin(b):
+            self.abort(401)
         self.response.status = '200 OK'
-        self.response.write(template.render(name=b.name,
-                                            user=User.query(User.name == 'Dick').get()))
+        self.response.write(self.template.render(
+        ))

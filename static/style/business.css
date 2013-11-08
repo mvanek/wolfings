@@ -1,48 +1,3 @@
-/* Animations */
-@keyframes slide
-{
-    from {
-        margin-top: 0px;
-    }
-
-    to {
-        margin-top: 0px;
-    }
-}
-
-
-/* Buttons */
-input[type=submit],
-button {
-    background: #180878;
-
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 0.25em 1em;
-
-    text-align: center;
-    font-size: 0.75em;
-    color: #ffffff;
-
-    border:solid;
-    border-left-color:#201088;
-    border-top-color:#201088;
-    border-right-color:#180868;
-    border-bottom-color:#180868;
-    border-width:2px;
-}
-input[type=submit]:hover,
-button:hover {
-    background: #1808a8;
-}
-input[type=submit]:active,
-button:active {
-    background: #180868;
-}
-
-
-/* Images */
 img.mark {
     vertical-align: middle;
 }
@@ -60,3 +15,5 @@ article {
 .coupon .right {
     top: 0.25em;
 }
+
+

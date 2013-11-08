@@ -1,7 +1,10 @@
 import webapp2
+from RequestHandler import RequestHandler, get_cur_user
 from google.appengine.ext.webapp import blobstore_handlers
 from google.appengine.ext import blobstore
+from google.appengine.ext import ndb
 from google.appengine.api import images
+from google.appengine.api import users
 import urllib
 import jinja2
 import os
@@ -12,20 +15,26 @@ from models import Business, Coupon, User
 __all__ = ['BusinessHandler',
            'BusinessIDHandler',
            'BusinessIDAdminHandler',
-           'BusinessIDAdminCouponHandler',
            'BusinessIDUploadHandler']
 
-JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.join(
-        os.path.dirname(__file__), 'templates')),
-    extensions=['jinja2.ext.autoescape'],
-    trim_blocks=True)
+
+def is_admin(b=None):
+    if users.is_current_user_admin():
+        return True
+    if b:
+        return ndb.Key('User', users.get_current_user().user_id()) in b.admins
+    return False
 
 
-class BusinessHandler(webapp2.RequestHandler):
+class BusinessHandler(RequestHandler):
     '''
     HTTP Request Handler, Collection: /business
     '''
+    def __init__(self, *args, **kwargs):
+        super(BusinessHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('business_list.jinja')
+        self.idtype = int
+
     def get(self):
         '''
         Lists businesses, filtered by optional parameters
@@ -40,127 +49,74 @@ class BusinessHandler(webapp2.RequestHandler):
             query = Business.query()
         else:
             query = Business.query_location(lat=lat, lon=lon)
-
         name = urllib.unquote(self.request.get('name'))
         if name:
             query = query.filter(Business.name == name)
-
-        template = JINJA_ENVIRONMENT.get_template('business_list.jinja')
         businesses = query.fetch_page(20, projection=[Business.name])[0]
         self.response.status = '200 OK'
-        self.response.write(template.render(businesses=businesses,
-                                            user=User.query(User.name == 'Dick').get()))
+        self.response.write(self.template.render(
+            businesses=businesses
+        ))
 
 
-class BusinessIDHandler(webapp2.RequestHandler):
+class BusinessIDHandler(RequestHandler):
     '''
     HTTP Request Handler, Entity: /business/[id]
     '''
-    def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[2]))
-
-    def get_business(self):
-        '''
-        Returns business entity, and aborts with code 404 if there's no entity
-        '''
-        b = Business.get_by_id(self.get_id())
-        if b:
-            return b
-        self.abort(404)
+    def __init__(self, *args, **kwargs):
+        super(BusinessIDHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('business.jinja')
+        self.idtype = int
 
     def get(self):
         '''
         Returns business entity
         '''
-        b = self.get_business()
-        coupons = Coupon.get_by_business(b.key.id())
-        try:
-            mark_url = images.get_serving_url(b.mark, size=200)
-        except images.BlobKeyRequiredError:
-            mark_url = None
-        template = JINJA_ENVIRONMENT.get_template('business.jinja')
+        key = self.get_page_key()
+        coupons = Coupon.get_by_business(key.id())
         self.response.status = '200 OK'
-        self.response.write(template.render(name=b.name,
-                                            mark_url=mark_url,
-                                            coupons=coupons,
-                                            now=datetime.datetime.now(),
-                                            user=User.query(User.name == 'Dick').get()))
+        self.response.write(self.template.render(
+            b=key.get(),
+            coupons=coupons
+        ))
 
 
-class BusinessIDAdminHandler(webapp2.RequestHandler):
+class BusinessIDAdminHandler(RequestHandler):
     '''
     HTTP Request Handler, Entity: /business/[id]/admin
     '''
-    def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[2]))
-
-    def get_business(self):
-        '''
-        Returns business entity, and aborts with code 404 if there's no entity
-        '''
-        b = Business.get_by_id(self.get_id())
-        if b:
-            return b
-        self.abort(404)
+    def __init__(self, *args, **kwargs):
+        super(BusinessIDAdminHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('business_admin.jinja')
+        self.idtype = int
 
     def get(self):
-        b = self.get_business()
-        template = JINJA_ENVIRONMENT.get_template('business_admin.jinja')
-        mark_upload = blobstore.create_upload_url('/business/{}/upload/'
-                                                  .format(self.get_id()))
+        key = self.get_page_key()
+        b = key.get()
+        if not is_admin(b):
+            self.abort(401)
+        admins = ndb.get_multi(b.admins)
+        mark_upload = blobstore.create_upload_url(
+                '/business/{}/upload/'.format(key.id())
+        )
         self.response.status = '200 OK'
-        self.response.write(template.render(name=b.name,
-                                            mark_upload=mark_upload,
-                                            user=User.query(User.name == 'Dick').get()))
-
-
-class BusinessIDAdminCouponHandler(webapp2.RequestHandler):
-    '''
-    HTTP Request Handler, Entity: /business/[id]/admin
-    '''
-    def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[2]))
-
-    def get_business(self):
-        '''
-        Returns business entity, and aborts with code 404 if there's no entity
-        '''
-        b = Business.get_by_id(self.get_id())
-        if b:
-            return b
-        self.abort(404)
-
-    def get(self):
-        b = self.get_business()
-        coupons = Coupon.get_by_business(self.get_id())
-        template = JINJA_ENVIRONMENT.get_template('business_admin_coupon.jinja')
-        self.response.status = '200 OK'
-        self.response.write(template.render(name=b.name,
-                                            mark_url=b.mark_url,
-                                            coupons=coupons,
-                                            now=datetime.datetime.now(),
-                                            user=User.query(User.name == 'Dick').get()))
+        self.response.write(self.template.render(
+            b=b,
+            admins=admins,
+            mark_upload=mark_upload
+        ))
 
 
 class BusinessIDUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     '''
     HTTP Request Handler, Entity: /business/[id]/upload
     '''
-    def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[2]))
-
-    def get_business(self):
-        '''
-        Returns business entity, and aborts with code 404 if there's no entity
-        '''
-        b = Business.get_by_id(self.get_id())
-        if b:
-            return b
-        self.abort(404)
-
     def post(self):
         blob_info = self.get_uploads('mark')[0]
-        b = self.get_business()
+        key = self.get_page_key()
+        b = key.get()
+        if not is_admin(b):
+            self.abort(401)
         b.mark = blob_info.key()
         b.put()
-        self.redirect('/business/{}/admin/'.format(self.get_id()))
+        self.redirect('/business/{}/admin/'.format(key.id()))

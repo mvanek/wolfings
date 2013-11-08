@@ -3,11 +3,29 @@ import urllib
 import json
 
 from google.appengine.ext import ndb
-from models import User, Coupon
+from google.appengine.api import users
+from models import User, Coupon, Business
 
 
 __all__ = ['UserHandler', 'UserIDHandler',
            'UserIDCouponHandler', 'UserIDCouponIDHandler']
+
+
+def is_admin(uid=None, bid=None):
+    if users.is_current_user_admin():
+        return True
+    cur_user = users.get_current_user().user_id()
+    if uid:
+        if uid == cur_user:
+            return True
+        if bid:
+            return cur_user in Business.get_by_id(bid).admins
+    return False
+
+
+def authenticate(uid=None, bid=None):
+    if not is_admin(uid, bid):
+        webapp2.abort(401)
 
 
 class UserHandler(webapp2.RequestHandler):
@@ -46,6 +64,7 @@ class UserHandler(webapp2.RequestHandler):
         HTTP POST Method Handler
         Creates new user from JSON representation
         '''
+        authenticate()
         name = urllib.unquote(self.request.get('name'))
         user = User(name=name)
         key = user.put()
@@ -58,7 +77,7 @@ class UserIDHandler(webapp2.RequestHandler):
     HTTP Request Handler: /api/user/[id]
     '''
     def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[3]))
+        return urllib.unquote(self.request.path.split('/')[3])
 
     def get(self):
         '''
@@ -74,6 +93,7 @@ class UserIDHandler(webapp2.RequestHandler):
         HTTP PUT Method Handler
         Creates new user at the requested URI
         '''
+        authenticate(self.get_uid())
         data = json.loads(self.request.body)
         try:
             data['held_coupons'] = [ndb.Key('Coupon', i) for i in
@@ -103,7 +123,7 @@ class UserIDCouponHandler(webapp2.RequestHandler):
     '''
     def get_uid(self):
         try:
-            return int(urllib.unquote(self.request.path.split('/')[3]))
+            return urllib.unquote(self.request.path.split('/')[3])
         except ValueError:
             self.abort(404)
 
@@ -124,6 +144,7 @@ class UserIDCouponHandler(webapp2.RequestHandler):
         HTTP POST Method Handler
         Searches user's coupons
         '''
+        authenticate(self.get_uid(), self.get_bid())
         self.response.status = '200 OK'
         for k in Coupon.get_by_user_and_business(self.get_uid(),
                                                  self.get_bid(),
@@ -135,10 +156,11 @@ class UserIDCouponHandler(webapp2.RequestHandler):
         HTTP POST Method Handler
         Gives user a coupon
         '''
+        authenticate(self.get_uid())
+        user = User.get_by_id(self.get_uid())
         coupon = Coupon.get_by_id(self.get_cid())
         if not coupon:
             self.abort(400)
-        user = User.get_by_id(self.get_uid())
         if not user:
             self.abort(400)
         if coupon.key not in user.held_coupons:
@@ -150,11 +172,11 @@ class UserIDCouponHandler(webapp2.RequestHandler):
 
 class UserIDCouponIDHandler(webapp2.RequestHandler):
     '''
-    HTTP Request Handler: /api/user/[id]/coupons/
+    HTTP Request Handler: /api/user/[id]/coupons/[id]
     '''
     def get_uid(self):
         try:
-            return int(urllib.unquote(self.request.path.split('/')[3]))
+            return urllib.unquote(self.request.path.split('/')[3])
         except ValueError:
             self.abort(404)
 
@@ -172,6 +194,8 @@ class UserIDCouponIDHandler(webapp2.RequestHandler):
         user = User.get_by_id(self.get_uid())
         if not user:
             self.abort(400)
-        user.held_coupons.remove(ndb.Key('Coupon', self.get_cid()))
+        coupon_key = ndb.Key('Coupon', self.get_cid())
+        authenticate(self.get_uid(), coupon_key.get().business.id())
+        user.held_coupons.remove(coupon_key)
         user.put()
         self.response.status = '204 No Content'

@@ -1,18 +1,5 @@
 import webapp2
-from handlers import (SlashHandler,
-                      MainHandler,
-                      AdminHandler,
-                      CouponHandler,
-                      CouponIDHandler,
-                      BusinessHandler,
-                      BusinessIDHandler,
-                      BusinessIDAdminHandler,
-                      BusinessIDAdminCouponHandler,
-                      BusinessIDUploadHandler,
-                      UserHandler,
-                      UserIDHandler,
-                      UserIDAdminHandler,
-                      api)
+from handlers import *
 from populate import InitHandler, ReInitHandler
 
 
@@ -33,16 +20,16 @@ def main():
         ('/',       MainHandler),
         ('/admin/', AdminHandler),
 
-        ('/coupon/',                        CouponHandler),
-        ('/coupon/[0-9]+/',                 CouponIDHandler),
-        ('/business/',                      BusinessHandler),
-        ('/business/[0-9]+/',               BusinessIDHandler),
-        ('/business/[0-9]+/admin/',         BusinessIDAdminHandler),
-        ('/business/[0-9]+/admin/coupons/', BusinessIDAdminCouponHandler),
-        ('/business/[0-9]+/upload/',        BusinessIDUploadHandler),
-        ('/user/',                          UserHandler),
-        ('/user/[0-9]+/',                   UserIDHandler),
-        ('/user/[0-9]+/admin/',             UserIDAdminHandler)
+        ('/login/',                     LoginHandler),
+        ('/logout/',                    LogoutHandler),
+        ('/coupon/',                    CouponHandler),
+        ('/coupon/[0-9]+/',             CouponIDHandler),
+        ('/business/',                  BusinessHandler),
+        ('/business/[0-9]+/',           BusinessIDHandler),
+        ('/business/[0-9]+/admin/',     BusinessIDAdminHandler),
+        ('/business/[0-9]+/upload/',    BusinessIDUploadHandler),
+        ('/user/',                      UserHandler),
+        ('/user/[0-9]+/',               UserIDHandler)
     ], debug=True)
 
 

@@ -2,13 +2,7 @@ from google.appengine.ext import ndb
 from google.appengine.api import images
 import geobox
 import json
-
-
-def mark_url(b):
-    try:
-        mark_url = images.get_serving_url(b.mark, size=200)
-    except images.BlobKeyRequiredError:
-        mark_url = None
+import logging
 
 
 class Business(ndb.Model):
@@ -17,7 +11,21 @@ class Business(ndb.Model):
     lon = ndb.FloatProperty('o', required=True)
     geoboxes = ndb.StringProperty('g', repeated=True)
     mark = ndb.BlobKeyProperty('m')
-    mark_url = ndb.ComputedProperty(mark_url, 'u')
+    admins = ndb.KeyProperty('adm', repeated=True)
+
+    @property
+    def mark_url(self):
+        try:
+            return images.get_serving_url(self.mark, size=200)
+        except images.BlobKeyRequiredError:
+            return None
+
+    @property
+    def icon_url(self):
+        try:
+            return images.get_serving_url(self.mark, size=50)
+        except images.BlobKeyRequiredError:
+            return None
 
     @classmethod
     def new(cls, **kwargs):

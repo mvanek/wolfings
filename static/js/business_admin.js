@@ -1,6 +1,8 @@
+WOLFINGS.import('utils');
+
 function biz_id() {
     var path = window.location.pathname.split('/');
-    return toInt( path[ path.length-3 ] );
+    return WOLFINGS.utils.toInt( path[ path.length-3 ] );
 }
 
 function put_business() {
@@ -14,6 +16,28 @@ function put_business() {
         })
     }).done(function( res ) {
         window.location = res.slice(4);
+    })
+}
+
+function put_admins() {
+    var admins, adminList;
+    admins = [];
+    adminList = document.forms['admins'];
+    for ( i = 0; i < adminList.length; i++ ) {
+        if ( adminList[i].type != 'checkbox' || !adminList[i].checked )
+            continue;
+        admins.push( adminList[i].name.slice(1) );
+    }
+    jQuery.ajax({
+        type: 'PUT',
+        url: '/api/business/' + biz_id(),
+        processData: false,
+        contentType: 'text/json',
+        data: JSON.stringify({
+            admins: admins
+        })
+    }).done(function( res ) {
+        window.location = window.location;
     })
 }
 
@@ -46,10 +70,46 @@ function post_coupon() {
     })
 }
 
+function lookup_admin() {
+    var form,
+        dest;
+
+    form = document.forms['adminsearch'];
+    dest = document.getElementById('admin_list');
+    jQuery.ajax({
+        type: 'GET',
+        url: '/api/user/',
+        data: {
+            id: form['name'].value,
+            name: form['name'].value,
+            email: form['name'].value,
+        }
+    }).done(function( res ) {
+        var user_ids,
+            i;
+
+        user_ids = res.split('\n');
+        for ( i = 0; i < user_ids.length; i++ ) {
+            if ( !user_ids[i] ) {
+                continue;
+            }
+
+            jQuery.ajax({
+                type: 'GET',
+                url: '/api/user/' + user_ids[i]
+            }).done(function( res ) {
+                post_admin( JSON.parse( res ), dest );
+            });
+        }
+    })
+}
+
 function lookup_user() {
-    var form;
+    var form,
+        dest;
 
     form = document.forms['user'];
+    dest = document.getElementById('user_list');
     jQuery.ajax({
         type: 'GET',
         url: '/api/user/',
@@ -74,15 +134,55 @@ function lookup_user() {
                 type: 'GET',
                 url: '/api/user/' + user_ids[i]
             }).done(function( res ) {
-                post_user( JSON.parse( res ) );
+                post_user( JSON.parse( res ), dest );
             });
         }
     })
 }
 
-function post_user( user ) {
-    var dest,
+function post_admin( user, dest ) {
+    var i,
         e,
+        name, add,
+        admins,
+        adminList;
+
+    admins = [];
+    adminList = document.forms['admins'];
+    for ( i = 0; i < adminList.length; i++ ) {
+        if ( adminList[i].type != 'checkbox' )
+            continue;
+        admins.push( adminList[i].name.slice(1) );
+    }
+    if ( admins.indexOf( user.id ) < 0 )
+        admins.push( user.id );
+    WOLFINGS.log( admins );
+
+    addButton = document.createElement('button');
+    addButton.innerHTML = 'Add';
+    addButton.addEventListener('click', function() {
+        jQuery.ajax({
+            type: 'PUT',
+            url: '/api/business/' + biz_id(),
+            processData: false,
+            contentType: 'text/json',
+            data: JSON.stringify({
+                admins: admins
+            })
+        }).done(function( res ) {
+            window.location = window.location;
+        })
+    }, false);
+    name = document.createElement('span');
+    name.innerHTML = user.name;
+    e = document.createElement('div');
+    e.appendChild( addButton );
+    e.appendChild( name );
+    dest.appendChild( e );
+}
+
+function post_user( user, dest ) {
+    var e,
         get_coupons;
     get_coupons = document.createElement('button');
     get_coupons.innerHTML = user.name;
@@ -91,7 +191,7 @@ function post_user( user ) {
             type: 'GET',
             url: '/api/user/' + user.id + '/coupons/',
             data: {
-                business: window.location.pathname.split('/')[2]
+                business: biz_id()
             }
         }).done(function( res ) {
             var c = document.createElement('div');
@@ -101,6 +201,5 @@ function post_user( user ) {
     }, false);
     e = document.createElement('div');
     e.appendChild( get_coupons );
-    dest = document.getElementById('user_list');
     dest.appendChild(e);
 }

@@ -1,91 +1,60 @@
 import webapp2
+from RequestHandler import *
 import urllib
 import jinja2
 import os
 import datetime
 from models import User
+from google.appengine.api import users
+from google.appengine.ext import ndb
 
 
-__all__ = ['UserHandler', 'UserIDHandler',
-           'UserIDAdminHandler']
-
-JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.join(
-        os.path.dirname(__file__), 'templates')),
-    extensions=['jinja2.ext.autoescape'],
-    trim_blocks=True)
+__all__ = ['UserHandler',
+           'UserIDHandler']
 
 
-class UserHandler(webapp2.RequestHandler):
+class UserHandler(RequestHandler):
     '''
-    HTTP Request Handler, Collection: /business
+    HTTP Request Handler, Collection: /user/
     '''
+    def __init__(self, *args, **kwargs):
+        super(UserHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('user_list.jinja')
+        self.idtype = str
+
     def get(self):
         '''
-        Lists businesses, filtered by optional parameters
+        Lists useres, filtered by optional parameters
         Parameters:
-            name - Name of the business
-            lat,lon - Location of the business
+            name - Name of the user
+            lat,lon - Location of the user
         '''
         query = User.query()
-
-        template = JINJA_ENVIRONMENT.get_template('user_list.jinja')
         users = [u.dict() for u in
                  query.fetch_page(20, projection=[User.name])[0]]
         self.response.status = '200 OK'
-        self.response.write(template.render(users=users,
-                                            user=User.query(User.name == 'Dick').get()))
+        self.response.write(self.template.render(
+            users=users
+        ))
 
 
-class UserIDHandler(webapp2.RequestHandler):
+class UserIDHandler(RequestHandler):
     '''
-    HTTP Request Handler, Entity: /business/[id]
+    HTTP Request Handler, Entity: /user/[id]
     '''
-    def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[2]))
-
-    def get_user(self):
-        '''
-        Returns business entity, and aborts with code 404 if there's no entity
-        '''
-        u = User.get_by_id(self.get_id())
-        if u:
-            return u
-        self.abort(404)
+    def __init__(self, *args, **kwargs):
+        super(UserIDHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('user.jinja')
+        self.idtype = str
 
     def get(self):
         '''
-        Returns business entity
+        Returns user entity
         '''
-        u = self.get_user()
-        coupons = [key.get() for key in u.held_coupons]
-        template = JINJA_ENVIRONMENT.get_template('user.jinja')
+        u = self.get_page_entity()
+        coupons = ndb.get_multi(u.held_coupons)
         self.response.status = '200 OK'
-        self.response.write(template.render(name=u.name,
-                                            coupons=coupons,
-                                            now=datetime.datetime.now(),
-                                            user=User.query(User.name == 'Dick').get()))
-
-
-class UserIDAdminHandler(webapp2.RequestHandler):
-    '''
-    HTTP Request Handler, Entity: /business/[id]/admin
-    '''
-    def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[2]))
-
-    def get_business(self):
-        '''
-        Returns business entity, and aborts with code 404 if there's no entity
-        '''
-        u = User.get_by_id(self.get_id())
-        if u:
-            return u
-        self.abort(404)
-
-    def get(self):
-        u = self.get_business()
-        template = JINJA_ENVIRONMENT.get_template('user_admin.jinja')
-        self.response.status = '200 OK'
-        self.response.write(template.render(name=u.name,
-                                            user=User.query(User.name == 'Dick').get()))
+        self.response.write(self.template.render(
+            u=u,
+            coupons=coupons
+        ))

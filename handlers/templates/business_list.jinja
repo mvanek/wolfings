@@ -1,21 +1,26 @@
+{# /business/
+Parameters:
+    - businesses: An iterable of all businesses
+Globals:
+    - user: The logged-in user's entity
+    - is_admin(business): Verifies user has rights to modify the entity
+#}
 {% extends "base.jinja" %}
 
 
-{% block title %}{{name}}{% endblock title %}
-
+{% block title %}{{ name }}{% endblock title %}
 
 {% block head %}{{ super() }}
-        <link rel="stylesheet" type="text/css" href="/static/style/business.css">
+<link rel="stylesheet" type="text/css" href="/static/style/business.css">
 {% endblock head %}
 
-
 {% block body %}
-            <section id="businesses">
-                <header>Businesses</header>
-{% for b in businesses %}
-                <p id="b{{b.key.id()}}">
-                    <a href="/business/{{b.key.id()}}/">{{b.name}}</a>
-                </p>
-{% endfor %}
-            </section>
+<section id="businesses">
+    <header>Businesses</header>
+    {% for b in businesses %}
+    <p id="b{{ b.key.id() }}">
+    <a href="/business/{{ b.key.id() }}/">{{ b.name }}</a>
+    </p>
+    {% endfor %}
+</section>
 {% endblock body %}

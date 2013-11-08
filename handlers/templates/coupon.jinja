@@ -1,25 +1,33 @@
+{# /coupon/[id]/
+Parameters:
+    - c: The coupon entity referred to by the page ID
+    - b: The business entity that owns parameter c
+Globals:
+    - user: The logged-in user's entity
+    - is_admin(business): Verifies user has rights to modify the entity
+#}
 {% extends "base.jinja" %}
 {% from "coupon_snip.jinja" import coupon_snip %}
 
 
 {% block title %}{{ c.name }} | {{ b.name }}{% endblock title %}
+
+
 {% block head %}{{ super() }}
-        <link rel="stylesheet" type="text/css" href="/static/style/coupon.css">
-        <link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
+<link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
 {% endblock head %}
 
 
 {% block body %}
-        <section>
-            <header>
-    {% if mark_url %}
-                <img class="mark" alt="{{ b.name }}" src="{{ mark_url }}">
-    {% endif %}
-                {{ b.name }} - {{ c.name }}
-            </header>
-        </section>
-        <section id="coupon">
-            {{ coupon_snip(c, now, user) }}
-            <script src="/static/js/coupon_snip.js"></script>
-        </section>
+<section>
+    <header>
+        {% if b.mark_url %}
+        <img class="mark" alt="{{ b.name }}" src="{{ b.mark_url }}">
+        {% endif %}
+        {{ b.name }} - {{ c.name }}
+    </header>
+</section>
+<section id="coupon">
+    {{ coupon_snip(c) }}
+</section>
 {% endblock body %}

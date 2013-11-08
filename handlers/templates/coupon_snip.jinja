@@ -22,9 +22,9 @@
 {% endif %}
 {% endmacro %}
 
-{% macro coupon_snip(c, now, user=None, editable=False, show_holders=False, admin=False) %}
-{% set business = c.business.get() %}
 
+{% macro coupon_snip(c, show_img=False, held=False) %}
+{% set b = c.business.get() %}
 {% if c.start < now and now < c.end %}
 {% set class='active' %}
 {% elif now < c.start %}
@@ -33,33 +33,60 @@
 {% set class='expired' %}
 {% endif %}
 
-<article class="{{class}} coupon" id="c{{c.key.id()}}">
+<article class="{{ class }} coupon" id="c{{ c.key.id() }}">
 
-    <header>
-        <a href="/coupon/{{c.key.id()}}/">
-            {% if business.name %}
-            {{ business.name }} -
+    {% if show_img %}
+    <div style="float:left; width:50px; text-align: center; margin-right:0.5em;">
+        <img src="{{ b.icon_url }}">
+    </div>
+    {% endif %}
+    <div>
+        <header>
+            <a href="/business/{{ b.key.id() }}/">{{ b.name }}</a> -
+            <a href="/coupon/{{ c.key.id() }}/">{{ c.name }}</a>
+        </header>
+
+        <div class="time">{{ c.start.strftime('%c') }} - {{ c.end.strftime('%c') }}</div>
+        <div class="time">
+            {% if c.start < now and now < c.end %}
+            Available for {{ timediff(c.end, now) }}
+            {% elif now < c.start %}
+            Available in {{ timediff(c.start, now) }} for {{ timediff(c.end, c.start) }}
+            {% else %}
+            Offer has expired
             {% endif %}
-            {{ c.name }}
-        </a>
-    </header>
-    <div class="time">{{ c.start.strftime('%c') }} - {{ c.end.strftime('%c') }}</div>
+        </div>
+
+        {% if is_admin(b) %}
+        <ul class="holders">
+            <header>Holders</header>
+            {% set holders = c.get_holders() %}
+            {% if not holders %}
+            <li>None</li>
+            {% else %}
+            {% for u in holders %}
+            <li>{{ u.name }}</li>
+            {% endfor %}
+            {% endif %}
+        </ul>
+        {% endif %}
+    </div>
 
     <div class="right">
-        {% if admin %}
+        {% if is_admin(b) %}
         <button class="edit" id="button_c{{ c.key.id() }}">EDIT</button>
         <script>
-            WOLFINGS.import('coupon_admin', function() {
+            WOLFINGS.import('handlers.coupon', function() {
                 var button = document.getElementById('button_c{{ c.key.id() }}');
-                WOLFINGS.handlers.click_edit_coupon( button );
+                WOLFINGS.handlers.coupon.click_edit_coupon( button );
             });
         </script>
-        {% elif editable %}
+        {% elif held %}
         <button class="trash" id="button_c{{ c.key.id() }}">TRASH</button>
         <script>
-            WOLFINGS.import('coupon_snip', function() {
+            WOLFINGS.import('handlers.coupon', function() {
                 var button = document.getElementById('button_c{{ c.key.id() }}');
-                WOLFINGS.handlers.click_trash_coupon( button );
+                WOLFINGS.handlers.coupon.click_trash_coupon( button );
             });
         </script>
         {% elif user %}
@@ -68,33 +95,15 @@
         {% elif now < c.end %}
         <button class="claim" id="button_c{{ c.key.id() }}">CLAIM</button>
         <script>
-            WOLFINGS.import('coupon_snip', function() {
+            WOLFINGS.import('handlers.coupon', function() {
                 var button = document.getElementById('button_c{{ c.key.id() }}');
-                WOLFINGS.handlers.click_claim_coupon( button );
+                WOLFINGS.handlers.coupon.click_claim_coupon( button );
             });
         </script>
         {% endif %}
         {% endif %}
     </div>
-    {% if c.start < now and now < c.end %}
-    <div class="time">Available for {{ timediff(c.end, now) }}</div>
-    {% elif now < c.start %}
-    <div class="time">Available in {{ timediff(c.start, now) }} for {{ timediff(c.end, c.start) }}</div>
-    {% else %}
-    <div class="time">Offer has expired</div>
-    {% endif %}
+    <div style="clear:both;"></div>
 
-    {% if show_holders %}
-    <ul class="holders">
-        <header>Holders</header>
-        {% set users = c.get_holders() %}
-        {% if not users %}
-        <li>None</li>
-        {% endif %}
-        {% for u in c.get_holders() %}
-        <li>{{ u.name }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
     </article>
 {% endmacro %}

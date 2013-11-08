@@ -4,8 +4,10 @@ from models import Business, Coupon, User
 
 
 def init(self):
-    users = ['Tom', 'Dick', 'Harry']
-    coupons = ['Two for one donuts', '50% off coffee', '']
+    users = []
+    coupons = ['Two for one donuts',
+               '50% off coffee',
+               'Something completely different']
     businesses = [('Chipotle', 35.945841, -86.825259),
                   ('Starbucks', 35.960119, -86.802725),
                   ('Dunkin Donuts', 35.959632, -86.801355)]
@@ -27,6 +29,12 @@ def init(self):
 
 class InitHandler(webapp2.RequestHandler):
     def get(self):
+        for b in Business.query().iter():
+            b.key.delete()
+        for c in Coupon.query().iter():
+            c.key.delete()
+        for u in User.query().iter():
+            u.key.delete()
         init(self)
 
 

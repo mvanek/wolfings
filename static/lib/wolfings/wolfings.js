@@ -12,13 +12,14 @@ var WOLFINGS = (function() {
         loading,
         namespace;
 
-    obj = function() {}
-    obj.prototype.api = {};
-    obj.prototype.handlers = {};
-
     modules = [];
     loading = {};
     namespace = {};
+
+    obj = function() {}
+    obj.prototype.api = {};
+    obj.prototype.utils = {};
+    obj.prototype.handlers = {};
 
 
     obj.prototype.get = function( key ) {
@@ -48,9 +49,9 @@ var WOLFINGS = (function() {
                 }
             })( script.onload );
         } else {
+            var append_script;
             script = document.createElement('script');
             script.src = '/static/lib/wolfings/' + path + '.js';
-            document.body.appendChild( script );
             loading[ path ] = script;
             onload = function() {
                 modules.push( path );
@@ -59,11 +60,18 @@ var WOLFINGS = (function() {
                     callback();
                 }
             }
+            append_script = function() {
+                if ( document.body ) {
+                    document.body.appendChild( script );
+                } else {
+                    window.setTimeout(append_script, 0);
+                }
+            }
+            append_script();
         }
 
         script.onreadystatechange = onload;
         script.onload = onload;
-        modules.push( path );
     }
 
 
@@ -71,6 +79,9 @@ var WOLFINGS = (function() {
         switch ( dest ) {
             case 'api':
                 dest = obj.prototype.api;
+                break;
+            case 'utils':
+                dest = obj.prototype.utils;
                 break;
             case 'handlers':
                 dest = obj.prototype.handlers;
@@ -94,6 +105,9 @@ var WOLFINGS = (function() {
         return modules.slice(0);
     }
 
-
     return new obj();
 })();
+
+
+/* Import utils */
+WOLFINGS.import('utils');

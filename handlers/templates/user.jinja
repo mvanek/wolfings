@@ -1,32 +1,30 @@
+{# /user/[id]/
+Parameters:
+    - u: User entity corresponding to the page ID
+    - coupons: Coupon entities currently held by the user
+Globals:
+    - user: The logged-in user's entity
+    - is_admin(business): Verifies user has rights to modify the entity
+#}
 {% extends "base.jinja" %}
 {% from "coupon_snip.jinja" import coupon_snip %}
 
-
 {% block title %}{{name}}{% endblock title %}
-
-
 {% block head %}{{ super() }}
-        <link rel="stylesheet" type="text/css" href="/static/style/user.css">
-        <link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
+<link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
 {% endblock head %}
 
-
 {% block body %}
-
-    <section>
-        <header>
-            {{name}}
-        </header>
-    </section>
-
-    {% if coupons %}
-    <section id="coupons">
-        {% for c in coupons %}
-            {{ coupon_snip(c, now, user, True) }}
-        {% endfor %}
-    </section>
-    {% endif %}
-
-    <script src="/static/js/coupon_snip.js"></script>
-
+<section>
+    <header>
+        {{name}}
+    </header>
+</section>
+{% if coupons %}
+<section id="coupons">
+    {% for c in coupons %}
+    {{ coupon_snip(c, show_img=True, held=True) }}
+    {% endfor %}
+</section>
+{% endif %}
 {% endblock body %}
