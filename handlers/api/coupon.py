@@ -1,11 +1,10 @@
-from google.appengine.ext import ndb
-from google.appengine.api import users
 import webapp2
-import urllib
+from APIHandler import APIHandler
+from google.appengine.api import users
+from google.appengine.ext import ndb
+from models import Coupon
 import json
 import datetime
-
-from models import Coupon
 
 
 __all__ = ['CouponHandler', 'CouponIDHandler']
@@ -16,24 +15,21 @@ def str_to_datetime(s):
                                       '%Y-%m-%dT%H:%M:%S.%f')
 
 
-def is_admin(b=None):
+def authenticate(b=None):
     if users.is_current_user_admin():
         return True
-    if b:
-        logging.info('\nUSER: {}\nADMINS: {}'.format(ndb.Key('User', users.get_current_user().user_id()), b.admins))
-        return ndb.Key('User', users.get_current_user().user_id()) in b.admins
-    return False
+    if b and ndb.Key('User', users.get_current_user().user_id()) in b.admins:
+        return True
+    webapp2.abort(401)
 
 
-def authenticate(b=None):
-    if not is_admin(b):
-        webapp2.abort(401)
-
-
-class CouponHandler(webapp2.RequestHandler):
+class CouponHandler(APIHandler):
     '''
     HTTP Request Handler: /api/coupon
     '''
+    def __init__(self, *args, **kwargs):
+        super(CouponHandler, self).__init__(Coupon, *args, **kwargs)
+
     def get(self):
         '''
         HTTP GET Method Handler
@@ -43,28 +39,40 @@ class CouponHandler(webapp2.RequestHandler):
             - int user: the ID of the user whose coupons you want to check
             - int active: 0 if you want non-active coupons
         '''
+        params = self.load_http_params({
+            'business': (int, False),
+            'user': (int, False),
+            'year': (int, False),
+            'month': (int, False),
+            'day': (int, False),
+            'hour': (int, False),
+            'min': (int, False)
+        }, use_default=True)
         try:
-            business_id = int(urllib.unquote(self.request.get('business')))
-        except ValueError:
-            business_id = None
-        try:
-            user_id = int(urllib.unquote(self.request.get('user')))
-        except ValueError:
-            user_id = None
-        try:
-            month = int(urllib.unquote(self.request.get('month')))
-            day = int(urllib.unquote(self.request.get('day')))
-            year = int(urllib.unquote(self.request.get('year')))
-            hour = int(urllib.unquote(self.request.get('hour')))
-            minute = int(urllib.unquote(self.request.get('min')))
-            time = datetime.datetime(year, month, day, hour, minute)
-        except ValueError:
+            time = datetime.datetime(
+                params['year'],
+                params['month'],
+                params['day'],
+                params['hour'],
+                params['minute']
+            )
+        except KeyError:
             time = None
+
+        coupon_keys = Coupon.list_coupons(
+            user_id=params['user'],
+            business_id=params['business'],
+            time=time,
+            keys_only=True
+        )
+
         self.status = '200 OK'
-        for key in Coupon.list_coupons(user_id=user_id,
-                                       business_id=business_id,
-                                       time=time,
-                                       keys_only=True):
+        flag = False
+        for key in coupon_keys:
+            if flag:
+                self.response.write('\n')
+            else:
+                flag = True
             self.response.write(str(key.id()) + '\n')
 
     def post(self):
@@ -72,32 +80,30 @@ class CouponHandler(webapp2.RequestHandler):
         HTTP POST Method Handler
         Creates new coupon
         '''
-        data = json.loads(urllib.unquote(self.request.body))
-        data['start'] = str_to_datetime(data['start'])
-        data['end'] = str_to_datetime(data['end'])
-        business_key = ndb.Key('Business', data['business'])
+        params = self.load_json_params({
+            'business': (int, True),
+            'name': (str, True),
+            'start': (str_to_datetime, True),
+            'end': (str_to_datetime, True)
+        })
+        business_key = ndb.Key('Business', params['business'])
         authenticate(business_key.get())
-        coupon = Coupon(name=data['name'],
-                        business=business_key,
-                        start=data['start'],
-                        end=data['end'])
-        key = coupon.put()
+        key = Coupon(
+            name=params['name'],
+            business=business_key,
+            start=params['start'],
+            end=params['end']
+        ).put()
         self.status = '200 OK'
         self.response.write('/api/coupon/' + str(key.id()))
 
 
-class CouponIDHandler(webapp2.RequestHandler):
+class CouponIDHandler(APIHandler):
     '''
     HTTP Request Handler: /api/coupon/[id]
     '''
-    def get_id(self):
-        return int(urllib.unquote(self.request.path.split('/')[3]))
-
-    def get_coupon(self):
-        c = Coupon.get_by_id(self.get_id())
-        if c:
-            return c
-        self.abort(404)
+    def __init__(self, *args, **kwargs):
+        super(CouponIDHandler, self).__init__(Coupon, *args, **kwargs)
 
     def get(self):
         '''
@@ -105,23 +111,24 @@ class CouponIDHandler(webapp2.RequestHandler):
         Returns JSON representation of coupon
         '''
         self.status = '200 OK'
-        self.response.write(self.get_coupon().json())
+        self.response.write(self.get_entity().json())
 
     def put(self):
         '''
         HTTP PUT Method Handler
         Creates new coupon at the requested URI
         '''
-        coupon = self.get_coupon()
+        coupon = self.get_entity()
         authenticate(coupon.business.get())
-        data = json.loads(self.request.body)
-        try:
-            data['business'] = ndb.Key('Business', int(data['business']))
-        except ValueError:
-            self.abort(400)
-        except KeyError:
-            self.abort(400)
-        for key, value in data.iteritems():
+        params = self.load_json_params({
+            'business': (int, False),
+            'name': (str, False),
+            'start': (str_to_datetime, False),
+            'end': (str_to_datetime, False)
+        })
+        for key, value in params.iteritems():
+            if key == 'business':
+                value = ndb.Key('Business', value)
             setattr(coupon, key, value)
         key = coupon.put()
         self.status = '200 OK'
@@ -132,7 +139,7 @@ class CouponIDHandler(webapp2.RequestHandler):
         HTTP DELETE Method Handler
         Deletes exiting coupon
         '''
-        coupon = self.get_coupon()
+        coupon = self.get_entity()
         authenticate(coupon.business.get())
         coupon.key.delete()
         self.status = '204 No Content'

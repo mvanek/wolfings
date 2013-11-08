@@ -58,4 +58,6 @@ class Business(ndb.Model):
         return data
 
     def json(self):
-        return json.dumps(self.dict())
+        d = self.dict()
+        d['admins'] = [user_key.id() for user_key in d['admins']]
+        return json.dumps(d)
