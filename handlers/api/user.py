@@ -21,8 +21,6 @@ def is_admin(uid=None, bid=None):
     if bid:
         user_key = ndb.Key('User', cur_user)
         admins = Business.get_by_id(bid).admins
-        logging.info(user_key)
-        logging.info(admins)
         return user_key in admins
     return False
 
