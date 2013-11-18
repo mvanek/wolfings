@@ -24,9 +24,11 @@ def main():
         ('/logout/',                    LogoutHandler),
         ('/coupon/',                    CouponHandler),
         ('/coupon/[0-9]+/',             CouponIDHandler),
+        ('/coupon/[0-9]+/edit/',        CouponIDEditHandler),
         ('/business/',                  BusinessHandler),
         ('/business/[0-9]+/',           BusinessIDHandler),
         ('/business/[0-9]+/admin/',     BusinessIDAdminHandler),
+        ('/business/[0-9]+/verify/',    BusinessIDVerifyHandler),
         ('/business/[0-9]+/upload/',    BusinessIDUploadHandler),
         ('/user/',                      UserHandler),
         ('/user/[0-9]+/',               UserIDHandler)

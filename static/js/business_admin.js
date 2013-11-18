@@ -5,6 +5,11 @@ function biz_id() {
     return WOLFINGS.utils.toInt( path[ path.length-3 ] );
 }
 
+function coup_id() {
+    var path = window.location.pathname.split('/');
+    return WOLFINGS.utils.toInt( path[ path.length-3 ] );
+}
+
 function put_business() {
     jQuery.ajax({
         type: 'PUT',
@@ -13,6 +18,43 @@ function put_business() {
         contentType: 'text/json',
         data: JSON.stringify({
             name: document.forms['update']['name'].value
+        })
+    }).done(function( res ) {
+        window.location = res.slice(4);
+    })
+}
+
+function delete_coupon() {
+    jQuery.ajax({
+        type: 'DELETE',
+        url: '/api/coupon/' + coup_id(),
+        processData: false
+    }).done(function( res ) {
+        window.location = '/';
+    })
+}
+
+function put_coupon() {
+    var start, end;
+    start = new Date(
+        document.forms['update']['start_date'].value + ' ' + 
+        document.forms['update']['start_hour'].value + ':' +
+        document.forms['update']['start_min'].value
+    );
+    end = new Date(
+        document.forms['update']['end_date'].value + ' ' + 
+        document.forms['update']['end_hour'].value + ':' +
+        document.forms['update']['end_min'].value
+    );
+    jQuery.ajax({
+        type: 'PUT',
+        url: '/api/coupon/' + coup_id(),
+        processData: false,
+        contentType: 'text/json',
+        data: JSON.stringify({
+            name: document.forms['update']['name'].value,
+            start: start,
+            end: end
         })
     }).done(function( res ) {
         window.location = res.slice(4);
@@ -106,20 +148,27 @@ function lookup_admin() {
 
 function lookup_user() {
     var form,
-        dest;
+        dest,
+        data,
+        name, address, city, zip, phone;
 
     form = document.forms['user'];
     dest = document.getElementById('user_list');
+    name = form['name'].value;
+    if ( name = form['name'].value )
+        data['name'] = name
+    if ( address = form['address'].value )
+        data['address'] = name
+    if ( city = form['city'].value )
+        data['city'] = name
+    if ( zip = form['zip'].value )
+        data['zip'] = name
+    if ( phone = form['phone'].value )
+        data['phone'] = name
     jQuery.ajax({
         type: 'GET',
         url: '/api/user/',
-        data: {
-            name: form['name'].value,
-            address: form['address'].value,
-            city: form['city'].value,
-            zip: form['zip'].value,
-            phone: form['phone'].value
-        }
+        data: data
     }).done(function( res ) {
         var user_ids,
             i;

@@ -22,7 +22,8 @@ class APIHandler(webapp2.RequestHandler):
             try:
                 params[k] = dtype(data[k])
             except ValueError:
-                self.abort(400)
+                if data[k]:
+                    self.abort(400)
             except KeyError:
                 if required:
                     self.abort(400)

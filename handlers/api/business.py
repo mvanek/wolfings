@@ -3,6 +3,7 @@ from APIHandler import APIHandler
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from models import Business, Coupon
+import logging
 
 
 __all__ = ['BusinessHandler', 'BusinessIDHandler']
@@ -45,7 +46,7 @@ class BusinessHandler(APIHandler):
         else:
             query = Business.query()
 
-        if 'name' in params:
+        if 'name' in params and params['name']:
             query = query.filter(Business.name == params['name'])
 
         self.response.status = '200 OK'
@@ -74,7 +75,7 @@ class BusinessHandler(APIHandler):
         }, use_default=True)
 
         authenticate()
-        admin_keys = [ndb.Key('User', adm_id) for adm_id in admins]
+        admin_keys = [ndb.Key('User', adm_id) for adm_id in params['admins']]
         if not len(ndb.get_multi(admin_keys)) == len(admin_keys):
             self.abort(400)
 

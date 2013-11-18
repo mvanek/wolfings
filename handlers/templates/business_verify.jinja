@@ -12,29 +12,32 @@ Globals:
 
 {% block title %}{{ name }}{% endblock title %}
 
-{% block head %}{{ super() }}
-<link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
-{% endblock head %}
-
 {% block body %}
 {% if is_admin(b) %}
-<div class="adminlink">
-    <a href="admin">Verify Coupons</a><br>
-    <a href="admin">Admin Panel</a>
-</div>
+<a class="adminlink" href="admin">Admin Panel</a>
 {% endif %}
 <section>
     <header>
         {% if b.mark_url %}
         <img class="mark" alt="{{ b.name }}" src="{{ b.mark_url }}">
         {% endif %}
-        {{ b.name }}
+        {{ b.name }} Coupon Verification
     </header>
 </section>
 {% if coupons %}
 <section id="coupons">
     {% for c in coupons %}
-    {{ coupon_snip(c, show_img=True) }}
+    <article id="{{ c.key.id() }}">
+        <header>{{ c.name }}</header>
+        <ul>
+            {% for u in c.get_holders() %}
+            <li><form method="POST" action="/api/user/{{ u.key.id() }}/coupons/{{ c.key.id() }}">
+                <input type="submit" value="{{ u.name }}">
+                <input type="hidden" name="verify" value="true">
+            </form></li>
+            {% endfor %}
+        </ul>
+    </article>
     {% endfor %}
 </section>
 {% endif %}

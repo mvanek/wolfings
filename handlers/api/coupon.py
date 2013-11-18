@@ -2,7 +2,7 @@ import webapp2
 from APIHandler import APIHandler
 from google.appengine.api import users
 from google.appengine.ext import ndb
-from models import Coupon
+from models import Coupon, User
 import datetime
 
 
@@ -140,5 +140,11 @@ class CouponIDHandler(APIHandler):
         '''
         coupon = self.get_entity()
         authenticate(coupon.business.get())
+        ulist = []
+        qry = User.query(User.held_coupons == coupon.key)
+        for u in qry.iter():
+            u.held_coupons.remove(coupon.key)
+            ulist.append(u)
+        ndb.put_multi(ulist)
         coupon.key.delete()
         self.status = '204 No Content'

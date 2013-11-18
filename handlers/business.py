@@ -15,6 +15,7 @@ from models import Business, Coupon, User
 __all__ = ['BusinessHandler',
            'BusinessIDHandler',
            'BusinessIDAdminHandler',
+           'BusinessIDVerifyHandler',
            'BusinessIDUploadHandler']
 
 
@@ -28,7 +29,7 @@ def is_admin(b=None):
 
 class BusinessHandler(RequestHandler):
     '''
-    HTTP Request Handler, Collection: /business
+    HTTP Request Handler, Page: /business/
     '''
     def __init__(self, *args, **kwargs):
         super(BusinessHandler, self).__init__(*args, **kwargs)
@@ -61,7 +62,7 @@ class BusinessHandler(RequestHandler):
 
 class BusinessIDHandler(RequestHandler):
     '''
-    HTTP Request Handler, Entity: /business/[id]
+    HTTP Request Handler, Page: /business/[id]/
     '''
     def __init__(self, *args, **kwargs):
         super(BusinessIDHandler, self).__init__(*args, **kwargs)
@@ -83,7 +84,7 @@ class BusinessIDHandler(RequestHandler):
 
 class BusinessIDAdminHandler(RequestHandler):
     '''
-    HTTP Request Handler, Entity: /business/[id]/admin
+    HTTP Request Handler, Page: /business/[id]/admin/
     '''
     def __init__(self, *args, **kwargs):
         super(BusinessIDAdminHandler, self).__init__(*args, **kwargs)
@@ -107,9 +108,30 @@ class BusinessIDAdminHandler(RequestHandler):
         ))
 
 
+class BusinessIDVerifyHandler(RequestHandler):
+    '''
+    HTTP Request Handler, Page: /business/[id]/verify/
+    '''
+    def __init__(self, *args, **kwargs):
+        super(BusinessIDVerifyHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('business_verify.jinja')
+        self.idtype = int
+
+    def get(self):
+        b = self.get_page_entity()
+        if not is_admin(b):
+            self.abort(401)
+        coupons = Coupon.get_by_business(b.key.id())
+        self.response.status = '200 OK'
+        self.response.write(self.template.render(
+            b=b,
+            coupons=coupons
+        ))
+
+
 class BusinessIDUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     '''
-    HTTP Request Handler, Entity: /business/[id]/upload
+    HTTP Request Handler, Page: /business/[id]/upload
     '''
     def post(self):
         blob_info = self.get_uploads('mark')[0]

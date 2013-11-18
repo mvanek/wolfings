@@ -1,4 +1,5 @@
 import webapp2
+import urllib
 from APIHandler import APIHandler
 
 from google.appengine.ext import ndb
@@ -14,11 +15,10 @@ def is_admin(uid=None, bid=None):
     if users.is_current_user_admin():
         return True
     cur_user = users.get_current_user().user_id()
-    if uid:
-        if uid == cur_user:
-            return True
-        if bid:
-            return cur_user in Business.get_by_id(bid).admins
+    if uid == cur_user:
+        return True
+    if bid:
+        return cur_user in Business.get_by_id(bid).admins
     return False
 
 
@@ -204,6 +204,64 @@ class UserIDCouponIDHandler(webapp2.RequestHandler):
             return int(urllib.unquote(self.request.path.split('/')[5]))
         except ValueError:
             self.abort(404)
+
+    def delete(self):
+        '''
+        HTTP DELETE Method Handler
+        Takes coupon away from user
+        '''
+        user = User.get_by_id(self.get_uid())
+        if not user:
+            self.abort(400)
+        coupon_key = ndb.Key('Coupon', self.get_cid())
+        authenticate(self.get_uid(), coupon_key.get().business.id())
+        user.held_coupons.remove(coupon_key)
+        user.put()
+        self.response.status = '204 No Content'
+
+
+class UserIDCouponIDHandler(APIHandler):
+    '''
+    HTTP Request Handler: /api/user/[id]/coupons/[id]
+    '''
+    def __init__(self, *args, **kwargs):
+        super(UserIDCouponIDHandler, self).__init__(User, *args, idtype=str, **kwargs)
+
+    def get_uid(self):
+        try:
+            return urllib.unquote(self.request.path.split('/')[3])
+        except ValueError:
+            self.abort(404)
+
+    def get_cid(self):
+        try:
+            return int(urllib.unquote(self.request.path.split('/')[5]))
+        except ValueError:
+            self.abort(404)
+
+    def post(self):
+        '''
+        HTTP POST Method Handler
+        Verifies coupon
+        '''
+        params = self.load_http_params({
+            'verify': (bool, True)
+        })
+        user = self.get_entity()
+        coupon_key = ndb.Key('Coupon', self.get_cid())
+        authenticate(self.get_uid(), coupon_key.get().business.id())
+        if coupon_key not in user.held_coupons:
+            self.abort(404)
+        if not params['verify']:
+            self.abort(400)
+        user.old_coupons.append(coupon_key)
+        user.held_coupons.remove(coupon_key)
+        user.put()
+        self.response.status = '200 OK'
+        self.response.write = '/api/user/{}/history/{}'.format(
+            user.key.id(),
+            coupon_key.id()
+        )
 
     def delete(self):
         '''

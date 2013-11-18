@@ -16,6 +16,7 @@ class User(ndb.Model):
     phone = ndb.StringProperty('p')
     address = ndb.StructuredProperty(Address)
     held_coupons = ndb.KeyProperty('c', kind='Coupon', repeated=True)
+    old_coupons = ndb.KeyProperty('o', kind='Coupon', repeated=True)
 
     @classmethod
     def list_users(cls, keys_only=False):
