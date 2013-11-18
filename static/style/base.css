@@ -25,7 +25,10 @@ body {
 
     background: rgba(255, 255, 255, 0.80);
 }
-
+/* Clear the bottom of the viewport */
+.clear {
+    clear:both;
+}
 
 /* Header bar */
 #topbar {
@@ -120,9 +123,7 @@ section + section {
 
 /* Admin links */
 .adminlink {
-    position: absolute;
+    float:right;
     line-height: 1.3em;
-    margin-right: 0.75em;
-
-    right:0;
+    text-align:right;
 }
