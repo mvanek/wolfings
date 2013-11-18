@@ -1,4 +1,5 @@
 import webapp2
+import logging
 import urllib
 from APIHandler import APIHandler
 
@@ -18,7 +19,11 @@ def is_admin(uid=None, bid=None):
     if uid == cur_user:
         return True
     if bid:
-        return cur_user in Business.get_by_id(bid).admins
+        user_key = ndb.Key('User', cur_user)
+        admins = Business.get_by_id(bid).admins
+        logging.info(user_key)
+        logging.info(admins)
+        return user_key in admins
     return False
 
 
@@ -249,7 +254,7 @@ class UserIDCouponIDHandler(APIHandler):
         })
         user = self.get_entity()
         coupon_key = ndb.Key('Coupon', self.get_cid())
-        authenticate(self.get_uid(), coupon_key.get().business.id())
+        authenticate(bid=coupon_key.get().business.id())
         if coupon_key not in user.held_coupons:
             self.abort(404)
         if not params['verify']:
