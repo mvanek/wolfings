@@ -14,13 +14,16 @@
     function validateForm() {
         if ( phoneInput.value.length == 0 ) {
             phoneLabel.className = '';
-            return;
-        }
-        if ( !isValidPhone( phoneInput.value ) ) {
-            phoneLabel.className = 'invalid';
         } else {
-            phoneLabel.className = 'valid';
+            if ( !isValidPhone( phoneInput.value ) ) {
+                phoneLabel.className = 'invalid';
+                return false;
+            } else {
+                phoneLabel.className = 'valid';
+            }
         }
+        phoneInput.value = phoneInput.value.replace(/[^0-9]/g, '');
+        return true;
     }
 
     phoneInput = document.forms[0]['phone'];
@@ -32,5 +35,6 @@
         }
     }
     phoneInput.addEventListener('change', validateForm, false);
+    document.forms[0].onsubmit = validateForm;
     validateForm();
 ;})();
