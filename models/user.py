@@ -13,7 +13,7 @@ class Address(ndb.Model):
 class User(ndb.Model):
     name = ndb.StringProperty('n', required=True)
     email = ndb.StringProperty('e', required=True)
-    phone = ndb.StringProperty('p')
+    phone = ndb.IntegerProperty('p')
     address = ndb.StructuredProperty(Address)
     held_coupons = ndb.KeyProperty('c', kind='Coupon', repeated=True)
     old_coupons = ndb.KeyProperty('o', kind='Coupon', repeated=True)

@@ -81,13 +81,15 @@ body {
 
 /* Right-align */
 .right {
-    position: absolute;
-    right: 0;
-    top: 0;
+    float: right;
 }
 
 
 /* Headers */
+#viewport > header {
+    font-size: 1.4em;
+    text-align: center;
+}
 section > header {
     font-size: 1.3em;
 }

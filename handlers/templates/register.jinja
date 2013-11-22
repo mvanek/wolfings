@@ -1,0 +1,32 @@
+{# /register/
+Parameters: none
+Globals: none
+#}
+{% extends "base.jinja" %}
+
+{% block title %}Register{% endblock title %}
+{% block head %}{{ super() }}
+<link rel="stylesheet" type="text/css" href="/static/style/register.css">
+{% endblock head %}
+
+{% block body %}
+<header>Register</header>
+<form action="/register/" method="POST">
+    <label for="name" class="required"><span>Name</span></label>
+    <input type="text" name="name" placeholder="Your Name">
+    <div class="status" id="status_name"></div>
+    <br>
+
+    <label for="phone"><span>Phone number</span></label>
+    <input type="text" name="phone" placeholder="(xxx) xxx-xxxx">
+    <div class="status" id="status_phone"></div>
+    <br>
+
+    <div class="legend">
+        <span class="red">*</span> Indicates required field</span>
+    </div>
+
+    <input type="submit" class="blue" value="Register">
+</form>
+<script src="/static/js/register.js"></script>
+{% endblock body %}

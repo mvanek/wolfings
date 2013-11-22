@@ -1,0 +1,32 @@
+@import "buttons.css";
+
+label {
+    display: inline-block;
+    width: 8.5em;
+    margin-left:1em;
+}
+label:after {
+    vertical-align: middle;
+    float: right;
+}
+label.required:after {
+    content: "*";
+    color:#ff0000;
+    font-size:1.2em;
+}
+label.valid:after {
+    content: "✅";
+}
+label.invalid:after {
+    content: "×";
+    color:#ff0000;
+    font-size:1.2em;
+}
+
+.legend {
+    font-size: 0.75em;
+}
+
+.red {
+    color: #ff0000;
+}
