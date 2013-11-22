@@ -7,37 +7,11 @@ Parameters:
 {% extends "base.jinja" %}
 
 
-{% macro input_datetime(name, label=None) %}
-{# Parameters:
-    - name: A unique string to identify the input field
-    - label: An optional string to be used as a label for the input field
-#}
-{% if label %}
-<label for="{{ name }}_date">{{ label }}</label>
-{% endif %}
-<input name="{{ name }}_date" id="{{ name }}_date"></input>
-<select name="{{ name }}_hour">
-    {% for i in range(24) %}
-    <option value="{{ i }}">{{ '{:02}'.format(i) }}</option>
-    {% endfor %}
-</select> : <select name="{{ name }}_min">
-    {% for i in range(60) %}
-    <option value="{{ i }}">{{ '{:02}'.format(i) }}</option>
-    {% endfor %}
-</select>
-<script>
-    jQuery( document.getElementById('{{ name }}_date') ).datepicker();
-</script>
-{% endmacro %}
-
-
 {% block title %}{{ b.name }}{% endblock title %}
 
 {% block head %}
 {{ super() }}
-<link href="/static/lib/jquery-ui/css/dot-luv/jquery-ui-1.10.3.custom.css" rel="stylesheet" type="text/css">
 <link href="/static/style/business_admin.css" rel="stylesheet" type="text/css">
-<script src="/static/lib/jquery-ui/js/jquery-ui-1.10.3.custom.js"></script>
 <script src="/static/js/utils.js"></script>
 <script src="/static/js/business_admin.js"></script>
 {% endblock head %}
@@ -84,16 +58,6 @@ Parameters:
             <input type="submit" class="blue" value="search">
         </form>
         <div id="admin_list"> </article>
-    </article>
-    <article>
-        <header>New Coupon</header>
-        <form name="newcoup" action="javascript:post_coupon()">
-            <label for="name">Name: </label>
-            <input type="text" name="name" value=""> <br>
-            {{ input_datetime('start', 'Start time:') }} <br>
-            {{ input_datetime('end', 'End time:') }}
-            <input type="submit" class="blue" value="submit">
-        </form>
     </article>
     <article>
         <header>User Lookup</header>

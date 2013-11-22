@@ -108,7 +108,7 @@ function post_coupon() {
             end: new Date( endDateString )
         })
     }).done(function( res ) {
-        window.location = res.slice(4);
+        window.location = window.location;
     })
 }
 

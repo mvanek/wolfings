@@ -15,7 +15,7 @@ from models import Business, Coupon, User
 __all__ = ['BusinessHandler',
            'BusinessIDHandler',
            'BusinessIDAdminHandler',
-           'BusinessIDVerifyHandler',
+           'BusinessIDManageHandler',
            'BusinessIDUploadHandler']
 
 
@@ -108,12 +108,12 @@ class BusinessIDAdminHandler(RequestHandler):
         ))
 
 
-class BusinessIDVerifyHandler(RequestHandler):
+class BusinessIDManageHandler(RequestHandler):
     '''
-    HTTP Request Handler, Page: /business/[id]/verify/
+    HTTP Request Handler, Page: /business/[id]/manage/
     '''
     def __init__(self, *args, **kwargs):
-        super(BusinessIDVerifyHandler, self).__init__(*args, **kwargs)
+        super(BusinessIDManageHandler, self).__init__(*args, **kwargs)
         self.template = self.JINJA_ENVIRONMENT.get_template('business_verify.jinja')
         self.idtype = int
 
