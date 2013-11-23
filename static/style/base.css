@@ -82,6 +82,7 @@ body {
 /* Right-align */
 .right {
     float: right;
+    text-align: right;
 }
 .right >* {
     margin-right: 0;
