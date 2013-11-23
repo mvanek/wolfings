@@ -1,13 +1,6 @@
 from google.appengine.ext import ndb
+from address import Address
 import json
-
-
-class Address(ndb.Model):
-    number = ndb.IntegerProperty()
-    street = ndb.StringProperty()
-    city = ndb.StringProperty()
-    zip = ndb.StringProperty()
-    country = ndb.StringProperty()
 
 
 class User(ndb.Model):

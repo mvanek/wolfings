@@ -1,4 +1,5 @@
 from google.appengine.ext import ndb
+from address import Address
 from google.appengine.api import images
 import geobox
 import json
@@ -7,11 +8,12 @@ import logging
 
 class Business(ndb.Model):
     name = ndb.StringProperty('n', required=True)
+    mark = ndb.BlobKeyProperty('m')
+    admins = ndb.KeyProperty('adm', repeated=True)
+    address = ndb.StructuredProperty(Address, required=True)
     lat = ndb.FloatProperty('a', required=True)
     lon = ndb.FloatProperty('o', required=True)
     geoboxes = ndb.StringProperty('g', repeated=True)
-    mark = ndb.BlobKeyProperty('m')
-    admins = ndb.KeyProperty('adm', repeated=True)
 
     @property
     def mark_url(self):

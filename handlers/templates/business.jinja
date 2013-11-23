@@ -12,25 +12,35 @@ Globals:
 
 {% block title %}{{ name }}{% endblock title %}
 
+
 {% block head %}{{ super() }}
 <link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
+<link rel="stylesheet" type="text/css" href="/static/style/business.css">
 {% endblock head %}
 
+
 {% block body %}
+
 {% if is_admin(b) %}
-<div class="adminlink">
+<div class="right">
     <a href="manage">Manage Coupons</a><br>
     <a href="admin">Admin Panel</a>
 </div>
 {% endif %}
-<section>
+
+{% if b.mark_url %}
+<img class="mark" src="{{ b.mark_url }}">
+{% endif %}
+
+<section class="desc">
     <header>
-        {% if b.mark_url %}
-        <img class="mark" alt="{{ b.name }}" src="{{ b.mark_url }}">
-        {% endif %}
         {{ b.name }}
     </header>
+    <div>
+        {{ b.address|render_address }}
+    </div>
 </section>
+
 {% if coupons %}
 <section id="coupons">
     {% for c in coupons %}
@@ -38,4 +48,5 @@ Globals:
     {% endfor %}
 </section>
 {% endif %}
+
 {% endblock body %}

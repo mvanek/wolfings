@@ -135,7 +135,8 @@ class BusinessIDUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     '''
     def post(self):
         blob_info = self.get_uploads('mark')[0]
-        key = self.get_page_key()
+        page_id = int(urllib.unquote(self.request.path).split('/')[2])
+        key = ndb.Key('Business', page_id);
         b = key.get()
         if not is_admin(b):
             self.abort(401)

@@ -1,7 +1,7 @@
-img.mark {
+.mark, .desc {
+    display: inline-block;
     vertical-align: middle;
 }
-
 
 article {
     border-top: solid;
@@ -10,10 +10,3 @@ article {
 
     padding-top: 0.25em;
 }
-
-
-.coupon .right {
-    top: 0.25em;
-}
-
-

@@ -27,6 +27,11 @@ def is_admin(env, b=None):
         return env.globals['user'].key in b.admins
     return False
 
+def render_address(address):
+    return ('<div>{address.number} {address.street}</div>'
+        '<div>{address.city}, {address.state} {address.zip}</div>'
+        ).format(address=address)
+
 class RequestHandler(webapp2.RequestHandler):
     def __init__(self, *args, **kwargs):
         super(RequestHandler, self).__init__(*args, **kwargs)
@@ -43,6 +48,7 @@ class RequestHandler(webapp2.RequestHandler):
         self.JINJA_ENVIRONMENT.globals['user'] = get_cur_user()
         self.JINJA_ENVIRONMENT.globals['now'] = datetime.datetime.now()
         self.JINJA_ENVIRONMENT.globals['is_admin'] = is_admin
+        self.JINJA_ENVIRONMENT.filters['render_address'] = render_address
 
     def _load_params(self, data, param_info, use_default):
         params = {}
