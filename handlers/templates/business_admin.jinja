@@ -21,9 +21,70 @@ Parameters:
     <header>Admin Panel</header>
     <article>
         <header>Update Details</header>
-        <form name="update" action="javascript:put_business()">
-            <label for="name">Name: </label>
-            <input type="text" name="name" value="{{b.name}}">
+        <form name="update" method="POST">
+            <label for="name">Name</label>
+            <input name="name" type="text" value="{{ b.name }}"><br>
+            <label for="address">Address</label>
+            <input name="address" type="text" value="{{ b.address.number }} {{ b.address.street }}"><br>
+            <label for="city">City</label>
+            <input name="city" type="text" value="{{ b.address.city }}"><br>
+            <label for="zip">Zip</label>
+            <input name="zip" type="text" value="{{ b.address.zip }}"><br>
+            <label for="state">State</label>
+            <select name="state">
+                <option value="" selected="selected">Select a State</option> 
+                <option value="AL" {% if b.address.state == 'AL' %} selected="selected" {% endif %}> Alabama              </option> 
+                <option value="AK" {% if b.address.state == 'AK' %} selected="selected" {% endif %}> Alaska               </option> 
+                <option value="AZ" {% if b.address.state == 'AZ' %} selected="selected" {% endif %}> Arizona              </option> 
+                <option value="AR" {% if b.address.state == 'AR' %} selected="selected" {% endif %}> Arkansas             </option> 
+                <option value="CA" {% if b.address.state == 'CA' %} selected="selected" {% endif %}> California           </option> 
+                <option value="CO" {% if b.address.state == 'CO' %} selected="selected" {% endif %}> Colorado             </option> 
+                <option value="CT" {% if b.address.state == 'CT' %} selected="selected" {% endif %}> Connecticut          </option> 
+                <option value="DE" {% if b.address.state == 'DE' %} selected="selected" {% endif %}> Delaware             </option> 
+                <option value="DC" {% if b.address.state == 'DC' %} selected="selected" {% endif %}> District Of Columbia </option> 
+                <option value="FL" {% if b.address.state == 'FL' %} selected="selected" {% endif %}> Florida              </option> 
+                <option value="GA" {% if b.address.state == 'GA' %} selected="selected" {% endif %}> Georgia              </option> 
+                <option value="HI" {% if b.address.state == 'HI' %} selected="selected" {% endif %}> Hawaii               </option> 
+                <option value="ID" {% if b.address.state == 'ID' %} selected="selected" {% endif %}> Idaho                </option> 
+                <option value="IL" {% if b.address.state == 'IL' %} selected="selected" {% endif %}> Illinois             </option> 
+                <option value="IN" {% if b.address.state == 'IN' %} selected="selected" {% endif %}> Indiana              </option> 
+                <option value="IA" {% if b.address.state == 'IA' %} selected="selected" {% endif %}> Iowa                 </option> 
+                <option value="KS" {% if b.address.state == 'KS' %} selected="selected" {% endif %}> Kansas               </option> 
+                <option value="KY" {% if b.address.state == 'KY' %} selected="selected" {% endif %}> Kentucky             </option> 
+                <option value="LA" {% if b.address.state == 'LA' %} selected="selected" {% endif %}> Louisiana            </option> 
+                <option value="ME" {% if b.address.state == 'ME' %} selected="selected" {% endif %}> Maine                </option> 
+                <option value="MD" {% if b.address.state == 'MD' %} selected="selected" {% endif %}> Maryland             </option> 
+                <option value="MA" {% if b.address.state == 'MA' %} selected="selected" {% endif %}> Massachusetts        </option> 
+                <option value="MI" {% if b.address.state == 'MI' %} selected="selected" {% endif %}> Michigan             </option> 
+                <option value="MN" {% if b.address.state == 'MN' %} selected="selected" {% endif %}> Minnesota            </option> 
+                <option value="MS" {% if b.address.state == 'MS' %} selected="selected" {% endif %}> Mississippi          </option> 
+                <option value="MO" {% if b.address.state == 'MO' %} selected="selected" {% endif %}> Missouri             </option> 
+                <option value="MT" {% if b.address.state == 'MT' %} selected="selected" {% endif %}> Montana              </option> 
+                <option value="NE" {% if b.address.state == 'NE' %} selected="selected" {% endif %}> Nebraska             </option> 
+                <option value="NV" {% if b.address.state == 'NV' %} selected="selected" {% endif %}> Nevada               </option> 
+                <option value="NH" {% if b.address.state == 'NH' %} selected="selected" {% endif %}> New Hampshire        </option> 
+                <option value="NJ" {% if b.address.state == 'NJ' %} selected="selected" {% endif %}> New Jersey           </option> 
+                <option value="NM" {% if b.address.state == 'NM' %} selected="selected" {% endif %}> New Mexico           </option> 
+                <option value="NY" {% if b.address.state == 'NY' %} selected="selected" {% endif %}> New York             </option> 
+                <option value="NC" {% if b.address.state == 'NC' %} selected="selected" {% endif %}> North Carolina       </option> 
+                <option value="ND" {% if b.address.state == 'ND' %} selected="selected" {% endif %}> North Dakota         </option> 
+                <option value="OH" {% if b.address.state == 'OH' %} selected="selected" {% endif %}> Ohio                 </option> 
+                <option value="OK" {% if b.address.state == 'OK' %} selected="selected" {% endif %}> Oklahoma             </option> 
+                <option value="OR" {% if b.address.state == 'OR' %} selected="selected" {% endif %}> Oregon               </option> 
+                <option value="PA" {% if b.address.state == 'PA' %} selected="selected" {% endif %}> Pennsylvania         </option> 
+                <option value="RI" {% if b.address.state == 'RI' %} selected="selected" {% endif %}> Rhode Island         </option> 
+                <option value="SC" {% if b.address.state == 'SC' %} selected="selected" {% endif %}> South Carolina       </option> 
+                <option value="SD" {% if b.address.state == 'SD' %} selected="selected" {% endif %}> South Dakota         </option> 
+                <option value="TN" {% if b.address.state == 'TN' %} selected="selected" {% endif %}> Tennessee            </option> 
+                <option value="TX" {% if b.address.state == 'TX' %} selected="selected" {% endif %}> Texas                </option> 
+                <option value="UT" {% if b.address.state == 'UT' %} selected="selected" {% endif %}> Utah                 </option> 
+                <option value="VT" {% if b.address.state == 'VT' %} selected="selected" {% endif %}> Vermont              </option> 
+                <option value="VA" {% if b.address.state == 'VA' %} selected="selected" {% endif %}> Virginia             </option> 
+                <option value="WA" {% if b.address.state == 'WA' %} selected="selected" {% endif %}> Washington           </option> 
+                <option value="WV" {% if b.address.state == 'WV' %} selected="selected" {% endif %}> West Virginia        </option> 
+                <option value="WI" {% if b.address.state == 'WI' %} selected="selected" {% endif %}> Wisconsin            </option> 
+                <option value="WY" {% if b.address.state == 'WY' %} selected="selected" {% endif %}> Wyoming              </option>
+            </select><br>
             <input type="submit" class="blue" value="submit">
         </form>
     </article>
@@ -59,22 +120,5 @@ Parameters:
         </form>
         <div id="admin_list"> </article>
     </article>
-    <article>
-        <header>User Lookup</header>
-        <form name="user" action="javascript:lookup_user()">
-            <label for="name">Name:</label>
-            <input name="name" type="text" value=""> <br>
-            <label for="address">Address:</label>
-            <input name="address" type="text" value=""> <br>
-            <label for="city">City:</label>
-            <input name="city" type="text" value=""> <br>
-            <label for="zip">Zip Code:</label>
-            <input name="zip" type="text" value=""> <br>
-            <label for="phone">Phone:</label>
-            <input name="phone" type="text" value=""> <br>
-            <input type="submit" class="blue" value="search">
-        </form>
-    </article>
-    <article id="user_list"> </article>
 </section>
 {% endblock body %}

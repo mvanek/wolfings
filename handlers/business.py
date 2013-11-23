@@ -9,7 +9,7 @@ import urllib
 import jinja2
 import os
 import datetime
-from models import Business, Coupon, User
+from models import Business, Coupon, User, Address
 
 
 __all__ = ['BusinessHandler',
@@ -106,6 +106,29 @@ class BusinessIDAdminHandler(RequestHandler):
             admins=admins,
             mark_upload=mark_upload
         ))
+
+    def post(self):
+        self.load_http_params({
+            'name': (str, True),
+            'address': (str, True),
+            'city': (str, True),
+            'state': (str, True),
+            'zip': (int, True)
+        })
+        key = self.get_page_key()
+        b = key.get()
+        if not is_admin(b):
+            self.abort(401)
+        address_parts    = self.params['address'].split(' ', 1)
+        self.response.write(address_parts[0])
+        b.name           = self.params['name']
+        b.address.number = int(address_parts[0])
+        b.address.street = address_parts[1]
+        b.address.city   = self.params['city']
+        b.address.state  = self.params['state']
+        b.address.zip    = self.params['zip']
+        b.put()
+        self.redirect('.')
 
 
 class BusinessIDManageHandler(RequestHandler):

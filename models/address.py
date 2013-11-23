@@ -6,5 +6,5 @@ class Address(ndb.Model):
     street = ndb.StringProperty()
     city = ndb.StringProperty()
     state = ndb.StringProperty()
-    zip = ndb.StringProperty()
+    zip = ndb.IntegerProperty()
     country = ndb.StringProperty()
