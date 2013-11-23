@@ -41,7 +41,6 @@ Globals:
 <link href="/static/lib/jquery-ui/css/dot-luv/jquery-ui-1.10.3.custom.css" rel="stylesheet" type="text/css">
 <link href="/static/style/business_admin.css" rel="stylesheet" type="text/css">
 <script src="/static/lib/jquery-ui/js/jquery-ui-1.10.3.custom.js"></script>
-<script src="/static/js/utils.js"></script>
 <script src="/static/js/business_admin.js"></script>
 {% endblock head %}
 
@@ -64,25 +63,34 @@ Globals:
         {{ input_datetime('end', 'End') }}<br>
         <label for="name">Name</label>
         <input type="text" name="name" value=""> <br>
+        <label for="description">Description</label>
+        <textarea name="description"></textarea>
         <input type="submit" class="blue" value="submit">
     </form>
 </section>
-{% if coupons %}
 <section id="coupons">
+    <header>Verify Coupons</header>
+    {% if coupons %}
     {% for c in coupons %}
     <article id="{{ c.key.id() }}">
         <header>{{ c.name }}</header>
+        {% set holders = c.get_holders() %}
         <ul>
+            {% if holders %}
             {% for u in c.get_holders() %}
             <li><form method="POST" action="/api/user/{{ u.key.id() }}/coupons/{{ c.key.id() }}">
                 <input type="submit" value="{{ u.name }}">
                 <input type="hidden" name="verify" value="true">
             </form></li>
             {% endfor %}
+            {% else %}
+            <li>Nobody has claimed this coupon.</li>
+            {% endif %}
         </ul>
     </article>
     {% endfor %}
+    {% else %}
+    You have no active coupons.
+    {% endif %}
 </section>
-
-{% endif %}
 {% endblock body %}

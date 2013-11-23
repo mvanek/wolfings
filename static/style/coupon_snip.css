@@ -1,51 +1,59 @@
-article.coupon {
+.coupon {
     border: solid;
     border-width: 1px;
     padding: 0.5em;
     margin-top: 0.75em;
     box-shadow: 3px 3px 5px #bbb;
 }
-
-article.coupon a {
+.coupon a {
+    color: #180878;
     text-decoration: none;
 }
-article.coupon .right {
-    right:0.5em;
-    top:0.5em;
-}
-
-article.coupon div.time {
+.coupon .time {
     font-size: 0.8em;
+    text-align: right;
 }
-
-article.coupon ul.holders {
+.coupon .description {
+    font-size: 0.9em;
+}
+.coupon .holders {
     margin-top: 0.5em;
 }
-article.coupon ul.holders li {
+.coupon .holders li {
     font-size: 0.8em;
     list-style-type: disc;
     margin-left: 1.25em;
 }
+.coupon .mark {
+    float: left;
+    width: 50px;
+    text-align: center;
+    margin-right: 0.5em;
+}
+.coupon .timeleft {
+    font-size: 0.8em;
+    text-align: center;
+    clear: both;
+}
 
 
 /* Coupon classes */
-article.coupon.active {
+.coupon.active {
     background: rgba(255, 255, 255, 0.7);
 }
-article.coupon.active,
-article.coupon.active a {
+.coupon.active {
     color: #000000;
     border-color: #180878;
 }
 
-article.coupon.expired,
-article.coupon.inactive {
+.coupon.expired,
+.coupon.inactive {
     background: rgba(200, 200, 200, 0.7);
 }
-article.coupon.expired,
-article.coupon.inactive,
-article.coupon.expired a,
-article.coupon.inactive a {
+.coupon.expired,
+.coupon.inactive,
+.coupon.expired a,
+.coupon.inactive a {
     color: #606060;
     border-color: #606060;
 }

@@ -83,6 +83,9 @@ body {
 .right {
     float: right;
 }
+.right >* {
+    margin-right: 0;
+}
 
 
 /* Headers */

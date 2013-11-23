@@ -3,9 +3,22 @@
 
 label {
     display: inline-block;
-    width: 75px;
+    width: 5em;
+    vertical-align: top;
+}
+input,textarea {
+    margin-bottom: 0.5em;
+}
+
+textarea {
+    height:5em;
+    width:30em;
 }
 
 .ui-datepicker {
     font-size: 0.80em;
+}
+
+li {
+    margin-left: 2em;
 }

@@ -35,44 +35,12 @@
 
 <article class="{{ class }} coupon" id="c{{ c.key.id() }}">
 
-    {% if show_img %}
-    <div style="float:left; width:50px; text-align: center; margin-right:0.5em;">
-        <img src="{{ b.icon_url }}">
-    </div>
-    {% endif %}
-    <div>
-        <header>
-            <a href="/business/{{ b.key.id() }}/">{{ b.name }}</a> -
-            <a href="/coupon/{{ c.key.id() }}/">{{ c.name }}</a>
-        </header>
-
-        <div class="time">{{ c.start.strftime('%c') }} - {{ c.end.strftime('%c') }}</div>
+    <div class="right">
         <div class="time">
-            {% if c.start < now and now < c.end %}
-            Available for {{ timediff(c.end, now) }}
-            {% elif now < c.start %}
-            Available in {{ timediff(c.start, now) }} for {{ timediff(c.end, c.start) }}
-            {% else %}
-            Offer has expired
-            {% endif %}
+            <div class="start">{{ c.start.strftime('%c') }}</div>
+            <div class="end"> - {{ c.end.strftime('%c') }}</div>
         </div>
 
-        {% if is_admin(b) %}
-        <ul class="holders">
-            <header>Holders</header>
-            {% set holders = c.get_holders() %}
-            {% if not holders %}
-            <li>None</li>
-            {% else %}
-            {% for u in holders %}
-            <li>{{ u.name }}</li>
-            {% endfor %}
-            {% endif %}
-        </ul>
-        {% endif %}
-    </div>
-
-    <div class="right">
         {% if is_admin(b) %}
         <button class="edit" id="button_c{{ c.key.id() }}">EDIT</button>
         <script>
@@ -103,7 +71,46 @@
         {% endif %}
         {% endif %}
     </div>
-    <div style="clear:both;"></div>
+
+    {% if show_img %}
+    <div class="mark">
+        <img src="{{ b.icon_url }}">
+    </div>
+    {% endif %}
+    <header>
+        <a href="/business/{{ b.key.id() }}/">{{ b.name }}</a> -
+        <a href="/coupon/{{ c.key.id() }}/">{{ c.name }}</a>
+    </header>
+
+    {% if c.description %}
+    <div class="description">
+        {{ c.description }}
+    </div>
+    {% endif %}
+
+    {% if is_admin(b) %}
+    <ul class="holders">
+        <header>Holders</header>
+        {% set holders = c.get_holders() %}
+        {% if not holders %}
+        <li>None</li>
+        {% else %}
+        {% for u in holders %}
+        <li>{{ u.name }}</li>
+        {% endfor %}
+        {% endif %}
+    </ul>
+    {% endif %}
+
+    <div class="timeleft">
+        {% if c.start < now and now < c.end %}
+        Available for {{ timediff(c.end, now) }}
+        {% elif now < c.start %}
+        Available in {{ timediff(c.start, now) }} for {{ timediff(c.end, c.start) }}
+        {% else %}
+        Offer has expired
+        {% endif %}
+    </div>
 
     </article>
 {% endmacro %}

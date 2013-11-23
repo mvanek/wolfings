@@ -7,6 +7,7 @@ from user import User
 
 class Coupon(ndb.Model):
     name = ndb.StringProperty('n', required=True)
+    description = ndb.TextProperty('d')
     business = ndb.KeyProperty('b', required=True, kind='Business')
     start = ndb.DateTimeProperty('s', required=True)
     end = ndb.DateTimeProperty('e', required=True)

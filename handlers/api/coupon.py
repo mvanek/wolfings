@@ -82,17 +82,14 @@ class CouponHandler(APIHandler):
         params = self.load_json_params({
             'business': (int, True),
             'name': (str, True),
+            'description': (str, False),
             'start': (str_to_datetime, True),
             'end': (str_to_datetime, True)
         })
         business_key = ndb.Key('Business', params['business'])
         authenticate(business_key.get())
-        key = Coupon(
-            name=params['name'],
-            business=business_key,
-            start=params['start'],
-            end=params['end']
-        ).put()
+        params['business'] = business_key
+        key = Coupon(**self.params).put()
         self.status = '200 OK'
         self.response.write('/api/coupon/' + str(key.id()))
 

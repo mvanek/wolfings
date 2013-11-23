@@ -103,7 +103,8 @@ function post_coupon() {
         contentType: 'text/json',
         data: JSON.stringify({
             business: biz_id(),
-            name: document.forms['newcoup']['name'].value,
+            name: form['name'].value,
+            description: form['description'].value,
             start: new Date( startDateString ),
             end: new Date( endDateString )
         })
