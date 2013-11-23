@@ -1,19 +1,26 @@
 from google.appengine.ext import ndb
-from address import Address
 from google.appengine.api import images
+from address import Address
 import geobox
 import json
 import logging
 
 
 class Business(ndb.Model):
-    name = ndb.StringProperty('n', required=True)
-    mark = ndb.BlobKeyProperty('m')
-    admins = ndb.KeyProperty('adm', repeated=True)
-    address = ndb.StructuredProperty(Address, required=True)
-    lat = ndb.FloatProperty('a', required=True)
-    lon = ndb.FloatProperty('o', required=True)
+    name     = ndb.StringProperty('n', required=True)
+    mark     = ndb.BlobKeyProperty('m')
+    admins   = ndb.KeyProperty('adm', repeated=True)
+    address  = ndb.StructuredProperty(Address, required=True)
+    phone    = ndb.StringProperty('p')
+    lat      = ndb.FloatProperty('a', required=True)
+    lon      = ndb.FloatProperty('o', required=True)
     geoboxes = ndb.StringProperty('g', repeated=True)
+
+    @property
+    def api_url(self):
+        if self.key.id():
+            return '/api/business/' + str(self.key.id())
+        return None
 
     @property
     def mark_url(self):
@@ -29,11 +36,8 @@ class Business(ndb.Model):
         except images.BlobKeyRequiredError:
             return None
 
-    @classmethod
-    def new(cls, **kwargs):
-        b = Business(**kwargs)
-        b.gen_geoboxes()
-        return b
+    def _pre_put_hook(self):
+        self.geoboxes = [geobox.compute(self.lat, self.lon, 1, 1)]
 
     @classmethod
     def query_location(cls, query=None, lat=None, lon=None):
@@ -45,9 +49,6 @@ class Business(ndb.Model):
         box = geobox.compute(lat, lon, 1, 1)
         query = query.filter(Business.geoboxes == box)
         return query
-
-    def gen_geoboxes(self):
-        self.geoboxes = [geobox.compute(self.lat, self.lon, 1, 1)]
 
     def dict(self):
         data = self.to_dict()

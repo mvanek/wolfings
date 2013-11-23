@@ -1,6 +1,6 @@
 import webapp2
 from handlers import *
-from populate import InitHandler, ReInitHandler
+from populate import InitHandler
 
 
 def main():
@@ -14,7 +14,6 @@ def main():
         ('/api/business/',                  api.BusinessHandler),
         ('/api/business/[0-9]+',            api.BusinessIDHandler),
         ('/api/init/',                      InitHandler),
-        ('/api/reinit/',                    ReInitHandler),
 
         ('.*[^/]$', SlashHandler),
         ('/',       MainHandler),
