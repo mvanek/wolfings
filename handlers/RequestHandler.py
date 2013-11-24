@@ -56,7 +56,7 @@ class RequestHandler(webapp2.RequestHandler):
             try:
                 params[k] = dtype(data[k])
             except ValueError:
-                if data[k]:
+                if required or data[k]:
                     self.abort(400)
                 if use_default:
                     params[k] = dtype()

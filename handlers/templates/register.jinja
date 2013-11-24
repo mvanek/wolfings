@@ -12,8 +12,13 @@ Globals: none
 {% block body %}
 <header>Register</header>
 <form action="/register/" method="POST">
-    <label for="name" class="required"><span>Name</span></label>
-    <input type="text" name="name" placeholder="Your Name">
+    <label for="surame" class="required"><span>Last name</span></label>
+    <input type="text" name="surname" placeholder="">
+    <div class="status" id="status_name"></div>
+    <br>
+
+    <label for="firstName"><span>First name</span></label>
+    <input type="text" name="firstName" placeholder="">
     <div class="status" id="status_name"></div>
     <br>
 

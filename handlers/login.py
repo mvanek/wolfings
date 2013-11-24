@@ -46,13 +46,15 @@ class RegisterHandler(RequestHandler):
 
     def post(self):
         self.load_http_params({
-            'name': (str, True),
+            'surname': (str, True),
+            'firstName': (str, False),
             'phone': (int, False)
         }, use_default=True)
         user = users.get_current_user()
         user_model = User(
             id=user.user_id(),
-            name=self.params['name'],
+            surname=self.params['surname'],
+            familiar_name=self.params['firstName'],
             phone=self.params['phone'],
             email=user.email()
         )

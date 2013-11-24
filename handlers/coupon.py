@@ -59,7 +59,6 @@ class CouponHandler(RequestHandler):
                    for c in business]
 
         coupons = sorted(coupons, lambda x, y: cmp(x.end, y.end))
-        coupons = sorted(coupons, lambda x, y: cmp(x.end, y.end))
         now = datetime.datetime.now()
         i = 0
         expired_index = None

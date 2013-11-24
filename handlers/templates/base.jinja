@@ -22,7 +22,9 @@
                 <a href="/coupon/">Coupons</a>
                 <a href="/business/">Restaurants</a>
                 {% if user %}
-                <a href="/user/{{ user.key.id() }}/">{{ user.name }}</a>
+                <a href="/user/{{ user.key.id() }}/">
+                    {{ user.familiar_name or user.surname }}
+                </a>
                 <a href="/logout/">Log out</a>
                 <script>WOLFINGS.set('user_id', '{{ user.key.id() }}');</script>
                 {% else %}
