@@ -7,6 +7,7 @@ import urllib
 import jinja2
 import os
 import datetime
+import logging
 from models import Business, Coupon, User
 
 
@@ -54,13 +55,25 @@ class CouponHandler(RequestHandler):
         name = urllib.unquote(self.request.get('name'))
         if name:
             query = query.filter(Business.name == name)
-        coupons = [c for business in query.map(collection_callback)
+        coupons = [c for business in query.map(lambda x: Coupon.get_by_business(x.key.id()))
                    for c in business]
         coupons = sorted(coupons, lambda x, y: cmp(x.end, y.end))
+        now = datetime.datetime.now()
+        i = 0
+        expired_index = None
+
+        for i in range(len(coupons)):
+            if expired_index is None and now < coupons[i].end:
+                expired_index = i
+            if now < coupons[i].start:
+                break
+        expired = coupons[0:expired_index]
+        active = coupons[expired_index:i]
+        inactive = coupons[i:]
 
         self.response.status = '200 OK'
         self.response.write(self.template.render(
-            coupons=coupons
+            coupons=active+inactive+expired
         ))
 
 
