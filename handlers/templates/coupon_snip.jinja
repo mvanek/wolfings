@@ -103,7 +103,7 @@
 
     <div class="timeleft">
         {% if c.start < now and now < c.end %}
-        Available for {{ timediff(c.end, now) }}
+        Expires in {{ timediff(c.end, now) }}
         {% elif now < c.start %}
         Available in {{ timediff(c.start, now) }} for {{ timediff(c.end, c.start) }}
         {% else %}
