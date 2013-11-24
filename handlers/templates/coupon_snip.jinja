@@ -78,8 +78,7 @@
     </div>
     {% endif %}
     <header>
-        <a href="/business/{{ b.key.id() }}/">{{ b.name }}</a> -
-        <a href="/coupon/{{ c.key.id() }}/">{{ c.name }}</a>
+        <a href="/business/{{ b.key.id() }}/">{{ b.name }}</a> - {{ c.name }}
     </header>
 
     {% if c.description %}
