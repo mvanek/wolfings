@@ -5,6 +5,18 @@
 {% set minutes = (t.seconds - 3600*hours)//60 %}
 {% set seconds = t.seconds - 60*minutes - 3600*hours %}
 
+{{ '{}:{:02}:{:02}'.format(days*24+hours, minutes, seconds) }}
+{% endmacro %}
+
+
+{% macro timediff_verbose(t1, t2) %}
+{% set t = t1 - t2 %}
+{% set days = t.days %}
+{% set hours = t.seconds//3600 %}
+{% set minutes = (t.seconds - 3600*hours)//60 %}
+{% set seconds = t.seconds - 60*minutes - 3600*hours %}
+
+
 {% if days %}
 {{ days }} days
 {% endif %}

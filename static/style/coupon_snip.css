@@ -11,6 +11,7 @@
 }
 .coupon .time {
     font-size: 0.8em;
+    margin-bottom:0.5em;
 }
 .coupon .description {
     font-size: 0.9em;
@@ -32,6 +33,10 @@
 .coupon .timeleft {
     font-size: 0.8em;
     text-align: center;
+    margin-top: 0.5em;
+    padding-top: 0.5em;
+    border-top: solid;
+    border-width: 1px;
     clear: both;
 }
 
