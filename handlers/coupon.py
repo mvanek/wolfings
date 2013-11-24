@@ -57,11 +57,12 @@ class CouponHandler(RequestHandler):
             query = query.filter(Business.name == name)
         coupons = [c for business in query.map(lambda x: Coupon.get_by_business(x.key.id()))
                    for c in business]
+
+        coupons = sorted(coupons, lambda x, y: cmp(x.end, y.end))
         coupons = sorted(coupons, lambda x, y: cmp(x.end, y.end))
         now = datetime.datetime.now()
         i = 0
         expired_index = None
-
         for i in range(len(coupons)):
             if expired_index is None and now < coupons[i].end:
                 expired_index = i

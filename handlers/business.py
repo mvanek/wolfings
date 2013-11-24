@@ -9,6 +9,7 @@ import urllib
 import jinja2
 import os
 import datetime
+import logging
 from models import Business, Coupon, User, Address
 
 
@@ -75,10 +76,30 @@ class BusinessIDHandler(RequestHandler):
         '''
         key = self.get_page_key()
         coupons = Coupon.get_by_business(key.id())
+
+        i = 0
+        expired_index = None
+        now = datetime.datetime.now()
+        coupons = sorted(coupons, lambda x, y: cmp(x.end, y.end))
+        for i in range(len(coupons)):
+            if expired_index is None and now < coupons[i].end:
+                expired_index = i
+            if now < coupons[i].start:
+                break
+        expired = coupons[0:expired_index]
+        active = coupons[expired_index:i]
+        inactive = coupons[i:]
+        logging.info('expired')
+        logging.info(expired)
+        logging.info('active')
+        logging.info(active)
+        logging.info('inactive')
+        logging.info(inactive)
+
         self.response.status = '200 OK'
         self.response.write(self.template.render(
             b=key.get(),
-            coupons=coupons
+            coupons=active+inactive+expired
         ))
 
 
