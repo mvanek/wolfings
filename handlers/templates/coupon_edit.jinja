@@ -7,6 +7,11 @@ Parameters:
 {% extends "base.jinja" %}
 
 
+{% macro option(v,l,d) %}
+    <option value="{{ v }}" {% if v == d %} selected="selected" {% endif %}>{{ l }}</option>
+{% endmacro %}
+
+
 {% macro input_datetime(name, label=None, dt=None) %}
 {# Parameters:
     - name: A unique string to identify the input field
@@ -18,25 +23,11 @@ Parameters:
 <input name="{{ name }}_date" id="{{ name }}_date" value="{{ dt.strftime('%m/%d/%Y') }}"></input>
 <select name="{{ name }}_hour">
     {% for i in range(24) %}
-    <option
-        {% if dt and dt.hour == i %}
-        selected="selected"
-        {% endif %}
-        value="{{ i }}"
-    >
-        {{ '{:02}'.format(i) }}
-    </option>
+    {{ option(i, '{:02}'.format(i), dt.hour) }}
     {% endfor %}
 </select> : <select name="{{ name }}_min">
     {% for i in range(60) %}
-    <option
-        {% if dt and dt.min == i %}
-        selected="selected"
-        {% endif %}
-        value="{{ i }}"
-    >
-        {{ '{:02}'.format(i) }}
-    </option>
+    {{ option(i, '{:02}'.format(i), dt.min) }}
     {% endfor %}
 </select>
 <script>

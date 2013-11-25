@@ -9,7 +9,7 @@ Globals:
 {% extends "base.jinja" %}
 {% from "coupon_snip.jinja" import coupon_snip %}
 
-{% block title %}{{name}}{% endblock title %}
+{% block title %}{{ name }}{% endblock title %}
 {% block head %}{{ super() }}
 <link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
 {% endblock head %}
@@ -17,7 +17,7 @@ Globals:
 {% block body %}
 <section>
     <header>
-        {{name}}
+        {{ name }}
     </header>
 </section>
 {% if coupons %}

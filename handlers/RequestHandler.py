@@ -27,10 +27,33 @@ def is_admin(env, b=None):
         return env.globals['user'].key in b.admins
     return False
 
-def render_address(address):
-    return ('<div>{address.number} {address.street}</div>'
-        '<div>{address.city}, {address.state} {address.zip}</div>'
-        ).format(address=address)
+def timedelta(t):
+    hours = t.seconds//3600
+    minutes = (t.seconds - 3600*hours)//60
+    seconds = t.seconds - 60*minutes - 3600*hours
+    return '{}:{:02}:{:02}'.format(t.days*24+hours, minutes, seconds)
+
+def stringify_unit(v,u):
+    return '{} {}{}'.format(v, u, 's' if v!=1 else '')
+
+def timedelta_verbose(t):
+    hours   = t.seconds//3600
+    minutes = (t.seconds - 3600*hours)//60
+    seconds = t.seconds - 60*minutes - 3600*hours
+    stringlist = []
+    if t.days:
+        stringlist.append(stringify_unit(t.days, 'day'))
+    if hours:
+        stringlist.append(stringify_unit(hours, 'hour'))
+    if minutes:
+        stringlist.append(stringify_unit(minutes, 'minute'))
+    if seconds:
+        stringlist.append(stringify_unit(seconds, 'second'))
+    llen = len(stringlist)
+    if llen > 1:
+        return '{} and {}'.format(', '.join(stringlist[0:llen-1]), stringlist[llen-1])
+    return stringlist[0]
+
 
 class RequestHandler(webapp2.RequestHandler):
     def __init__(self, *args, **kwargs):
@@ -44,11 +67,12 @@ class RequestHandler(webapp2.RequestHandler):
             trim_blocks=True
         )
         cur_user = get_cur_user()
-        self.JINJA_ENVIRONMENT.globals['users'] = users
-        self.JINJA_ENVIRONMENT.globals['user'] = get_cur_user()
-        self.JINJA_ENVIRONMENT.globals['now'] = datetime.datetime.now()
-        self.JINJA_ENVIRONMENT.globals['is_admin'] = is_admin
-        self.JINJA_ENVIRONMENT.filters['render_address'] = render_address
+        self.JINJA_ENVIRONMENT.globals['users']             = users
+        self.JINJA_ENVIRONMENT.globals['user']              = get_cur_user()
+        self.JINJA_ENVIRONMENT.globals['now']               = datetime.datetime.now()
+        self.JINJA_ENVIRONMENT.globals['is_admin']          = is_admin
+        self.JINJA_ENVIRONMENT.filters['timedelta']         = timedelta
+        self.JINJA_ENVIRONMENT.filters['timedelta_verbose'] = timedelta_verbose
 
     def _load_params(self, data, param_info, use_default):
         params = {}

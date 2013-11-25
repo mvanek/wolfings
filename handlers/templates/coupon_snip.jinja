@@ -1,40 +1,3 @@
-{% macro timediff(t1, t2) %}
-{% set t = t1 - t2 %}
-{% set days = t.days %}
-{% set hours = t.seconds//3600 %}
-{% set minutes = (t.seconds - 3600*hours)//60 %}
-{% set seconds = t.seconds - 60*minutes - 3600*hours %}
-
-{{ '{}:{:02}:{:02}'.format(days*24+hours, minutes, seconds) }}
-{% endmacro %}
-
-
-{% macro timediff_verbose(t1, t2) %}
-{% set t = t1 - t2 %}
-{% set days = t.days %}
-{% set hours = t.seconds//3600 %}
-{% set minutes = (t.seconds - 3600*hours)//60 %}
-{% set seconds = t.seconds - 60*minutes - 3600*hours %}
-
-
-{% if days %}
-{{ days }} days
-{% endif %}
-
-{% if hours %}
-{{ hours }} hours
-{% endif %}
-
-{% if minutes %}
-{{ minutes }} minutes
-{% endif %}
-
-{% if seconds %}
-{{ seconds }} seconds
-{% endif %}
-{% endmacro %}
-
-
 {% macro coupon_snip(c, show_img=False, held=False) %}
 {% set b = c.business.get() %}
 {% if c.start < now and now < c.end %}
@@ -49,8 +12,8 @@
 
     <div class="right">
         <div class="time">
-            <div class="start">{{ c.start.strftime('%c') }}</div>
-            <div class="end"> - {{ c.end.strftime('%c') }}</div>
+            <span class="start">{{ c.start.strftime('%c %z') }}</span><br>
+             - <span class="end">{{ c.end.strftime('%c %z') }}</span>
         </div>
 
         {% if is_admin(b) %}
@@ -107,7 +70,7 @@
         <li>None</li>
         {% else %}
         {% for u in holders %}
-        <li>{{ u.name }}</li>
+        <li>{{ u.familiar_name }} {{ u.surname }}</li>
         {% endfor %}
         {% endif %}
     </ul>
@@ -115,9 +78,9 @@
 
     <div class="timeleft">
         {% if c.start < now and now < c.end %}
-        Expires in {{ timediff(c.end, now) }}
+        Expires in <span class="tval">{{ (c.end - now)|timedelta }}</span>
         {% elif now < c.start %}
-        Available in {{ timediff(c.start, now) }} for {{ timediff(c.end, c.start) }}
+        Available in <span class="tval">{{ (c.start - now)|timedelta }}</span> for {{ (c.end - c.start)|timedelta_verbose }}
         {% else %}
         Offer has expired
         {% endif %}

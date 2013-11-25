@@ -6,8 +6,9 @@ Globals:
     - user: The logged-in user's entity
     - is_admin(business): Verifies user has rights to modify the entity
 #}
-{% extends "base.jinja" %}
-{% from "coupon_snip.jinja" import coupon_snip %}
+{% extends 'base.jinja' %}
+{% from 'coupon_snip.jinja' import coupon_snip %}
+{% from '_helpers.jinja' import render_address %}
 
 
 {% block title %}{{ name }}{% endblock title %}
@@ -37,7 +38,7 @@ Globals:
         {{ b.name }}
     </header>
     <div>
-        {{ b.address|render_address }}
+        {{ render_address(b.address) }}
     </div>
 </section>
 
