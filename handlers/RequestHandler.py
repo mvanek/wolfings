@@ -54,6 +54,9 @@ def timedelta_verbose(t):
         return '{} and {}'.format(', '.join(stringlist[0:llen-1]), stringlist[llen-1])
     return stringlist[0]
 
+def dt(v):
+    return v.strftime('%c') + ' GMT'
+
 
 class RequestHandler(webapp2.RequestHandler):
     def __init__(self, *args, **kwargs):
@@ -73,6 +76,7 @@ class RequestHandler(webapp2.RequestHandler):
         self.JINJA_ENVIRONMENT.globals['is_admin']          = is_admin
         self.JINJA_ENVIRONMENT.filters['timedelta']         = timedelta
         self.JINJA_ENVIRONMENT.filters['timedelta_verbose'] = timedelta_verbose
+        self.JINJA_ENVIRONMENT.filters['datetime'] = dt
 
     def _load_params(self, data, param_info, use_default):
         params = {}

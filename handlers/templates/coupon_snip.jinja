@@ -12,8 +12,8 @@
 
     <div class="right">
         <div class="time">
-            <span class="start">{{ c.start.strftime('%c %z') }}</span><br>
-             - <span class="end">{{ c.end.strftime('%c %z') }}</span>
+            <span class="datetime start">{{ c.start|datetime }}</span><br>
+             - <span class="datetime end">{{ c.end|datetime }}</span>
         </div>
 
         {% if is_admin(b) %}

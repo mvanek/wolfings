@@ -26,7 +26,9 @@
                     {{ user.familiar_name or user.surname }}
                 </a>
                 <a href="/logout/">Log out</a>
-                <script>WOLFINGS.set('user_id', '{{ user.key.id() }}');</script>
+                <script>
+                    WOLFINGS.set('user_id', '{{ user.key.id() }}');
+                </script>
                 {% else %}
                 <a href="/login/">Log in</a>
                 {% endif %}
