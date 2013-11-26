@@ -2,3 +2,89 @@
     <div>{{ a.number }} {{ a.street }}</div>
     <div>{{ a.city }}, {{ a.state }} {{ a.zip }}</div>
 {% endmacro %}
+
+
+{% macro option(v,l,d) %}
+    <option value="{{ v }}" {% if v == d %} selected="selected" {% endif %}>{{ l }}</option>
+{% endmacro %}
+
+
+{% macro utc_options() %}
+    <option value="UTC-12:00">UTC-12:00</option>
+    <option value="UTC-11:00">UTC-11:00</option>
+    <option value="UTC-10:00">UTC-10:00</option>
+    <option value="UTC-09:30">UTC-09:30</option>
+    <option value="UTC-09:00">UTC-09:00</option>
+    <option value="UTC-08:00">UTC-08:00</option>
+    <option value="UTC-07:00">UTC-07:00</option>
+    <option value="UTC-06:00">UTC-06:00</option>
+    <option value="UTC-05:00">UTC-05:00</option>
+    <option value="UTC-04:30">UTC-04:30</option>
+    <option value="UTC-04:00">UTC-04:00</option>
+    <option value="UTC-03:30">UTC-03:30</option>
+    <option value="UTC-03:00">UTC-03:00</option>
+    <option value="UTC-02:00">UTC-02:00</option>
+    <option value="UTC-01:00">UTC-01:00</option>
+    <option value="UTC+00:00" selected="selected">UTC</option>
+    <option value="UTC+01:00">UTC+01:00</option>
+    <option value="UTC+02:00">UTC+02:00</option>
+    <option value="UTC+03:00">UTC+03:00</option>
+    <option value="UTC+03:30">UTC+03:30</option>
+    <option value="UTC+04:00">UTC+04:00</option>
+    <option value="UTC+04:30">UTC+04:30</option>
+    <option value="UTC+05:00">UTC+05:00</option>
+    <option value="UTC+05:30">UTC+05:30</option>
+    <option value="UTC+05:45">UTC+05:45</option>
+    <option value="UTC+06:00">UTC+06:00</option>
+    <option value="UTC+06:30">UTC+06:30</option>
+    <option value="UTC+07:00">UTC+07:00</option>
+    <option value="UTC+08:00">UTC+08:00</option>
+    <option value="UTC+08:45">UTC+08:45</option>
+    <option value="UTC+09:00">UTC+09:00</option>
+    <option value="UTC+09:30">UTC+09:30</option>
+    <option value="UTC+10:00">UTC+10:00</option>
+    <option value="UTC+10:30">UTC+10:30</option>
+    <option value="UTC+11:00">UTC+11:00</option>
+    <option value="UTC+11:30">UTC+11:30</option>
+    <option value="UTC+12:00">UTC+12:00</option>
+    <option value="UTC+12:45">UTC+12:45</option>
+    <option value="UTC+13:00">UTC+13:00</option>
+    <option value="UTC+14:00">UTC+14:00</option>
+{% endmacro %}
+
+
+{# Parameters:
+    - name: A unique string to identify the input field
+    - label: An optional string to be used as a label for the input field
+    - dt: The pre-entered datetime #}
+{% macro input_datetime(name, label=None, dt=None) %}
+    {% if dt %}
+        {% set date = dt.strftime('%m/%d/%Y') %}
+        {% set hour = dt.hour %}
+        {% set minute = dt.minute %}
+    {% endif %}
+    {% if label %}
+        <label for="{{ name }}_date">{{ label }}</label>
+    {% endif %}
+    <input
+        name="{{ name }}_date"
+        value="{{ date }}"
+        id="{{ name }}_date"
+    >
+    </input>
+    <select name="{{ name }}_hour">
+        {% for i in range(24) %}
+            {{ option(i, '{:02}'.format(i), hour) }}
+        {% endfor %}
+    </select> : <select name="{{ name }}_min">
+        {% for i in range(60) %}
+            {{ option(i, '{:02}'.format(i), minute) }}
+        {% endfor %}
+    </select>
+    <select name="{{ name }}_locale">
+        {{ utc_options() }}
+    </select>
+    <script>
+        jQuery( document.getElementById('{{ name }}_date') ).datepicker();
+    </script>
+{% endmacro %}

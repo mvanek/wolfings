@@ -4,48 +4,20 @@ Parameters:
     - admins: The User entities that administrate the business
     - mark_upload: A uniquely-generated blobstore upload URL
 #}
-{% extends "base.jinja" %}
-
-
-{% macro option(v,l,d) %}
-    <option value="{{ v }}" {% if v == d %} selected="selected" {% endif %}>{{ l }}</option>
-{% endmacro %}
-
-
-{% macro input_datetime(name, label=None, dt=None) %}
-{# Parameters:
-    - name: A unique string to identify the input field
-    - label: An optional string to be used as a label for the input field
-#}
-{% if label %}
-<label for="{{ name }}_date">{{ label }}</label>
-{% endif %}
-<input name="{{ name }}_date" id="{{ name }}_date" value="{{ dt.strftime('%m/%d/%Y') }}"></input>
-<select name="{{ name }}_hour">
-    {% for i in range(24) %}
-    {{ option(i, '{:02}'.format(i), dt.hour) }}
-    {% endfor %}
-</select> : <select name="{{ name }}_min">
-    {% for i in range(60) %}
-    {{ option(i, '{:02}'.format(i), dt.min) }}
-    {% endfor %}
-</select>
-<script>
-    jQuery( document.getElementById('{{ name }}_date') ).datepicker();
-</script>
-{% endmacro %}
+{% from '_helpers.jinja' import option, utc_options, input_datetime %}
+{% extends 'base.jinja' %}
 
 
 {% block title %}{{ b.name }}{% endblock title %}
 
-{% block head %}
-{{ super() }}
+{% block head %} {{ super() }}
 <link href="/static/lib/jquery-ui/css/dot-luv/jquery-ui-1.10.3.custom.css" rel="stylesheet" type="text/css">
 <link href="/static/style/business_admin.css" rel="stylesheet" type="text/css">
 <link href="/static/style/coupon_snip.css" rel="stylesheet" type="text/css">
 <script src="/static/lib/jquery-ui/js/jquery-ui-1.10.3.custom.js"></script>
 <script src="/static/js/utils.js"></script>
 <script src="/static/js/business_admin.js"></script>
+<script src="/static/js/coupon_edit.js"></script>
 {% endblock head %}
 
 {% block body %}

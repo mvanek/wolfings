@@ -15,11 +15,9 @@ WOLFINGS.import('utils', function() {
                     if ( h === 0 ) {
                         window.clearInterval( timer );
                     }
-                    h -= 1;
-                    m = 60;
+                    h -= 1; m = 60;
                 }
-                m -= 1;
-                s = 60;
+                m -= 1; s = 60;
             }
             s -= 1;
 
