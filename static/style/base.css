@@ -40,11 +40,11 @@ body {
     font-size: 1.125em;
     font-weight: bold;
 
-    background: #180878;
+    background-color: #180878;
     color: #ffffff;
 }
 
-#topbar header {
+#topbar > header {
     padding: 0.5em 1em;
     margin-right: -1em;
 
@@ -63,19 +63,16 @@ body {
 #topbar a:hover,
 #topbar a:active,
 #topbar a:visited {
-    padding: 0.625em 1em;
+    vertical-align: top;
+    padding: 0.45em 0.5em 0.45em 0.5em;
+    line-height: 2.25;
     text-decoration: none;
     color: #ffffff;
-    font-size:0.8em;
 }
 #topbar a:hover {
     border-top: solid;
     border-width: 0.2em;
     border-color: #ffffff;
-}
-
-#topbar .right {
-    padding: 0.625em 0;
 }
 
 
@@ -84,10 +81,6 @@ body {
     float: right;
     text-align: right;
 }
-.right >* {
-    margin-right: 0;
-}
-
 
 /* Headers */
 #viewport > header {
@@ -132,4 +125,31 @@ section + section {
     float:right;
     line-height: 1.3em;
     text-align:right;
+}
+
+
+/* Dropdown menu */
+.dropdown {
+    display: inline-block;
+    background-color: #180878;
+    text-align: left;
+}
+.submenu {
+    display: none;
+}
+.dropdown:hover > .submenu {
+    display: block;
+}
+#topbar .dropdown {
+    padding-right: 0.5em;
+}
+#topbar .submenu a {
+    line-height: 2;
+    border-top: none;
+    border-left: solid;
+    border-color: #180878;
+}
+#topbar .submenu a:hover {
+    border-width: 0.2em;
+    border-color: #ffffff;
 }
