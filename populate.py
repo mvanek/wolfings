@@ -151,6 +151,4 @@ class InitHandler(webapp2.RequestHandler):
             b.key.delete()
         for c in Coupon.query().iter():
             c.key.delete()
-        for u in User.query().iter():
-            u.key.delete()
         self.init()

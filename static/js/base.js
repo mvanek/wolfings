@@ -14,6 +14,7 @@ var Dropdown = function( menuNode ) {
     }
 
     submenuNode = find_submenu();
+    submenuNode.style.width = menuNode.offsetWidth + "px";
     menuNode.addEventListener('hover', drop, false);
 }
 

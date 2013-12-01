@@ -18,18 +18,18 @@
 
         {% block header %}
         <div id="topbar">
-            <header class="unselectable">WOLFINGS</header>
+            <header class="unselectable"><a href="/coupon/">WOLFINGS</a></header>
             <div class="right">
-                <a href="/coupon/">Coupons</a>
                 {% if user %}
                     <div class="dropdown">
-                        <a href="/user/{{ user.key.id() }}/">
-                            {{ user.familiar_name or user.surname }}
-                        </a>
+                        <a>My Restaurants</a>
                         <div class="submenu">
-                            <a href="/logout/">Log out</a>
+                            <a>butt one</a>
+                            <a>butt two</a>
                         </div>
                     </div>
+                    <a href="/user/{{ user.key.id() }}/">My Coupons</a>
+                    <a href="/logout/">Log out</a>
                 <script>
                     WOLFINGS.set('user_id', '{{ user.key.id() }}');
                 </script>
