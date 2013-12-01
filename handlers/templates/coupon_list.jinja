@@ -15,8 +15,8 @@ Globals:
 {% endblock head %}
 
 {% block body %}
+<header>Coupons</header>
 <section id="coupons">
-    <header>Coupons</header>
     {% for c in coupons %}
     {{ coupon_snip(c, show_img=True) }}
     {% endfor %}
