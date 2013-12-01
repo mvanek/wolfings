@@ -48,8 +48,7 @@ body {
 }
 
 #topbar > header {
-    height:1.25em;
-    display: inline-block;
+    padding: 0.09375em 0;
 }
 #topbar img {
     height:2em;
