@@ -7,7 +7,7 @@ class MainHandler(webapp2.RequestHandler):
 
         self.response.set_cookie('user_id')
 
-        self.redirect('/business/')
+        self.redirect('/coupon/')
 
     def put(self):
         self.response.write('Hello put!')
