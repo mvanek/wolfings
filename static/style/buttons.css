@@ -1,4 +1,8 @@
 /* Blue button */
+input[type=submit]:focus,
+button:focus {
+    outline: none;
+}
 input[type=submit].blue,
 button.blue {
     background: #a00;

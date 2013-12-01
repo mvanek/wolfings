@@ -87,6 +87,9 @@ button:hover {
 button:active {
     background: #59771e;
 }
+button:focus {
+    outline: none;
+}
 
 button.trash {
     background: #a00;

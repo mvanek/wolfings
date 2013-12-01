@@ -9,22 +9,20 @@ Globals:
 {% extends "base.jinja" %}
 {% from "coupon_snip.jinja" import coupon_snip %}
 
-{% block title %}{{ name }}{% endblock title %}
+{% block title %}{{ u.familiar_name or u.surname }}{% endblock title %}
 {% block head %}{{ super() }}
 <link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
 {% endblock head %}
 
 {% block body %}
-<section>
-    <header>
-        {{ name }}
-    </header>
-</section>
-{% if coupons %}
+<header>{{ u.familiar_name }} {{ u.surname }}</header>
 <section id="coupons">
+{% if coupons %}
     {% for c in coupons %}
     {{ coupon_snip(c, show_img=True, held=True) }}
     {% endfor %}
-</section>
+{% else %}
+    You don't have any coupons yet. Get them <a href="/coupon/">here</a>
 {% endif %}
+</section>
 {% endblock body %}
