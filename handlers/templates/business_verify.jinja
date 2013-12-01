@@ -38,7 +38,7 @@ Globals:
 {% endmacro %}
 
 
-{% block title %}{{ name }}{% endblock title %}
+{% block title %}{{ b.name }} - Coupon Management{% endblock title %}
 
 {% block head %}
 {{ super() }}
@@ -50,9 +50,7 @@ Globals:
 {% endblock head %}
 
 {% block body %}
-{% if is_admin(b) %}
-<a class="adminlink" href="../admin">Admin Panel</a>
-{% endif %}
+<a class="right" href="../admin/">Admin Panel</a>
 <section>
     <header>
         {% if b.mark_url %}
