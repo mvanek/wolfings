@@ -17,35 +17,41 @@
     <body>
 
         {% block header %}
-        <div id="topbar">
-            <header class="unselectable"><a href="/coupon/">WOLFINGS</a></header>
-            <div class="right">
-                {% if user %}
-                    <div class="dropdown">
-                        <a>My Restaurants</a>
-                        <div class="submenu">
-                            <a>butt one</a>
-                            <a>butt two</a>
+        <div id="topbarContainer">
+            <div id="topbar">
+                <div class="right">
+                    {% if user %}
+{#
+                        <div class="dropdown">
+                            <a>My Restaurants</a>
+                            <div class="submenu">
+                                <a>butt one</a>
+                                <a>butt two</a>
+                            </div>
                         </div>
-                    </div>
-                    <a href="/user/{{ user.key.id() }}/">My Coupons</a>
-                    <a href="/logout/">Log out</a>
-                <script>
-                    WOLFINGS.set('user_id', '{{ user.key.id() }}');
-                </script>
-                {% else %}
-                <a href="/login/">Log in</a>
-                {% endif %}
+#}
+                        <a href="/user/{{ user.key.id() }}/">My Coupons</a>
+                        <a href="/logout/">Log out</a>
+                        <script>
+                            WOLFINGS.set('user_id', '{{ user.key.id() }}');
+                        </script>
+                        {% else %}
+                        <a href="/login/">Log in</a>
+                        {% endif %}
+                </div>
+                <header><a href="/coupon/"><img src="/static/img/WolfingsLogoGrey.png"></a></header>
             </div>
         </div>
         {% endblock header %}
 
-        <div id="viewport">
+        <div id="viewportContainer">
+            <div id="viewport">
 
-            {% block body %}
-            {% endblock body %}
+                {% block body %}
+                {% endblock body %}
+                <div class="clear"></div>
 
-            <div class="clear"></div>
+            </div>
         </div>
     </body>
 </html>
