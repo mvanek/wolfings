@@ -30,6 +30,10 @@
                             </div>
                         </div>
 #}
+                        {% set b = user.business %}
+                        {% if b %}
+                        <a href="/business/{{ b.key.id() }}/">{{ b.name }}</a>
+                        {% endif %}
                         <a href="/user/{{ user.key.id() }}/">My Coupons</a>
                         <a href="/logout/">Log out</a>
                         <script>

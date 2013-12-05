@@ -1,5 +1,6 @@
 from google.appengine.ext import ndb
 from address import Address
+from business import Business
 import json
 
 
@@ -11,6 +12,11 @@ class User(ndb.Model):
     address       = ndb.StructuredProperty(Address)
     held_coupons  = ndb.KeyProperty('c', kind='Coupon', repeated=True)
     old_coupons   = ndb.KeyProperty('o', kind='Coupon', repeated=True)
+
+    @property
+    def business(self):
+        qry = Business.query(Business.admins == self.key)
+        return qry.get()
 
     @classmethod
     def list_users(cls, keys_only=False):
