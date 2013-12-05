@@ -131,6 +131,7 @@ class BusinessIDAdminHandler(RequestHandler):
     def post(self):
         self.load_http_params({
             'name': (str, True),
+            'description': (str, True),
             'address': (str, True),
             'city': (str, True),
             'state': (str, True),
@@ -143,6 +144,7 @@ class BusinessIDAdminHandler(RequestHandler):
         address_parts    = self.params['address'].split(' ', 1)
         self.response.write(address_parts[0])
         b.name           = self.params['name']
+        b.description    = self.params['description']
         b.address.number = int(address_parts[0])
         b.address.street = address_parts[1]
         b.address.city   = self.params['city']

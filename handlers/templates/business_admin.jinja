@@ -86,6 +86,8 @@ Parameters:
                 <option value="WI" {% if b.address.state == 'WI' %} selected="selected" {% endif %}> Wisconsin            </option> 
                 <option value="WY" {% if b.address.state == 'WY' %} selected="selected" {% endif %}> Wyoming              </option>
             </select><br>
+            <label for="description">Description</label>
+            <textarea name="description">{{ b.description or '' }}</textarea>
             <input type="submit" class="blue" value="submit">
         </form>
     </article>
@@ -97,6 +99,7 @@ Parameters:
             <input type="submit" class="blue" value="submit">
         </form>
     </article>
+{#
     <article>
         <header>Administrators</header>
         <form name="admins" action="javascript:put_admins()">
@@ -121,5 +124,6 @@ Parameters:
         </form>
         <div id="admin_list"> </article>
     </article>
+#}
 </section>
 {% endblock body %}

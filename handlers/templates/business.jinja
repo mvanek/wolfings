@@ -11,7 +11,7 @@ Globals:
 {% from '_helpers.jinja' import render_address %}
 
 
-{% block title %}{{ name }}{% endblock title %}
+{% block title %}{{ b.name }}{% endblock title %}
 
 
 {% block head %}{{ super() }}
@@ -40,6 +40,11 @@ Globals:
     <div>
         {{ render_address(b.address) }}
     </div>
+    {% if b.description %}
+    <div>
+        {{ b.description }}
+    </div>
+    {% endif %}
 </section>
 
 {#

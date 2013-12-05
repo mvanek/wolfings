@@ -7,14 +7,15 @@ import logging
 
 
 class Business(ndb.Model):
-    name     = ndb.StringProperty('n', required=True)
-    mark     = ndb.BlobKeyProperty('m')
-    admins   = ndb.KeyProperty('adm', repeated=True)
-    address  = ndb.StructuredProperty(Address, required=True)
-    phone    = ndb.StringProperty('p')
-    lat      = ndb.FloatProperty('a', required=True)
-    lon      = ndb.FloatProperty('o', required=True)
-    geoboxes = ndb.StringProperty('g', repeated=True)
+    name        = ndb.StringProperty('n', required=True)
+    mark        = ndb.BlobKeyProperty('m')
+    admins      = ndb.KeyProperty('adm', repeated=True)
+    address     = ndb.StructuredProperty(Address, required=True)
+    description = ndb.TextProperty('d')
+    phone       = ndb.StringProperty('p')
+    lat         = ndb.FloatProperty('a', required=True)
+    lon         = ndb.FloatProperty('o', required=True)
+    geoboxes    = ndb.StringProperty('g', repeated=True)
 
     @property
     def api_url(self):
