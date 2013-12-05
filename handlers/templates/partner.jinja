@@ -1,0 +1,48 @@
+{# /partner/
+Parameters: none
+Globals: none
+#}
+{% extends "base.jinja" %}
+
+{% block title %}Partner{% endblock title %}
+{% block head %}{{ super() }}
+<link rel="stylesheet" type="text/css" href="/static/style/register.css">
+{% endblock head %}
+
+{% block body %}
+<header>Register your business</header>
+{% if post %}
+<div>Thank you for your interest. We will get in touch with you shortly.</div>
+{% else %}
+<div>Please enter some information about your business and whom we should contact.</div>
+<form action="/partner/" method="POST">
+    <div>Restaurant information</div>
+    <label for="name"><span>Name</span></label>
+    <input type="text" name="name" placeholder="">
+    <br>
+    <label for="address"><span>Address</span></label>
+    <input type="text" name="address" placeholder="">
+    <br>
+    <label for="city"><span>City</span></label>
+    <input type="text" name="city" placeholder="">
+    <br>
+    <label for="zip"><span>Zip</span></label>
+    <input type="text" name="zip" placeholder="">
+    <br>
+
+    <div>Contact's information</div>
+    <label for="cname"><span>Name</span></label>
+    <input type="text" name="cname" placeholder="First Last">
+    <br>
+    <label for="cphone"><span>Phone</span></label>
+    <input type="text" name="cphone" placeholder="(xxx) xxx-xxxx">
+    <br>
+    <label for="cemail"><span>E-Mail</span></label>
+    <input type="text" name="cemail" placeholder="your@email.com">
+    <br>
+
+    <input type="submit" class="blue" value="Submit">
+</form>
+<script src="/static/js/register.js"></script>
+{% endif %}
+{% endblock body %}

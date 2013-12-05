@@ -23,6 +23,7 @@ def main():
         ('/logout/',                    LogoutHandler),
         ('/register/',                  RegisterHandler),
         ('/legal/',                     LegalHandler),
+        ('/partner/',                   PartnerHandler),
         ('/coupon/',                    CouponHandler),
         ('/coupon/[0-9]+/',             CouponIDHandler),
         ('/coupon/[0-9]+/edit/',        CouponIDEditHandler),

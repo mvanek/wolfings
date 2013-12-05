@@ -6,6 +6,16 @@ import json
 import logging
 
 
+class ProtoBusiness(ndb.Model):
+    name        = ndb.StringProperty('n')
+    address     = ndb.StringProperty('a')
+    initiator   = ndb.KeyProperty('i', kind='User')
+    cname       = ndb.StringProperty('cn')
+    cphone      = ndb.StringProperty('cp')
+    cemail      = ndb.StringProperty('ce')
+
+
+
 class Business(ndb.Model):
     name        = ndb.StringProperty('n', required=True)
     mark        = ndb.BlobKeyProperty('m')
