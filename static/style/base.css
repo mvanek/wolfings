@@ -89,6 +89,11 @@ article > header {
     font-size: 1.1em;
 }
 
+/* Centering */
+.center {
+    text-align: center;
+}
+
 
 /* Section and article spacing */
 article {

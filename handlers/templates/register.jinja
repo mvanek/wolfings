@@ -12,13 +12,13 @@ Globals: none
 {% block body %}
 <header>Register</header>
 <form action="/register/" method="POST">
-    <label for="surame" class="required"><span>Last name</span></label>
-    <input type="text" name="surname" placeholder="">
+    <label for="firstName"><span>First name</span></label>
+    <input type="text" name="firstName" placeholder="">
     <div class="status" id="status_name"></div>
     <br>
 
-    <label for="firstName"><span>First name</span></label>
-    <input type="text" name="firstName" placeholder="">
+    <label for="surame" class="required"><span>Last name</span></label>
+    <input type="text" name="surname" placeholder="">
     <div class="status" id="status_name"></div>
     <br>
 
@@ -31,7 +31,8 @@ Globals: none
         <span class="red">*</span> Indicates required field</span>
     </div>
 
-    <input type="submit" class="blue" value="Register">
+    <div class="center">By clicking submit, you agree to the <a href="/legal/" target="blank">Wolfings Privacy Policy and Terms and Conditions</a>.</div>
+    <input type="submit" class="blue" value="Submit">
 </form>
 <script src="/static/js/register.js"></script>
 {% endblock body %}

@@ -6,7 +6,8 @@ import logging
 
 __all__ = ['LoginHandler',
            'LogoutHandler',
-           'RegisterHandler']
+           'RegisterHandler',
+           'LegalHandler']
 
 
 class LoginHandler(webapp2.RequestHandler):
@@ -60,3 +61,12 @@ class RegisterHandler(RequestHandler):
         )
         user_model.put()
         self.redirect('/')
+
+
+class LegalHandler(RequestHandler):
+    def __init__(self, *args, **kwargs):
+        super(LegalHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('legal.jinja')
+
+    def get(self):
+        self.response.write(self.template.render())
