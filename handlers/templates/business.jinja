@@ -21,18 +21,15 @@ Globals:
 
 
 {% block body %}
-
 {% if is_admin(b) %}
 <div class="right">
     <a href="manage">Manage Coupons</a><br>
     <a href="admin">Admin Panel</a>
 </div>
 {% endif %}
-
 {% if b.mark_url %}
 <img class="mark" src="{{ b.mark_url }}">
 {% endif %}
-
 <section class="desc">
     <header>
         {{ b.name }}
@@ -40,12 +37,12 @@ Globals:
     <div>
         {{ render_address(b.address) }}
     </div>
-    {% if b.description %}
-    <div>
-        {{ b.description }}
-    </div>
-    {% endif %}
 </section>
+{% if b.description %}
+<section>
+    {{ b.description }}
+</section>
+{% endif %}
 
 {#
 {% if coupons %}
