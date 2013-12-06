@@ -81,9 +81,11 @@ Globals:
         <ul>
             {% if holders %}
             {% for u in c.get_holders() %}
-            <li><form method="POST" action="/api/user/{{ u.key.id() }}/coupons/{{ c.key.id() }}">
-                <input type="submit" value="{{ u.name }}">
-                <input type="hidden" name="verify" value="true">
+            <li><form method="POST">
+                <input type="hidden" name="coupon" value="{{ c.key.urlsafe() }}">
+                <input type="hidden" name="user" value="{{ u.key.urlsafe() }}">
+                <input type="submit" name="method" value="Verify">
+                <label for="{{ u.key.id() }}">{{ u.email }}</label>
             </form></li>
             {% endfor %}
             {% else %}

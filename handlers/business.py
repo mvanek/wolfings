@@ -168,10 +168,36 @@ class BusinessIDManageHandler(RequestHandler):
         if not is_admin(b):
             self.abort(401)
         coupons = Coupon.get_by_business(b.key.id())
-        self.response.status = '200 OK'
         self.response.write(self.template.render(
             b=b,
             coupons=coupons
+        ))
+
+    def post(self):
+        b = self.get_page_entity()
+        if not is_admin(b):
+            self.abort(401)
+        self.load_http_params({
+            'user': (lambda s: ndb.Key(urlsafe=s), True),
+            'coupon': (lambda s: ndb.Key(urlsafe=s), True),
+            'method': (str, True)
+        })
+
+        user = self.params['user'].get()
+        try:
+            index = user.held_coupons.index(self.params['coupon'])
+            user.old_coupons.append(user.held_coupons.pop(index))
+            user.put()
+            status = 'Verified.'
+            statusClass = 'success'
+        except ValueError:
+            status = '{} isn\'t holding that coupon.'.format(user.email)
+            statusClass = 'failure'
+        self.response.write(self.template.render(
+            b=b,
+            coupons=Coupon.get_by_business(b.key.id()),
+            status=status,
+            statusClass=statusClass
         ))
 
 

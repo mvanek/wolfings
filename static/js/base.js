@@ -15,15 +15,20 @@ var Dropdown = function( menuNode ) {
 
     submenuNode = find_submenu();
     submenuNode.style.width = menuNode.offsetWidth + "px";
-    menuNode.addEventListener('hover', drop, false);
+    menuNode.addEventListener( 'hover', drop, false );
 }
 
 jQuery( document ).ready(function() {
     var i,
-        dropdownNodes;
+        dropdownNodes,
+        statusNode;
 
     dropdownNodes = jQuery('.dropdown');
     for ( i=0; i<dropdownNodes.length; i++ ) {
         new Dropdown( dropdownNodes[i] );
     }
+    statusNode = document.getElementById('statusContainer');
+    window.setTimeout(function() {
+        slideUp( statusNode );
+    }, 5000);
 })

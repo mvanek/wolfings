@@ -1,10 +1,14 @@
 @keyframes slide
 {
     from {
-        margin-top: 0px;
+        max-height: 3em;
     }
 
     to {
-        margin-top: 0px;
+        max-height: 0;
     }
+}
+
+.slider {
+    animation-duration: 500ms;
 }
