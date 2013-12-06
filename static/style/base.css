@@ -78,7 +78,9 @@ body {
 /* Footer */
 footer {
     text-align: center;
+    font-size: 0.75em;
     margin-top: 0.5em;
+    margin-bottom: 1em;
 }
 
 
