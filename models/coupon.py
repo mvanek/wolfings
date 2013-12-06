@@ -13,6 +13,22 @@ class Coupon(ndb.Model):
     end         = ndb.DateTimeProperty('e', required=True)
 
     @classmethod
+    def _pre_delete_hook(cls, key):
+        q1 = User.query(ndb.OR(
+            User.held_coupons == key,
+            User.old_coupons == key
+        ))
+        q2 = User.query(User.old_coupons == key)
+        for u in q1.iter():
+            try:
+                u.held_coupons.remove(key)
+            except ValueError:
+                u.old_coupons.remove(key)
+            finally:
+                u.put()
+
+
+    @classmethod
     def get_all(cls, time=None, keys_only=False):
         '''
         Returns a list of all coupons

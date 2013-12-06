@@ -1,7 +1,48 @@
 import webapp2
 from datetime import datetime, timedelta
 from google.appengine.ext import ndb
+from google.appengine.api import users
 from models import Business, Coupon, User, Address
+
+
+def find_errors(response, fix=False):
+        qry_u = User.query()
+        for u in qry_u:
+            held_coupons = []
+            for key_c in u.held_coupons:
+                c = key_c.get()
+                if c:
+                    held_coupons.append(key_c)
+                else:
+                    response.write('bad key: {} held by {}<br>'.format(key_c, u.key.id()))
+            u.held_coupons = held_coupons
+
+            old_coupons = []
+            for key_c in u.old_coupons:
+                c = key_c.get()
+                if c:
+                    old_coupons.append(key_c)
+                else:
+                    response.write('bad key: {} held by {}<br>'.format(key_c, u.key.id()))
+            u.old_coupons = old_coupons
+            if fix:
+                u.put()
+
+
+class ConsistencyCheckHandler(webapp2.RequestHandler):
+    def get(self):
+        if not users.is_current_user_admin():
+            self.abort(404)
+        find_errors(self.response)
+        self.response.write('success')
+
+
+class ConsistencyFixHandler(webapp2.RequestHandler):
+    def get(self):
+        if not users.is_current_user_admin():
+            self.abort(404)
+        find_errors(self.response, fix=True)
+        self.response.write('success')
 
 
 class InitHandler(webapp2.RequestHandler):
@@ -144,11 +185,13 @@ class InitHandler(webapp2.RequestHandler):
             )
         ]
         U_keys = ndb.put_multi(U)
-        self.response.write('success')
 
     def get(self):
+        if not users.is_current_user_admin():
+            self.abort(404)
         for b in Business.query().iter():
             b.key.delete()
         for c in Coupon.query().iter():
             c.key.delete()
         self.init()
+        self.response.write('success')

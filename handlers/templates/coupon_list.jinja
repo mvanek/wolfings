@@ -17,7 +17,9 @@ Globals:
 {% block body %}
 <section id="coupons">
     {% for c in coupons %}
+    {% if c %}
     {{ coupon_snip(c, show_img=True) }}
+    {% endif %}
     {% endfor %}
 </section>
 {% endblock body %}

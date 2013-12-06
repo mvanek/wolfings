@@ -7,6 +7,7 @@ import datetime
 from models import User
 from google.appengine.api import users
 from google.appengine.ext import ndb
+import logging
 
 
 __all__ = ['UserHandler',
@@ -32,7 +33,6 @@ class UserHandler(RequestHandler):
         query = User.query()
         users = [u.dict() for u in
                  query.fetch_page(20, projection=[User.name])[0]]
-        self.response.status = '200 OK'
         self.response.write(self.template.render(
             users=users
         ))
@@ -53,7 +53,8 @@ class UserIDHandler(RequestHandler):
         '''
         u = self.get_page_entity()
         coupons = ndb.get_multi(u.held_coupons)
-        self.response.status = '200 OK'
+        logging.info(u.held_coupons)
+        logging.info(coupons)
         self.response.write(self.template.render(
             u=u,
             coupons=coupons

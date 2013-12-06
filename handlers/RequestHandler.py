@@ -71,12 +71,12 @@ class RequestHandler(webapp2.RequestHandler):
         )
         cur_user = get_cur_user()
         self.JINJA_ENVIRONMENT.globals['users']             = users
-        self.JINJA_ENVIRONMENT.globals['user']              = get_cur_user()
+        self.JINJA_ENVIRONMENT.globals['user']              = cur_user
         self.JINJA_ENVIRONMENT.globals['now']               = datetime.datetime.now()
         self.JINJA_ENVIRONMENT.globals['is_admin']          = is_admin
         self.JINJA_ENVIRONMENT.filters['timedelta']         = timedelta
         self.JINJA_ENVIRONMENT.filters['timedelta_verbose'] = timedelta_verbose
-        self.JINJA_ENVIRONMENT.filters['datetime'] = dt
+        self.JINJA_ENVIRONMENT.filters['datetime']          = dt
 
     def _load_params(self, data, param_info, use_default):
         params = {}
@@ -119,7 +119,6 @@ class RequestHandler(webapp2.RequestHandler):
 
     def get_page_entity(self):
         key = self.get_page_key()
-        logging.info(key)
         entity = key.get()
         if not entity:
             self.abort(404)

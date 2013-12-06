@@ -22,26 +22,26 @@
                 <div class="right">
                     {% if user %}
 {#
-                        <div class="dropdown">
-                            <a>My Restaurants</a>
-                            <div class="submenu">
-                                <a>butt one</a>
-                                <a>butt two</a>
-                            </div>
+                    <div class="dropdown">
+                        <a>My Restaurants</a>
+                        <div class="submenu">
+                            <a>butt one</a>
+                            <a>butt two</a>
                         </div>
+                    </div>
 #}
-                        {% set b = user.business %}
-                        {% if b %}
-                        <a href="/business/{{ b.key.id() }}/">{{ b.name }}</a>
-                        {% endif %}
-                        <a href="/user/{{ user.key.id() }}/">My Coupons</a>
-                        <a href="/logout/">Log out</a>
-                        <script>
-                            WOLFINGS.set('user_id', '{{ user.key.id() }}');
-                        </script>
-                        {% else %}
-                        <a href="/login/">Log in</a>
-                        {% endif %}
+                    {% set b = user.business %}
+                    {% if b %}
+                    <a href="/business/{{ b.key.id() }}/">{{ b.name }}</a>
+                    {% endif %}
+                    <a href="/user/{{ user.key.id() }}/">My Coupons</a>
+                    <a href="/logout/">Log out</a>
+                    <script>
+                        WOLFINGS.set('user_id', '{{ user.key.id() }}');
+                    </script>
+                    {% else %}
+                    <a href="/login/">Log in</a>
+                    {% endif %}
                 </div>
                 <header><a href="/coupon/"><img src="/static/img/WolfingsLogoGrey.png"></a></header>
             </div>
