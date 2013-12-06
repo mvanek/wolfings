@@ -31,10 +31,11 @@ class UserHandler(RequestHandler):
             lat,lon - Location of the user
         '''
         query = User.query()
-        users = [u.dict() for u in
-                 query.fetch_page(20, projection=[User.name])[0]]
+        user_list = [u.dict() for u in
+                 query.fetch_page(20, projection=(User.email,))[0]]
+        logging.info(user_list)
         self.response.write(self.template.render(
-            users=users
+            user_list=user_list
         ))
 
 

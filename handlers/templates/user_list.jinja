@@ -19,9 +19,9 @@ Globals:
 {% block body %}
 <section id="users">
     <header>Users</header>
-    {% for u in users %}
+    {% for u in user_list %}
     <p id="u{{u.id}}">
-    <a href="/user/{{u.id}}/">{{u.name}}</a>
+    <a href="/user/{{u.id}}/">{{ u.email }}</a>
     </p>
     {% endfor %}
 </section>

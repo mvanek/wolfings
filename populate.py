@@ -169,22 +169,6 @@ class InitHandler(webapp2.RequestHandler):
             )
         ]
         C_keys = ndb.put_multi(C)
-        U = [
-            User(
-                surname='Araxa',
-                familiar_name='Da\'Vas',
-                email='DaVasAraxa@teleworm.us',
-                phone=7704505687,
-                address=Address(
-                    number=2975,
-                    street='Elk Creek Road',
-                    city='Norcross',
-                    state='GA',
-                    zip=30071
-                )
-            )
-        ]
-        U_keys = ndb.put_multi(U)
 
     def get(self):
         if not users.is_current_user_admin():

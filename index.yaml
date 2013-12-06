@@ -14,3 +14,8 @@ indexes:
   properties:
   - name: b
   - name: e
+
+- kind: User
+  properties:
+  - name: f
+  - name: s
