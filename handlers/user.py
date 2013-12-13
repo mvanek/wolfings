@@ -89,8 +89,7 @@ class UserIDAdminHandler(BaseUserHandler):
     def post(self):
         self.load_http_params({
             'surname': (str, False),
-            'familiar_name': (str, False),
-            'email': (str, False)
+            'familiar_name': (str, False)
         })
         u = self.get_page_entity()
         try:
