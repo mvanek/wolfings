@@ -123,3 +123,6 @@ class RequestHandler(webapp2.RequestHandler):
         if not entity:
             self.abort(404)
         return entity
+
+    def render(self, *args, **kwargs):
+        self.response.write(self.template.render(*args, **kwargs))

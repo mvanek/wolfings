@@ -34,9 +34,9 @@ class UserHandler(RequestHandler):
         user_list = [u.dict() for u in
                  query.fetch_page(20, projection=(User.email,))[0]]
         logging.info(user_list)
-        self.response.write(self.template.render(
+        self.render(
             user_list=user_list
-        ))
+        )
 
 
 class UserIDHandler(RequestHandler):
@@ -56,7 +56,26 @@ class UserIDHandler(RequestHandler):
         coupons = ndb.get_multi(u.held_coupons)
         logging.info(u.held_coupons)
         logging.info(coupons)
-        self.response.write(self.template.render(
+        self.render(
             u=u,
             coupons=coupons
-        ))
+        )
+
+
+class UserIDAdminHandler(RequestHandler):
+    '''
+    HTTP Request Handler, Entity: /user/[id]/edit
+    '''
+    def __init__(self, *args, **kwargs):
+        super(UserIDHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('user_edit.jinja')
+        self.idtype = str
+
+    def get(self):
+        cur_u = users.get_current_user()
+        uid = self.get_page_id
+        if uid != cur_u.user_id():
+            self.abort(401)
+        self.render(
+            u=u
+        )
