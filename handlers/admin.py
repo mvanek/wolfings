@@ -2,6 +2,7 @@ import jinja2
 import os
 import webapp2
 from RequestHandler import *
+from google.appengine.api import users
 
 
 __all__ = ['AdminHandler']
@@ -25,5 +26,6 @@ class AdminHandler(RequestHandler):
         HTTP GET Method Handler
         Parameters: None
         '''
-        self.status = '200 OK'
+        if not users.is_current_user_admin():
+            self.abort(404)
         self.response.write(self.template.render())

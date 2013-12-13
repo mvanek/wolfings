@@ -16,15 +16,6 @@ class MainHandler(RequestHandler):
             self.redirect('/coupon/')
         self.response.write(self.template.render())
 
-    def put(self):
-        self.response.write('Hello put!')
-
-    def post(self):
-        self.response.write('Hello post!')
-
-    def delete(self):
-        self.response.write('Hello delete!')
-
 
 class LegalHandler(RequestHandler):
     def __init__(self, *args, **kwargs):
