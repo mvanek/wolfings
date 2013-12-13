@@ -93,9 +93,21 @@ class UserIDAdminHandler(BaseUserHandler):
             'email': (str, False)
         })
         u = self.get_page_entity()
+        try:
+            if not self.params['surname']:
+                self.render(
+                    u=u,
+                    status='Invalid surname.',
+                    statusClass='failure'
+                )
+                return
+        except KeyError:
+            pass
         for k,v in self.params.iteritems():
             setattr(u,k,v)
         u.put()
         self.render(
-            u=u
+            u=u,
+            status='Successfully updated preferences.',
+            statusClass='success'
         )
