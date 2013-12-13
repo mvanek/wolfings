@@ -1,0 +1,41 @@
+{% extends 'base.jinja' %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" type="text/css" href="/static/style/frontpage.css">
+{% endblock head %}
+
+{% block header %}{% endblock header %}
+
+{% block viewport %}
+<div id="viewportContainer">
+    <div id="viewport" class="notext">
+        {% block body %}
+        <div id="imgContainer">
+            <img src="/static/img/WolfingsLogoRed.png">
+        </div>
+        <div id="desc">
+            <div id="text">
+                Wolfings allows for you to save money eating at what would be empty tables at restaurants. With only a few clicks you can get discounts at some of the best places in town. Just claim your coupons on Wolfings and go eat and pay the way you normally would. All you have to do is tell them that you're using Wolfings. But you better be quick. The discounts expire quickly, so get there on time!
+            </div>
+            <a href="/register/"><div id="link">Sign up</div></a>
+        </div>
+        {% endblock body %}
+    </div>
+</div>
+{% endblock viewport %}
+
+{% block footer %}
+<script>
+(function() {
+    var img, viewport;
+    viewport = document.getElementById('viewport');
+    img = document.getElementById('imgContainer');
+    img.addEventListener('click', function() {
+        viewport.className = 'text';
+    }, false);
+})();
+</script>
+{% endblock footer %}

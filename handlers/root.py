@@ -1,13 +1,20 @@
 import webapp2
-from models import User
+from RequestHandler import RequestHandler
+from google.appengine.api import users
 
 
-class MainHandler(webapp2.RequestHandler):
+__all__ = ['MainHandler', 'LegalHandler']
+
+
+class MainHandler(RequestHandler):
+    def __init__(self, *args, **kwargs):
+        super(MainHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('frontpage.jinja')
+
     def get(self):
-
-        self.response.set_cookie('user_id')
-
-        self.redirect('/coupon/')
+        if users.get_current_user():
+            self.redirect('/coupon/')
+        self.response.write(self.template.render())
 
     def put(self):
         self.response.write('Hello put!')
@@ -17,3 +24,12 @@ class MainHandler(webapp2.RequestHandler):
 
     def delete(self):
         self.response.write('Hello delete!')
+
+
+class LegalHandler(RequestHandler):
+    def __init__(self, *args, **kwargs):
+        super(LegalHandler, self).__init__(*args, **kwargs)
+        self.template = self.JINJA_ENVIRONMENT.get_template('legal.jinja')
+
+    def get(self):
+        self.response.write(self.template.render())

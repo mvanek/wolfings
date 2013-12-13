@@ -50,6 +50,7 @@
         </div>
         {% endblock header %}
 
+        {% block viewport %}
         <div id="viewportContainer">
             <div id="viewport">
                 {% if status %}
@@ -62,10 +63,13 @@
 
             </div>
         </div>
+        {% endblock viewport %}
         <footer>
+            {% block footer %}
             <a href="/legal/">Legal</a> |
             <a href="mailto:admin@wolfings.com">Contact</a> |
             <a href="/partner/">Partner with Wolfings</a>
+            {% endblock footer %}
         </footer>
     </body>
 </html>

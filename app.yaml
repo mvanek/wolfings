@@ -6,12 +6,8 @@ threadsafe: yes
 
 handlers:
 - url: /favicon\.ico
-  static_files: favicon.ico
-  upload: favicon\.ico
-
-- url: /static/
-  static_files: static/index.html
-  upload: static/index.html
+  static_files: static/img/WolfingsIcon29.png
+  upload: static/img/WolfingsIcon29\.png
 
 - url: /static
   static_dir: static
