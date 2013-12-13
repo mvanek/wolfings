@@ -11,17 +11,29 @@ import logging
 
 
 __all__ = ['UserHandler',
-           'UserIDHandler']
+           'UserIDHandler',
+           'UserIDAdminHandler']
 
 
-class UserHandler(RequestHandler):
+class BaseUserHandler(RequestHandler):
+    def __init__(self, *args, **kwargs):
+        super(BaseUserHandler, self).__init__(*args, **kwargs)
+        self.idtype = str
+        cur_u = users.get_current_user()
+        ukey = self.get_page_key()
+        if not users.is_current_user_admin():
+            if ukey.id() != cur_u.user_id():
+                logging.info('Unauthorized user {} tried to access preference panel for user {}.'.format(cur_u.user_id(), ukey.id()))
+                self.abort(401)
+
+
+class UserHandler(BaseUserHandler):
     '''
     HTTP Request Handler, Collection: /user/
     '''
     def __init__(self, *args, **kwargs):
         super(UserHandler, self).__init__(*args, **kwargs)
         self.template = self.JINJA_ENVIRONMENT.get_template('user_list.jinja')
-        self.idtype = str
 
     def get(self):
         '''
@@ -39,14 +51,13 @@ class UserHandler(RequestHandler):
         )
 
 
-class UserIDHandler(RequestHandler):
+class UserIDHandler(BaseUserHandler):
     '''
     HTTP Request Handler, Entity: /user/[id]
     '''
     def __init__(self, *args, **kwargs):
         super(UserIDHandler, self).__init__(*args, **kwargs)
         self.template = self.JINJA_ENVIRONMENT.get_template('user.jinja')
-        self.idtype = str
 
     def get(self):
         '''
@@ -62,20 +73,29 @@ class UserIDHandler(RequestHandler):
         )
 
 
-class UserIDAdminHandler(RequestHandler):
+class UserIDAdminHandler(BaseUserHandler):
     '''
     HTTP Request Handler, Entity: /user/[id]/edit
     '''
     def __init__(self, *args, **kwargs):
-        super(UserIDHandler, self).__init__(*args, **kwargs)
+        super(UserIDAdminHandler, self).__init__(*args, **kwargs)
         self.template = self.JINJA_ENVIRONMENT.get_template('user_edit.jinja')
-        self.idtype = str
 
     def get(self):
-        cur_u = users.get_current_user()
-        uid = self.get_page_id
-        if uid != cur_u.user_id():
-            self.abort(401)
+        self.render(
+            u=self.get_page_entity()
+        )
+
+    def post(self):
+        self.load_http_params({
+            'surname': (str, False),
+            'familiar_name': (str, False),
+            'email': (str, False)
+        })
+        u = self.get_page_entity()
+        for k,v in self.params.iteritems():
+            setattr(u,k,v)
+        u.put()
         self.render(
             u=u
         )

@@ -36,7 +36,8 @@ def main():
         ('/business/[0-9]+/manage/',    BusinessIDManageHandler),
         ('/business/[0-9]+/upload/',    BusinessIDUploadHandler),
         ('/user/',                      UserHandler),
-        ('/user/[0-9]+/',               UserIDHandler)
+        ('/user/[0-9]+/',               UserIDHandler),
+        ('/user/[0-9]+/edit/',          UserIDAdminHandler)
     ], debug=True)
 
 
