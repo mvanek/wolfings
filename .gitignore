@@ -39,3 +39,6 @@ nosetests.xml
 
 # OS X system files
 .DS_Store
+
+# App engine configuration shouldn't automatically update
+app.yaml
