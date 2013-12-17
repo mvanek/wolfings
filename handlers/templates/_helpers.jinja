@@ -4,7 +4,7 @@
 {% endmacro %}
 
 
-{% macro option(v,l,d) %}
+{% macro option(v,l,d=None) %}
     <option value="{{ v }}" {% if v == d %} selected="selected" {% endif %}>{{ l }}</option>
 {% endmacro %}
 

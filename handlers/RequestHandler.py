@@ -83,7 +83,7 @@ class RequestHandler(webapp2.RequestHandler):
         for k,(dtype,required) in param_info.iteritems():
             try:
                 params[k] = dtype(data[k])
-            except ValueError:
+            except (ValueError, TypeError):
                 if required or data[k]:
                     self.abort(400)
                 if use_default:

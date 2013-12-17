@@ -26,7 +26,7 @@ Parameters:
             <label for="name">Name</label>
             <input name="name" type="text" value="{{ b.name }}"><br>
             <label for="address">Address</label>
-            <input name="address" type="text" value="{{ b.address.number }} {{ b.address.street }}"><br>
+            <input name="address" type="text" value="{% if b.address %}{{ b.address.number }} {{ b.address.street }}{% endif %}"><br>
             <label for="city">City</label>
             <input name="city" type="text" value="{{ b.address.city }}"><br>
             <label for="zip">Zip</label>

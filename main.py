@@ -18,9 +18,10 @@ def main():
         ('/api/consistency/',               ConsistencyCheckHandler),
         ('/api/consistency/repair',         ConsistencyFixHandler),
 
-        ('.*[^/]$', SlashHandler),
-        ('/',       MainHandler),
-        ('/admin/', AdminHandler),
+        ('.*[^/]$',     SlashHandler),
+        ('/',           MainHandler),
+        ('/admin/',     AdminHandler),
+        ('/admin/old/', OldAdminHandler),
 
         ('/login/',                     LoginHandler),
         ('/logout/',                    LogoutHandler),

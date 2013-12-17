@@ -20,7 +20,7 @@ class Business(ndb.Model):
     name        = ndb.StringProperty('n', required=True)
     mark        = ndb.BlobKeyProperty('m')
     admins      = ndb.KeyProperty('adm', repeated=True)
-    address     = ndb.StructuredProperty(Address, required=True)
+    address     = ndb.StructuredProperty(Address)
     description = ndb.TextProperty('d')
     phone       = ndb.StringProperty('p')
     lat         = ndb.FloatProperty('a', required=True)
