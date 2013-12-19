@@ -1,0 +1,5 @@
+CSS_DIR = "css"
+SASS_DIR = "sass"
+
+$(CSS_DIR)/%.css: $(SASS_DIR)/%.scss
+	sass $^ $@

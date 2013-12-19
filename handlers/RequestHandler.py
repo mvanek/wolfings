@@ -12,6 +12,11 @@ from google.appengine.api import users
 __all__ = ['RequestHandler',
            'get_cur_user']
 
+TEMPLATE_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    'jinja2'
+)
+
 
 def get_cur_user():
     user = users.get_current_user()
@@ -62,10 +67,7 @@ class RequestHandler(webapp2.RequestHandler):
     def __init__(self, *args, **kwargs):
         super(RequestHandler, self).__init__(*args, **kwargs)
         self.JINJA_ENVIRONMENT = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(os.path.join(
-                os.path.dirname(__file__),
-                'templates'
-            )),
+            loader=jinja2.FileSystemLoader(TEMPLATE_DIR),
             extensions=['jinja2.ext.autoescape'],
             trim_blocks=True
         )

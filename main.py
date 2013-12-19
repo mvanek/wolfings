@@ -1,8 +1,5 @@
 import webapp2
 from handlers import *
-from populate import (InitHandler,
-                      ConsistencyCheckHandler,
-                      ConsistencyFixHandler)
 
 def main():
     return webapp2.WSGIApplication([
@@ -14,9 +11,9 @@ def main():
         ('/api/coupon/[0-9]+',              api.CouponIDHandler),
         ('/api/business/',                  api.BusinessHandler),
         ('/api/business/[0-9]+',            api.BusinessIDHandler),
-        ('/api/init/',                      InitHandler),
-        ('/api/consistency/',               ConsistencyCheckHandler),
-        ('/api/consistency/repair',         ConsistencyFixHandler),
+        ('/api/init/',                      api.InitHandler),
+        ('/api/consistency/',               api.ConsistencyCheckHandler),
+        ('/api/consistency/repair',         api.ConsistencyFixHandler),
 
         ('.*[^/]$',     SlashHandler),
         ('/',           MainHandler),
