@@ -8,7 +8,7 @@ SCSS=scss
 # Stylesheets to convert
 DEPS=_utils
 DEPS_LIST=${DEPS:%=$SCSS/%.scss}
-STYLES=reset base frontpage
+STYLES=reset base frontpage register coupon_snip business business_admin admin
 CSS_LIST=${STYLES:%=$CSS/%.css}
 
 
@@ -21,3 +21,6 @@ clean:V:
 # Build rules
 $CSS/%.css: $SCSS/%.scss $DEPS_LIST
     $SC $SFLAGS $SCSS/$stem.scss $target
+
+$CSS/register.css: $SCSS/register.scss $SCSS/_utils.scss $SCSS/buttons.scss
+    $SC $SFLAGS $SCSS/register.scss $CSS/register.css

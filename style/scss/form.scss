@@ -1,3 +1,5 @@
+@import "utils";
+
 label {
 	display: inline-block;
 	width: 6em;
@@ -6,5 +8,5 @@ label {
 
 input[type="submit"] {
 	display: block;
-	margin:auto;
+    @include block-align-middle;
 }
