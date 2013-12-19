@@ -1,0 +1,65 @@
+/* GLOBAL VARIABLES */
+$red: #900;
+$dark-red: darken($red, 2%);
+$light-red: lighten($red, 2%);
+$light-green: #6a9f00;
+
+/* UTILS */
+@mixin radial-gradient
+{
+    background: -moz-radial-gradient(center, ellipse cover, rgba(255,255,255,0) 0%, rgba(211,211,211,0.26) 32%, rgba(183,183,183,0.45) 53%, rgba(119,119,119,1) 100%); /* FF3.6+ */
+    background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgba(255,255,255,0)), color-stop(32%,rgba(211,211,211,0.26)), color-stop(53%,rgba(183,183,183,0.45)), color-stop(100%,rgba(119,119,119,1))); /* Chrome,Safari4+ */
+    background: -webkit-radial-gradient(center, ellipse cover, rgba(255,255,255,0) 0%,rgba(211,211,211,0.26) 32%,rgba(183,183,183,0.45) 53%,rgba(119,119,119,1) 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-radial-gradient(center, ellipse cover, rgba(255,255,255,0) 0%,rgba(211,211,211,0.26) 32%,rgba(183,183,183,0.45) 53%,rgba(119,119,119,1) 100%); /* Opera 12+ */
+    background: -ms-radial-gradient(center, ellipse cover, rgba(255,255,255,0) 0%,rgba(211,211,211,0.26) 32%,rgba(183,183,183,0.45) 53%,rgba(119,119,119,1) 100%); /* IE10+ */
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0) 0%,rgba(211,211,211,0.26) 32%,rgba(183,183,183,0.45) 53%,rgba(119,119,119,1) 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00ffffff', endColorstr='#777777',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+}
+
+
+@mixin clearfix
+{
+  display: inline-block;
+  &:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+  }
+  * html & { height: 1px }
+}
+
+
+@mixin unselectable
+{
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+
+@mixin block-align-center
+{
+    margin {
+        left: auto;
+        right: auto;
+    }
+}
+
+
+@mixin block-align-right
+{
+    float: right;
+}
+
+
+@mixin box-shadow($shadows)
+{
+    -moz-box-shadow: $shadows;
+    -webkit-box-shadow: $shadows;
+    box-shadow: $shadows;
+}

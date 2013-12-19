@@ -1,9 +1,14 @@
+SC=sass
+SFLAGS=-t compressed --trace
+
 # Directories
 CSS=css
 SCSS=scss
 
 # Stylesheets to convert
-STYLES=base frontpage
+DEPS=_utils
+DEPS_LIST=${DEPS:%=$SCSS/%.scss}
+STYLES=reset base frontpage
 CSS_LIST=${STYLES:%=$CSS/%.css}
 
 
@@ -14,5 +19,5 @@ clean:V:
 
 
 # Build rules
-$CSS/%.css: $SCSS/%.scss
-    sass $SCSS/$stem.scss $target
+$CSS/%.css: $SCSS/%.scss $DEPS_LIST
+    $SC $SFLAGS $SCSS/$stem.scss $target

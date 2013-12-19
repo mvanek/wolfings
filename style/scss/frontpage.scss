@@ -1,71 +1,131 @@
-#title {
-    font-size: 3em;
-    font-weight: bold;
-}
-#subtitle {
-    font-size: 1.5em;
-    font-weight: bold;
-}
-body {
+@import "utils";
+
+$box-margin: 20px;
+$box-padding: 30px;
+$title-size: 50px;
+$subtitle-size: 25px;
+$img-margin: 20px;
+$img-size: 375px;
+$desc-size: 19px;
+$link-padding: 10px;
+$link-margin: 20px;
+$box-height: (
+    2*$box-margin
+    + 2*$box-padding
+    + $title-size
+    + $subtitle-size
+    + 2*$img-margin
+    + $img-size
+    + 4*$desc-size
+    + 2*$link-padding
+    + $link-margin
+);
+$box-width: 538px + 2*$box-padding + 2*$box-margin;
+
+body
+{
     color: white;
 }
 
-#box {
-    display:inline-block;
+
+#viewportContainer
+{
+    position: absolute;
+    margin: 0;
+    top: 0;
+    bottom: 0;
+    min-height: $box-height;
+    min-width: $box-width;
+    max-width: none;
+    width: 100%;
+    background: transparent;
+    @include box-shadow(none);
+    @include clearfix;
+
+    #viewport
+    {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin: {
+            top: ($box-height/-2);
+            left: ($box-width/-2);
+        }
+        text-align: center;
+        padding: 0;
+    }
+}
+
+
+#box
+{
+    display: inline-block;
     border-radius: 5px;
     background: rgba(0,0,0,0.6);
-    padding: 2em;
-    box-shadow: 5px 5px 25px #555;
-}
-#imgContainer {
-    display: block;
-    text-align: center;
-    vertical-align: middle;
-    margin-top: 1em;
-}
-#imgContainer > img {
-    height: 25em;
+    padding: $box-padding;
+    margin: $box-margin;
+    @include box-shadow(5px 5px 25px #555);
+
+    #title
+    {
+        font-size: $title-size;
+        font-weight: bold;
+    }
+
+    #subtitle
+    {
+        font-size: $subtitle-size;
+        font-weight: bold;
+    }
+
+    #imgContainer
+    {
+        display: block;
+        text-align: center;
+        margin: $img-margin 0;
+
+        img
+        {
+            height: $img-size;
+        }
+    }
+
+    #desc
+    {
+        display: inline-block;
+        max-width: 300px;
+        font-size: $desc-size;
+
+        a
+        {
+            color: white;
+            text-decoration: none;
+
+            #link
+            {
+                background-color: $red;
+                margin-top: $link-margin;
+                padding: $link-padding 0;
+                border: {
+                    style: solid;
+                    width: 0px;
+                    radius: 3px;
+                }
+                @include block-align-center;
+
+                &:hover
+                {
+                    background-color: $light-red;
+                }
+                &:active
+                {
+                    background-color: $dark-red;
+                }
+            }
+        }
+    }
 }
 
-#viewportContainer{
-    position: static;
-    margin: 0;
-}
-#viewport {
-    text-align: center;
-    position: absolute;
-    padding: 0;
-    top: 50%;
-    width: 100%;
-}
-#viewport.text {
-    margin-top: -22em;
-}
-
-#desc {
-    display: inline-block;
-
-    padding: 1em;
-    margin: auto;
-    max-width: 300px;
-
-    font-size: 1.2em;
-
-    vertical-align: middle;
-}
-#link {
-    background-color: #900;
-    margin: auto;
-    margin-top: 1em;
-    padding: 0.5em;
-    border: solid;
-    border-width: 0px;
-    border-radius: 3px;
-}
-#link:hover {
-    background-color: #a00;
-}
-a {
-    color: white;
-    text-decoration: none;
+footer {
+    display: none;
 }

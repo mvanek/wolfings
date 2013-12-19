@@ -1,9 +1,0 @@
-@keyframes slide {
-  from {
-    max-height: 3em; }
-
-  to {
-    max-height: 0; } }
-
-.slider {
-  animation-duration: 500ms; }
