@@ -23,4 +23,7 @@ $CSS/%.css: $SCSS/%.scss $DEPS_LIST
     $SC $SFLAGS $SCSS/$stem.scss $target
 
 $CSS/register.css: $SCSS/register.scss $SCSS/_utils.scss $SCSS/buttons.scss
-    $SC $SFLAGS $SCSS/register.scss $CSS/register.css
+    $SC $SFLAGS $SCSS/register.scss $target
+
+$CSS/coupon_snip.css: $SCSS/coupon_snip.scss $SCSS/_utils.scss $SCSS/buttons.scss
+    $SC $SFLAGS $SCSS/coupon_snip.scss $target
