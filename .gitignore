@@ -42,3 +42,6 @@ nosetests.xml
 
 # App engine configuration shouldn't automatically update
 app.yaml
+
+# SASS
+.sass-cache

@@ -1,5 +1,18 @@
-CSS_DIR = "css"
-SASS_DIR = "sass"
+# Directories
+CSS=css
+SCSS=scss
 
-$(CSS_DIR)/%.css: $(SASS_DIR)/%.scss
-	sass $^ $@
+# Stylesheets to convert
+STYLES=base frontpage
+CSS_LIST=${STYLES:%=$CSS/%.css}
+
+
+# Virtual Rules
+all:V: $CSS_LIST
+clean:V:
+    rm -f $CSS/*.css
+
+
+# Build rules
+$CSS/%.css: $SCSS/%.scss
+    sass $SCSS/$stem.scss $target

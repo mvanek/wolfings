@@ -1,0 +1,9 @@
+.mark, .desc {
+  display: inline-block;
+  vertical-align: middle; }
+
+article {
+  border-top: solid;
+  border-width: 1px;
+  border-color: #c0c0c0;
+  padding-top: 0.25em; }
