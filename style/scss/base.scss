@@ -24,7 +24,6 @@ body
     #viewport
     {
         padding: 0.75em;
-        @include clearfix;
 
         &>header
         {
