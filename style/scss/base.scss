@@ -46,10 +46,10 @@ body
     {
         max-width: 1000px;
         width: 100%;
-        height:2.25em;
+        height: 2.25em;
         @include block-align-center;
 
-        font {
+        font: {
             size: 1.25em;
             weight: bold;
         }
@@ -84,7 +84,7 @@ body
 
                 &:hover
                 {
-                    border {
+                    border: {
                         top: solid;
                         width: 0.2em;
                         color: #ffffff;
@@ -111,7 +111,7 @@ footer
     text-align: center;
     padding: 0.5em 0;
     margin-bottom: 1em;
-    border {
+    border: {
         style: solid;
         width: 1px;
         radius: 5px;
@@ -188,18 +188,18 @@ article
         {
             display: block;
             line-height: 2;
-            padding {
+            padding: {
                 top: 0;
                 bottom: 0;
             }
-            border {
+            border: {
                 right: solid;
                 color: $red;
             }
 
             &:hover
             {
-                border {
+                border: {
                     width: 0.2em;
                     top: none;
                     color: #ffffff;
