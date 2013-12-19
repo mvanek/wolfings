@@ -24,10 +24,9 @@ body
     #viewport
     {
         padding: 0.75em;
-        width: 100%;
         @include clearfix;
 
-        header
+        &>header
         {
             font-size: 1.4em;
             text-align: center;
