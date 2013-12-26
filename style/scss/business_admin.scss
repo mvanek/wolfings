@@ -1,24 +1,36 @@
-@import url("/static/style/buttons.css");
-@import url("/static/style/business.css");
+@import "buttons";
+@import "business";
 
-label {
+input[type=submit]
+{
+    @include red-button;
+}
+
+label
+{
     display: inline-block;
     width: 5em;
     vertical-align: top;
 }
-input,textarea {
+
+input,
+textarea
+{
     margin-bottom: 0.5em;
 }
 
-textarea {
+textarea
+{
     height:5em;
     width:30em;
 }
 
-.ui-datepicker {
+.ui-datepicker
+{
     font-size: 0.80em;
 }
 
-li {
+li
+{
     margin-left: 2em;
 }

@@ -7,26 +7,35 @@ button:focus
     font-size: 0.8em;
 }
 
-label {
+label
+{
     display: inline-block;
     width: 8.5em;
     margin-left:1em;
-    &:after {
+
+    &:after
+    {
         vertical-align: middle;
         float: right;
-    }
-    &.required:after {
-        content: "*";
-        color:#ff0000;
-        font-size:1.2em;
-    }
-    &.valid:after {
-        content: "✅";
-    }
-    &.invalid:after {
-        content: "×";
-        color:#ff0000;
-        font-size:1.2em;
+
+        &.required
+        {
+            content: "*";
+            color:#ff0000;
+            font-size:1.2em;
+        }
+
+        &.valid
+        {
+            content: "✅";
+        }
+
+        &.invalid
+        {
+            content: "×";
+            color:#ff0000;
+            font-size:1.2em;
+        }
     }
 }
 

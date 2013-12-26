@@ -1,7 +1,5 @@
 all:V:
-    cd style
-    mk all
+    cd style; mk all
 
 clean:V:
-    cd style
-    mk clean
+    cd style; mk clean

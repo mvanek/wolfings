@@ -1,12 +1,16 @@
 @import "utils";
+@import "buttons";
 
-label {
+label
+{
 	display: inline-block;
 	width: 6em;
 	margin-bottom: 0.5em;
 }
 
-input[type="submit"] {
+input[type=submit]
+{
 	display: block;
-    @include block-align-middle;
+    @include block-align-center;
+    @include red-button;
 }
