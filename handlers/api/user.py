@@ -184,43 +184,13 @@ class UserIDCouponHandler(webapp2.RequestHandler):
         if not coupon:
             self.abort(400)
         if not user:
+            logging.info('no user: {}'.format(self.request.path.split('/')))
             self.abort(400)
         if coupon.key not in user.held_coupons:
             user.held_coupons.append(coupon.key)
             user.put()
         self.response.status = '200 OK'
         self.response.write('/api/user/' + str(user.key.id()))
-
-
-class UserIDCouponIDHandler(webapp2.RequestHandler):
-    '''
-    HTTP Request Handler: /api/user/[id]/coupons/[id]
-    '''
-    def get_uid(self):
-        try:
-            return urllib.unquote(self.request.path.split('/')[3])
-        except ValueError:
-            self.abort(404)
-
-    def get_cid(self):
-        try:
-            return int(urllib.unquote(self.request.path.split('/')[5]))
-        except ValueError:
-            self.abort(404)
-
-    def delete(self):
-        '''
-        HTTP DELETE Method Handler
-        Takes coupon away from user
-        '''
-        user = User.get_by_id(self.get_uid())
-        if not user:
-            self.abort(400)
-        coupon_key = ndb.Key('Coupon', self.get_cid())
-        authenticate(self.get_uid(), coupon_key.get().business.id())
-        user.held_coupons.remove(coupon_key)
-        user.put()
-        self.response.status = '204 No Content'
 
 
 class UserIDCouponIDHandler(APIHandler):

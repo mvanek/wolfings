@@ -12,6 +12,12 @@ handlers:
 - url: /static/style
   static_dir: style/css
 
+- url: /static/js
+  static_dir: js/compiled
+
+- url: /static/lib/closure
+  static_dir: js/closure-library/closure
+
 - url: /static
   static_dir: static
 

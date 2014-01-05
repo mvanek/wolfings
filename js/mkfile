@@ -1,0 +1,27 @@
+GOOG_DIR=closure-library
+WOLF_DIR=wolf
+COMP_DIR=compiled
+
+BUILDER=$GOOG_DIR/closure/bin/build/closurebuilder.py
+COMPILER=`which closure-compiler.jar`
+
+output_mode=compiled
+output_mode=script
+
+rebuild:V:
+    mk clean
+    mk all
+
+all:V: $COMP_DIR/wolf.js
+
+$COMP_DIR/wolf.js: $WOLF_DIR/start.js $WOLF_DIR/init.js
+    $BUILDER \
+            --namespace=wolf.start \
+            --root=$GOOG_DIR/ \
+            --root=$WOLF_DIR/ \
+            --output_mode=$output_mode \
+            --compiler_jar=$COMPILER \
+            > $target
+
+clean:V:
+    rm -f $COMP_DIR/*.js

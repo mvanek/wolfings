@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+
+    <head>
+        <title>Testing</title>
+        <link rel="stylesheet" type="text/css" href="/static/style/reset.css">
+        <style>
+            html,body {
+                height: 100%;
+            }
+            #statusContainer {
+                overflow: hidden;
+            }
+            #status {
+                padding: 0.5em;
+                margin-bottom: 0.5em;
+                border-radius: 2px;
+                font-weight: bold;
+                font-family: sans-serif;
+                color: white;
+                background-color: #6a9f00;
+            }
+        </style>
+        <script src="/static/lib/closure/goog/base.js"></script>
+        <script>
+            goog.require('goog.dom');
+            goog.require('goog.fx.easing');
+            goog.require('goog.fx.dom');
+            goog.require('goog.style');
+            goog.require('goog.async.Delay');
+        </script>
+        <script>
+            function Status( el ) {
+                if ( !el ) {
+                    return undefined;
+                }
+                this.container = el;
+                this.el = goog.dom.getFirstElementChild( this.container );
+                this.h = goog.style.getSize( this.container ).height;
+                this.expanded = true;
+                return this;
+            }
+
+            Status.prototype.slideUp = function() {
+                var anim = new goog.fx.dom.ResizeHeight(
+                    this.container,
+                    this.h, 0,
+                    1000,
+                    goog.fx.easing.easeOut
+                );
+                anim.play();
+                this.expanded = false;
+            }
+
+            Status.prototype.slideDown = function() {
+                var anim = new goog.fx.dom.ResizeHeight(
+                    this.container,
+                    0, this.h,
+                    1000,
+                    goog.fx.easing.easeOut
+                );
+                anim.play();
+                this.expanded = true;
+            }
+
+            Status.prototype.toggle = function() {
+                if ( this.expanded ) {
+                    this.slideUp();
+                } else {
+                    this.slideDown();
+                }
+            }
+
+            Status.prototype.set = function( text ) {
+                goog.dom.setTextContent( this.node, text );
+                goog.style.showElement( this.node );
+            }
+        </script>
+    </head>
+
+    <body>
+        <button onclick="s.toggle();">Toggle</button>
+        <div id="statusContainer">
+            <div id="status">
+                Lorem ipsum dolor sit amet, libris integre no qui.
+            </div>
+        </div>
+        <div>Additional text</div>
+        <script>
+            var s, el;
+            el = goog.dom.getElement('statusContainer')
+            s = new Status( el );
+        </script>
+    </body>
+
+</html>

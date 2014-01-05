@@ -23,7 +23,11 @@ Globals:
     {{ coupon_snip(c, show_img=True, held=True) }}
     {% endfor %}
 {% else %}
-    You don't have any coupons yet. Get them <a href="/coupon/">here</a>
+    You don't have any coupons yet. Get them <a href="/coupon/">here</a>.
 {% endif %}
 </section>
 {% endblock body %}
+
+{% block scripts %} {{ super() }}
+wolf.setup_coupons();
+{% endblock scripts %}

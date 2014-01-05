@@ -104,29 +104,52 @@ footer
 }
 
 /* Notifications */
-#status
+#statusContainer
 {
-    color: #fff;
-    text-align: center;
-    padding: 0.5em 0;
-    margin-bottom: 1em;
-    border: {
-        style: solid;
-        width: 1px;
-        radius: 5px;
-    }
-}
-#status.success
-{
-    background-color: $light-green;
-    border-color: $light-green;
-}
-#status.failure
-{
-    background-color: $red;
-    border-color: $red;
+    overflow: hidden;
 }
 
+#status
+{
+    position: relative;
+    padding: {
+        top: 0.5em;
+        bottom: 0.5em;
+        left: 0.5em;
+        right: 2em;
+    }
+    margin-bottom: 1em;
+    border-radius: 5px;
+    background-color: #6a9f00;
+    color: white;
+    text-align: center;
+    min-height: 1em;
+
+    button
+    {
+        position: absolute;
+        right: 0.4em;
+        top: 0.175em;
+        color: white;
+        font-size: 1.25em;
+        cursor: pointer;
+
+        border: none;
+        padding: 0;
+        margin: 0;
+        background: none;
+    }
+
+    &.success
+    {
+        background-color: $light-green;
+    }
+
+    &.failure
+    {
+        background-color: $red;
+    }
+}
 
 /* Section and article spacing */
 section

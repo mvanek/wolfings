@@ -17,32 +17,15 @@
         </div>
 
         {% if is_admin(b) %}
-        <button class="edit" id="button_c{{ c.key.id() }}">EDIT</button>
-        <script>
-            WOLFINGS.import('handlers.coupon', function() {
-                var button = document.getElementById('button_c{{ c.key.id() }}');
-                WOLFINGS.handlers.coupon.click_edit_coupon( button );
-            });
-        </script>
-        {% elif held %}
-        <button class="trash" id="button_c{{ c.key.id() }}">TRASH</button>
-        <script>
-            WOLFINGS.import('handlers.coupon', function() {
-                var button = document.getElementById('button_c{{ c.key.id() }}');
-                WOLFINGS.handlers.coupon.click_trash_coupon( button );
-            });
-        </script>
+        <button class="edit">EDIT</button>
+        {% endif %}
+        {% if held %}
+        <button class="trash">TRASH</button>
         {% elif user %}
         {% if c.key in user.held_coupons %}
         <button class="inactive">CLAIMED</button>
         {% elif now < c.end %}
-        <button class="claim" id="button_c{{ c.key.id() }}">CLAIM</button>
-        <script>
-            WOLFINGS.import('handlers.coupon', function() {
-                var button = document.getElementById('button_c{{ c.key.id() }}');
-                WOLFINGS.handlers.coupon.click_claim_coupon( button );
-            });
-        </script>
+        <button class="claim">CLAIM</button>
         {% endif %}
         {% endif %}
     </div>
@@ -88,5 +71,5 @@
         {% endif %}
     </div>
 
-    </article>
+</article>
 {% endmacro %}

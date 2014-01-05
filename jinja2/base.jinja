@@ -6,10 +6,7 @@
     {% block head %}
         <title>{% block title %}{% endblock title %} - Wolfings</title>
         <meta charset="UTF-8">
-        <script src="/static/lib/jquery-1.10.2.min.js"></script>
-        <script src="/static/lib/wolfings/wolfings.js"></script>
-        <script src="/static/js/animations.js"></script>
-        <script src="/static/js/base.js"></script>
+        <script src="/static/js/wolf.js"></script>
         <link rel="stylesheet" type="text/css" href="/static/style/reset.css">
         <link rel="stylesheet" type="text/css" href="/static/style/base.css">
     {% endblock head %}
@@ -37,9 +34,6 @@
                     {% endif %}
                     <a href="/user/{{ user.key.id() }}/">My Coupons</a>
                     <a href="/logout/">Log out</a>
-                    <script>
-                        WOLFINGS.set('user_id', '{{ user.key.id() }}');
-                    </script>
                     {% else %}
                     <a href="/login/">Log in</a>
                     {% endif %}
@@ -52,17 +46,19 @@
         {% block viewport %}
         <div id="viewportContainer">
             <div id="viewport">
-                {% if status %}
-                <div id="statusContainer" class="slider">
-                    <div id="status" class="{{ statusClass }}">{{ status }}</div>
+                <div id="statusContainer">
+                    <div id="status" class="{{ statusClass }}" {% if not status %}style="display: none;"{% endif %}>
+                        {{ status }}
+                        <button>⊗</button>
+                    </div>
                 </div>
-                {% endif %}
                 {% block body %}{% endblock body %}
                 <div class="clear"></div>
 
             </div>
         </div>
         {% endblock viewport %}
+
         <footer>
             {% block footer %}
             <a href="/legal/">Legal</a> |
@@ -70,5 +66,11 @@
             <a href="/partner/">Partner with Wolfings</a>
             {% endblock footer %}
         </footer>
+
+        <script>
+            {% block scripts %}
+            wolf.start('{% if user %}{{ user.key.id() }}{% endif %}');
+            {% endblock scripts %}
+        </script>
     </body>
 </html>

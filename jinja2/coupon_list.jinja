@@ -11,7 +11,6 @@ Globals:
 {% block title %}Coupons{% endblock title %}
 {% block head %}{{ super() }}
 <link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
-<script src="/static/js/coupon_snip.js"></script>
 {% endblock head %}
 
 {% block body %}
@@ -23,3 +22,7 @@ Globals:
     {% endfor %}
 </section>
 {% endblock body %}
+
+{% block scripts %} {{ super() }}
+wolf.setup_coupons();
+{% endblock scripts %}
