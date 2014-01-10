@@ -16,10 +16,12 @@ wolf.Status = function( el ) {
     this.el = goog.dom.getFirstElementChild( this.container );
     this.button = goog.dom.getFirstElementChild( this.el );
     this.h = goog.style.getSize( this.container ).height;
+}
+
+wolf.Status.prototype.init = function() {
     this.expanded = true;
     goog.events.listen( this.button, goog.events.EventType.CLICK, this.slideUp, true, this );
-    return this;
-}
+};
 
 wolf.Status.prototype.slideUp = function() {
     var anim;

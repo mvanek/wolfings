@@ -55,34 +55,40 @@ wolf.coupon.Timer.prototype.toString = function() {
 
 
 wolf.coupon.Coupon = function( node ) {
-    var buttons,
-        timeleft;
+    var timeleft;
     if ( !node ) return undefined;
     this.node = node;
     this.couponId = this.node.id.slice(1);
-    buttons = goog.dom.getElementsByTagNameAndClass( 'button', null, this.node );
-    for ( i=0; i<buttons.length; i++) {
-        if ( goog.dom.classlist.contains(buttons[i], 'claim') ) {
-            this.button = buttons[i];
+    timeleft = goog.dom.getElementByClass( 'tval', this.node );
+    if ( timeleft ) {
+        this.timer = new wolf.coupon.Timer( timeleft );
+    }
+    this.buttons = goog.dom.getElementsByTagNameAndClass( 'button', null, this.node );
+};
+
+wolf.coupon.Coupon.prototype.init = function() {
+    var method,
+        i;
+    for ( i=0; i<this.buttons.length; i++) {
+        if ( goog.dom.classlist.contains(this.buttons[i], 'claim') ) {
+            this.button = this.buttons[i];
             method = this.claim;
-        } else if ( goog.dom.classlist.contains(buttons[i], 'trash') ) {
+        } else if ( goog.dom.classlist.contains(this.buttons[i], 'trash') ) {
             method = this.trash;
-        } else if ( goog.dom.classlist.contains(buttons[i], 'edit') ) {
+        } else if ( goog.dom.classlist.contains(this.buttons[i], 'edit') ) {
             method = this.edit;
         } else {
             continue;
         }
         goog.events.listen(
-            buttons[i],
+            this.buttons[i],
             goog.events.EventType.CLICK,
             method,
             true,
             this
         );
     }
-    timeleft = goog.dom.getElementByClass( 'tval', this.node );
-    if ( timeleft ) {
-        this.timer = new wolf.coupon.Timer( timeleft );
+    if ( this.timer ) {
         this.timer.start();
     }
 };

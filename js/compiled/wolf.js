@@ -1629,6 +1629,22 @@ goog.scope = function(fn) {
 };
 
 
+(function() {
+    goog.provide('wolf.set');
+    goog.provide('wolf.get');
+
+    var data = {};
+
+    wolf.set = function( key, value ) {
+        data[ key ] = value;
+    }
+    wolf.get = function( key ) {
+        return data[ key ];
+    }
+
+    goog.exportSymbol('wolf.set', wolf.set);
+    goog.exportSymbol('wolf.get', wolf.get);
+})();
 // Copyright 2011 The Closure Library Authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15173,22 +15189,6 @@ goog.dom.classlist.addRemove = function(element, classToRemove, classToAdd) {
   goog.dom.classlist.remove(element, classToRemove);
   goog.dom.classlist.add(element, classToAdd);
 };
-(function() {
-    goog.provide('wolf.set');
-    goog.provide('wolf.get');
-
-    var data = {};
-
-    wolf.set = function( key, value ) {
-        data[ key ] = value;
-    }
-    wolf.get = function( key ) {
-        return data[ key ];
-    }
-
-    goog.exportSymbol('wolf.set', wolf.set);
-    goog.exportSymbol('wolf.get', wolf.get);
-})();
 // Copyright 2008 The Closure Library Authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28246,34 +28246,40 @@ wolf.coupon.Timer.prototype.toString = function() {
 
 
 wolf.coupon.Coupon = function( node ) {
-    var buttons,
-        timeleft;
+    var timeleft;
     if ( !node ) return undefined;
     this.node = node;
     this.couponId = this.node.id.slice(1);
-    buttons = goog.dom.getElementsByTagNameAndClass( 'button', null, this.node );
-    for ( i=0; i<buttons.length; i++) {
-        if ( goog.dom.classlist.contains(buttons[i], 'claim') ) {
-            this.button = buttons[i];
+    timeleft = goog.dom.getElementByClass( 'tval', this.node );
+    if ( timeleft ) {
+        this.timer = new wolf.coupon.Timer( timeleft );
+    }
+    this.buttons = goog.dom.getElementsByTagNameAndClass( 'button', null, this.node );
+};
+
+wolf.coupon.Coupon.prototype.init = function() {
+    var method,
+        i;
+    for ( i=0; i<this.buttons.length; i++) {
+        if ( goog.dom.classlist.contains(this.buttons[i], 'claim') ) {
+            this.button = this.buttons[i];
             method = this.claim;
-        } else if ( goog.dom.classlist.contains(buttons[i], 'trash') ) {
+        } else if ( goog.dom.classlist.contains(this.buttons[i], 'trash') ) {
             method = this.trash;
-        } else if ( goog.dom.classlist.contains(buttons[i], 'edit') ) {
+        } else if ( goog.dom.classlist.contains(this.buttons[i], 'edit') ) {
             method = this.edit;
         } else {
             continue;
         }
         goog.events.listen(
-            buttons[i],
+            this.buttons[i],
             goog.events.EventType.CLICK,
             method,
             true,
             this
         );
     }
-    timeleft = goog.dom.getElementByClass( 'tval', this.node );
-    if ( timeleft ) {
-        this.timer = new wolf.coupon.Timer( timeleft );
+    if ( this.timer ) {
         this.timer.start();
     }
 };
@@ -28316,1549 +28322,4154 @@ wolf.coupon.Coupon.prototype.trash = function() {
 wolf.coupon.Coupon.prototype.edit = function() {
     window.location.href = '/coupon/'+this.couponId+'/edit/';
 };
-// Copyright 2005-2009, The Dojo Foundation
-// Modifications Copyright 2008 The Closure Library Authors.
-// All Rights Reserved.
+// Copyright 2008 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 /**
- * @license Portions of this code are from the Dojo Toolkit, received by
- * The Closure Library Authors under the BSD license. All other code is
- * Copyright 2005-2009 The Closure Library Authors. All Rights Reserved.
-
-The "New" BSD License:
-
-Copyright (c) 2005-2009, The Dojo Foundation
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-  * Redistributions of source code must retain the above copyright notice, this
-    list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-  * Neither the name of the Dojo Foundation nor the names of its contributors
-    may be used to endorse or promote products derived from this software
-    without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-/**
- * @fileoverview This code was ported from the Dojo Toolkit
-   http://dojotoolkit.org and modified slightly for Closure.
+ * @fileoverview Data for time zone detection.
  *
- *  goog.dom.query is a relatively full-featured CSS3 query function. It is
- *  designed to take any valid CSS3 selector and return the nodes matching
- *  the selector. To do this quickly, it processes queries in several
- *  steps, applying caching where profitable.
- *    The steps (roughly in reverse order of the way they appear in the code):
- *    1.) check to see if we already have a "query dispatcher"
- *      - if so, use that with the given parameterization. Skip to step 4.
- *    2.) attempt to determine which branch to dispatch the query to:
- *      - JS (optimized DOM iteration)
- *      - native (FF3.1, Safari 3.2+, Chrome, some IE 8 doctypes). If native,
- *        skip to step 4, using a stub dispatcher for QSA queries.
- *    3.) tokenize and convert to executable "query dispatcher"
- *        assembled as a chain of "yes/no" test functions pertaining to
- *        a section of a simple query statement (".blah:nth-child(odd)"
- *        but not "div div", which is 2 simple statements).
- *    4.) the resulting query dispatcher is called in the passed scope
- *        (by default the top-level document)
- *      - for DOM queries, this results in a recursive, top-down
- *        evaluation of nodes based on each simple query section
- *      - querySelectorAll is used instead of DOM where possible. If a query
- *        fails in this mode, it is re-run against the DOM evaluator and all
- *        future queries using the same selector evaluate against the DOM branch
- *        too.
- *    5.) matched nodes are pruned to ensure they are unique
- * @deprecated This is an all-software query selector. When developing for
- *     recent browsers, use document.querySelector. See information at
- *     http://caniuse.com/queryselector and
- *     https://developer.mozilla.org/en-US/docs/DOM/Document.querySelector .
+ * The following code was generated by the timezone_detect.py script in:
+ * http://go/i18n_tools which uses following files in this directory:
+ * http://go/timezone_data
+ * Files: olson2fingerprint.txt, country2olsons.txt, popular_olsons.txt
+ *
+ * After automatic generation, we added some manual editing. Projecting on
+ * future changes, it is very unlikely that we will need to change the time
+ * zone ID groups. Most of the further modifications will be about relative
+ * time zone order in each time zone group. The easiest way to do that is
+ * to modify this code directly, and that's what we decide to do.
+ *
  */
 
-goog.provide('goog.dom.query');
-
-goog.require('goog.array');
-goog.require('goog.dom');
-goog.require('goog.functions');
-goog.require('goog.string');
-goog.require('goog.userAgent');
-
-  /**
-   * Returns nodes which match the given CSS3 selector, searching the
-   * entire document by default but optionally taking a node to scope
-   * the search by.
-   *
-   * dojo.query() is the swiss army knife of DOM node manipulation in
-   * Dojo. Much like Prototype's "$$" (bling-bling) function or JQuery's
-   * "$" function, dojo.query provides robust, high-performance
-   * CSS-based node selector support with the option of scoping searches
-   * to a particular sub-tree of a document.
-   *
-   * Supported Selectors:
-   * --------------------
-   *
-   * dojo.query() supports a rich set of CSS3 selectors, including:
-   *
-   *   * class selectors (e.g., `.foo`)
-   *   * node type selectors like `span`
-   *   * ` ` descendant selectors
-   *   * `>` child element selectors
-   *   * `#foo` style ID selectors
-   *   * `*` universal selector
-   *   * `~`, the immediately preceded-by sibling selector
-   *   * `+`, the preceded-by sibling selector
-   *   * attribute queries:
-   *   |  * `[foo]` attribute presence selector
-   *   |  * `[foo='bar']` attribute value exact match
-   *   |  * `[foo~='bar']` attribute value list item match
-   *   |  * `[foo^='bar']` attribute start match
-   *   |  * `[foo$='bar']` attribute end match
-   *   |  * `[foo*='bar']` attribute substring match
-   *   * `:first-child`, `:last-child` positional selectors
-   *   * `:empty` content empty selector
-   *   * `:empty` content empty selector
-   *   * `:nth-child(n)`, `:nth-child(2n+1)` style positional calculations
-   *   * `:nth-child(even)`, `:nth-child(odd)` positional selectors
-   *   * `:not(...)` negation pseudo selectors
-   *
-   * Any legal combination of these selectors will work with
-   * `dojo.query()`, including compound selectors ("," delimited).
-   * Very complex and useful searches can be constructed with this
-   * palette of selectors.
-   *
-   * Unsupported Selectors:
-   * ----------------------
-   *
-   * While dojo.query handles many CSS3 selectors, some fall outside of
-   * what's reasonable for a programmatic node querying engine to
-   * handle. Currently unsupported selectors include:
-   *
-   *   * namespace-differentiated selectors of any form
-   *   * all `::` pseudo-element selectors
-   *   * certain pseudo-selectors which don't get a lot of day-to-day use:
-   *   |  * `:root`, `:lang()`, `:target`, `:focus`
-   *   * all visual and state selectors:
-   *   |  * `:root`, `:active`, `:hover`, `:visited`, `:link`,
-   *       `:enabled`, `:disabled`, `:checked`
-   *   * `:*-of-type` pseudo selectors
-   *
-   * dojo.query and XML Documents:
-   * -----------------------------
-   *
-   * `dojo.query` currently only supports searching XML documents
-   * whose tags and attributes are 100% lower-case. This is a known
-   * limitation and will [be addressed soon]
-   * (http://trac.dojotoolkit.org/ticket/3866)
-   *
-   * Non-selector Queries:
-   * ---------------------
-   *
-   * If something other than a String is passed for the query,
-   * `dojo.query` will return a new array constructed from
-   * that parameter alone and all further processing will stop. This
-   * means that if you have a reference to a node or array or nodes, you
-   * can quickly construct a new array of nodes from the original by
-   * calling `dojo.query(node)` or `dojo.query(array)`.
-   *
-   * example:
-   *   search the entire document for elements with the class "foo":
-   * |  dojo.query(".foo");
-   *   these elements will match:
-   * |  <span class="foo"></span>
-   * |  <span class="foo bar"></span>
-   * |  <p class="thud foo"></p>
-   * example:
-   *   search the entire document for elements with the classes "foo" *and*
-   *   "bar":
-   * |  dojo.query(".foo.bar");
-   *   these elements will match:
-   * |  <span class="foo bar"></span>
-   *   while these will not:
-   * |  <span class="foo"></span>
-   * |  <p class="thud foo"></p>
-   * example:
-   *   find `<span>` elements which are descendants of paragraphs and
-   *   which have a "highlighted" class:
-   * |  dojo.query("p span.highlighted");
-   *   the innermost span in this fragment matches:
-   * |  <p class="foo">
-   * |    <span>...
-   * |      <span class="highlighted foo bar">...</span>
-   * |    </span>
-   * |  </p>
-   * example:
-   *   find all odd table rows inside of the table
-   *   `#tabular_data`, using the `>` (direct child) selector to avoid
-   *   affecting any nested tables:
-   * |  dojo.query("#tabular_data > tbody > tr:nth-child(odd)");
-   *
-   * @param {string|Array} query The CSS3 expression to match against.
-   *     For details on the syntax of CSS3 selectors, see
-   *     http://www.w3.org/TR/css3-selectors/#selectors.
-   * @param {(string|Node)=} opt_root A Node (or node id) to scope the search
-   *     from (optional).
-   * @return { {length: number} } The elements that matched the query.
-   *
-   * @deprecated This is an all-software query selector. Use
-   *     document.querySelector. See
-   *     https://developer.mozilla.org/en-US/docs/DOM/Document.querySelector .
-   */
-goog.dom.query = (function() {
-  ////////////////////////////////////////////////////////////////////////
-  // Global utilities
-  ////////////////////////////////////////////////////////////////////////
-
-  var cssCaseBug = (goog.userAgent.WEBKIT &&
-                     ((goog.dom.getDocument().compatMode) == 'BackCompat')
-                   );
-
-  // On browsers that support the "children" collection we can avoid a lot of
-  // iteration on chaff (non-element) nodes.
-  var childNodesName = !!goog.dom.getDocument().firstChild['children'] ?
-                          'children' :
-                          'childNodes';
-
-  var specials = '>~+';
-
-  // Global thunk to determine whether we should treat the current query as
-  // case sensitive or not. This switch is flipped by the query evaluator based
-  // on the document passed as the context to search.
-  var caseSensitive = false;
-
-
-  ////////////////////////////////////////////////////////////////////////
-  // Tokenizer
-  ////////////////////////////////////////////////////////////////////////
-
-  var getQueryParts = function(query) {
-    //  summary:
-    //    state machine for query tokenization
-    //  description:
-    //    instead of using a brittle and slow regex-based CSS parser,
-    //    dojo.query implements an AST-style query representation. This
-    //    representation is only generated once per query. For example,
-    //    the same query run multiple times or under different root nodes
-    //    does not re-parse the selector expression but instead uses the
-    //    cached data structure. The state machine implemented here
-    //    terminates on the last " " (space) character and returns an
-    //    ordered array of query component structures (or "parts"). Each
-    //    part represents an operator or a simple CSS filtering
-    //    expression. The structure for parts is documented in the code
-    //    below.
-
-
-    // NOTE:
-    //    this code is designed to run fast and compress well. Sacrifices
-    //    to readability and maintainability have been made.
-    if (specials.indexOf(query.slice(-1)) >= 0) {
-      // If we end with a ">", "+", or "~", that means we're implicitly
-      // searching all children, so make it explicit.
-      query += ' * '
-    } else {
-      // if you have not provided a terminator, one will be provided for
-      // you...
-      query += ' ';
-    }
-
-    var ts = function(/*Integer*/ s, /*Integer*/ e) {
-      // trim and slice.
-
-      // take an index to start a string slice from and an end position
-      // and return a trimmed copy of that sub-string
-      return goog.string.trim(query.slice(s, e));
-    };
-
-    // The overall data graph of the full query, as represented by queryPart
-    // objects.
-    var queryParts = [];
-
-
-    // state keeping vars
-    var inBrackets = -1,
-        inParens = -1,
-        inMatchFor = -1,
-        inPseudo = -1,
-        inClass = -1,
-        inId = -1,
-        inTag = -1,
-        lc = '',
-        cc = '',
-        pStart;
-
-    // iteration vars
-    var x = 0, // index in the query
-        ql = query.length,
-        currentPart = null, // data structure representing the entire clause
-        cp = null; // the current pseudo or attr matcher
-
-    // several temporary variables are assigned to this structure during a
-    // potential sub-expression match:
-    //    attr:
-    //      a string representing the current full attribute match in a
-    //      bracket expression
-    //    type:
-    //      if there's an operator in a bracket expression, this is
-    //      used to keep track of it
-    //    value:
-    //      the internals of parenthetical expression for a pseudo. for
-    //      :nth-child(2n+1), value might be '2n+1'
-
-    var endTag = function() {
-      // called when the tokenizer hits the end of a particular tag name.
-      // Re-sets state variables for tag matching and sets up the matcher
-      // to handle the next type of token (tag or operator).
-      if (inTag >= 0) {
-        var tv = (inTag == x) ? null : ts(inTag, x);
-        if (specials.indexOf(tv) < 0) {
-          currentPart.tag = tv;
-        } else {
-          currentPart.oper = tv;
-        }
-        inTag = -1;
-      }
-    };
-
-    var endId = function() {
-      // Called when the tokenizer might be at the end of an ID portion of a
-      // match.
-      if (inId >= 0) {
-        currentPart.id = ts(inId, x).replace(/\\/g, '');
-        inId = -1;
-      }
-    };
-
-    var endClass = function() {
-      // Called when the tokenizer might be at the end of a class name
-      // match. CSS allows for multiple classes, so we augment the
-      // current item with another class in its list.
-      if (inClass >= 0) {
-        currentPart.classes.push(ts(inClass + 1, x).replace(/\\/g, ''));
-        inClass = -1;
-      }
-    };
-
-    var endAll = function() {
-      // at the end of a simple fragment, so wall off the matches
-      endId(); endTag(); endClass();
-    };
-
-    var endPart = function() {
-      endAll();
-      if (inPseudo >= 0) {
-        currentPart.pseudos.push({ name: ts(inPseudo + 1, x) });
-      }
-      // Hint to the selector engine to tell it whether or not it
-      // needs to do any iteration. Many simple selectors don't, and
-      // we can avoid significant construction-time work by advising
-      // the system to skip them.
-      currentPart.loops = currentPart.pseudos.length ||
-                          currentPart.attrs.length ||
-                          currentPart.classes.length;
-
-      // save the full expression as a string
-      currentPart.oquery = currentPart.query = ts(pStart, x);
-
-
-      // otag/tag are hints to suggest to the system whether or not
-      // it's an operator or a tag. We save a copy of otag since the
-      // tag name is cast to upper-case in regular HTML matches. The
-      // system has a global switch to figure out if the current
-      // expression needs to be case sensitive or not and it will use
-      // otag or tag accordingly
-      currentPart.otag = currentPart.tag = (currentPart.oper) ?
-                                                     null :
-                                                     (currentPart.tag || '*');
-
-      if (currentPart.tag) {
-        // if we're in a case-insensitive HTML doc, we likely want
-        // the toUpperCase when matching on element.tagName. If we
-        // do it here, we can skip the string op per node
-        // comparison
-        currentPart.tag = currentPart.tag.toUpperCase();
-      }
-
-      // add the part to the list
-      if (queryParts.length && (queryParts[queryParts.length - 1].oper)) {
-        // operators are always infix, so we remove them from the
-        // list and attach them to the next match. The evaluator is
-        // responsible for sorting out how to handle them.
-        currentPart.infixOper = queryParts.pop();
-        currentPart.query = currentPart.infixOper.query + ' ' +
-            currentPart.query;
-      }
-      queryParts.push(currentPart);
-
-      currentPart = null;
-    }
-
-    // iterate over the query, character by character, building up a
-    // list of query part objects
-    for (; lc = cc, cc = query.charAt(x), x < ql; x++) {
-      //    cc: the current character in the match
-      //    lc: the last character (if any)
-
-      // someone is trying to escape something, so don't try to match any
-      // fragments. We assume we're inside a literal.
-      if (lc == '\\') {
-        continue;
-      }
-      if (!currentPart) { // a part was just ended or none has yet been created
-        // NOTE: I hate all this alloc, but it's shorter than writing tons of
-        // if's
-        pStart = x;
-        //  rules describe full CSS sub-expressions, like:
-        //    #someId
-        //    .className:first-child
-        //  but not:
-        //    thinger > div.howdy[type=thinger]
-        //  the individual components of the previous query would be
-        //  split into 3 parts that would be represented a structure
-        //  like:
-        //    [
-        //      {
-        //        query: 'thinger',
-        //        tag: 'thinger',
-        //      },
-        //      {
-        //        query: 'div.howdy[type=thinger]',
-        //        classes: ['howdy'],
-        //        infixOper: {
-        //          query: '>',
-        //          oper: '>',
-        //        }
-        //      },
-        //    ]
-        currentPart = {
-          query: null, // the full text of the part's rule
-          pseudos: [], // CSS supports multiple pseudo-class matches in a single
-              // rule
-          attrs: [],  // CSS supports multi-attribute match, so we need an array
-          classes: [], // class matches may be additive,
-              // e.g.: .thinger.blah.howdy
-          tag: null,  // only one tag...
-          oper: null, // ...or operator per component. Note that these wind up
-              // being exclusive.
-          id: null,   // the id component of a rule
-          getTag: function() {
-            return (caseSensitive) ? this.otag : this.tag;
-          }
-        };
-
-        // if we don't have a part, we assume we're going to start at
-        // the beginning of a match, which should be a tag name. This
-        // might fault a little later on, but we detect that and this
-        // iteration will still be fine.
-        inTag = x;
-      }
-
-      if (inBrackets >= 0) {
-        // look for a the close first
-        if (cc == ']') { // if we're in a [...] clause and we end, do assignment
-          if (!cp.attr) {
-            // no attribute match was previously begun, so we
-            // assume this is an attribute existence match in the
-            // form of [someAttributeName]
-            cp.attr = ts(inBrackets + 1, x);
-          } else {
-            // we had an attribute already, so we know that we're
-            // matching some sort of value, as in [attrName=howdy]
-            cp.matchFor = ts((inMatchFor || inBrackets + 1), x);
-          }
-          var cmf = cp.matchFor;
-          if (cmf) {
-            // try to strip quotes from the matchFor value. We want
-            // [attrName=howdy] to match the same
-            //  as [attrName = 'howdy' ]
-            if ((cmf.charAt(0) == '"') || (cmf.charAt(0) == "'")) {
-              cp.matchFor = cmf.slice(1, -1);
-            }
-          }
-          // end the attribute by adding it to the list of attributes.
-          currentPart.attrs.push(cp);
-          cp = null; // necessary?
-          inBrackets = inMatchFor = -1;
-        } else if (cc == '=') {
-          // if the last char was an operator prefix, make sure we
-          // record it along with the '=' operator.
-          var addToCc = ('|~^$*'.indexOf(lc) >= 0) ? lc : '';
-          cp.type = addToCc + cc;
-          cp.attr = ts(inBrackets + 1, x - addToCc.length);
-          inMatchFor = x + 1;
-        }
-        // now look for other clause parts
-      } else if (inParens >= 0) {
-        // if we're in a parenthetical expression, we need to figure
-        // out if it's attached to a pseudo-selector rule like
-        // :nth-child(1)
-        if (cc == ')') {
-          if (inPseudo >= 0) {
-            cp.value = ts(inParens + 1, x);
-          }
-          inPseudo = inParens = -1;
-        }
-      } else if (cc == '#') {
-        // start of an ID match
-        endAll();
-        inId = x + 1;
-      } else if (cc == '.') {
-        // start of a class match
-        endAll();
-        inClass = x;
-      } else if (cc == ':') {
-        // start of a pseudo-selector match
-        endAll();
-        inPseudo = x;
-      } else if (cc == '[') {
-        // start of an attribute match.
-        endAll();
-        inBrackets = x;
-        // provide a new structure for the attribute match to fill-in
-        cp = {
-          /*=====
-          attr: null, type: null, matchFor: null
-          =====*/
-        };
-      } else if (cc == '(') {
-        // we really only care if we've entered a parenthetical
-        // expression if we're already inside a pseudo-selector match
-        if (inPseudo >= 0) {
-          // provide a new structure for the pseudo match to fill-in
-          cp = {
-            name: ts(inPseudo + 1, x),
-            value: null
-          }
-          currentPart.pseudos.push(cp);
-        }
-        inParens = x;
-      } else if (
-        (cc == ' ') &&
-        // if it's a space char and the last char is too, consume the
-        // current one without doing more work
-        (lc != cc)
-      ) {
-        endPart();
-      }
-    }
-    return queryParts;
-  };
-
-
-  ////////////////////////////////////////////////////////////////////////
-  // DOM query infrastructure
-  ////////////////////////////////////////////////////////////////////////
-
-  var agree = function(first, second) {
-    // the basic building block of the yes/no chaining system. agree(f1,
-    // f2) generates a new function which returns the boolean results of
-    // both of the passed functions to a single logical-anded result. If
-    // either are not passed, the other is used exclusively.
-    if (!first) {
-      return second;
-    }
-    if (!second) {
-      return first;
-    }
-
-    return function() {
-      return first.apply(window, arguments) && second.apply(window, arguments);
-    }
-  };
-
-  /**
-   * @param {Array=} opt_arr
-   */
-  function getArr(i, opt_arr) {
-    // helps us avoid array alloc when we don't need it
-    var r = opt_arr || [];
-    if (i) {
-      r.push(i);
-    }
-    return r;
-  };
-
-  var isElement = function(n) {
-    return (1 == n.nodeType);
-  };
-
-  // FIXME: need to coalesce getAttr with defaultGetter
-  var blank = '';
-  var getAttr = function(elem, attr) {
-    if (!elem) {
-      return blank;
-    }
-    if (attr == 'class') {
-      return elem.className || blank;
-    }
-    if (attr == 'for') {
-      return elem.htmlFor || blank;
-    }
-    if (attr == 'style') {
-      return elem.style.cssText || blank;
-    }
-    return (caseSensitive ? elem.getAttribute(attr) :
-        elem.getAttribute(attr, 2)) || blank;
-  };
-
-  var attrs = {
-    '*=': function(attr, value) {
-      return function(elem) {
-        // E[foo*="bar"]
-        //    an E element whose "foo" attribute value contains
-        //    the substring "bar"
-        return (getAttr(elem, attr).indexOf(value) >= 0);
-      }
-    },
-    '^=': function(attr, value) {
-      // E[foo^="bar"]
-      //    an E element whose "foo" attribute value begins exactly
-      //    with the string "bar"
-      return function(elem) {
-        return (getAttr(elem, attr).indexOf(value) == 0);
-      }
-    },
-    '$=': function(attr, value) {
-      // E[foo$="bar"]
-      //    an E element whose "foo" attribute value ends exactly
-      //    with the string "bar"
-      var tval = ' ' + value;
-      return function(elem) {
-        var ea = ' ' + getAttr(elem, attr);
-        return (ea.lastIndexOf(value) == (ea.length - value.length));
-      }
-    },
-    '~=': function(attr, value) {
-      // E[foo~="bar"]
-      //    an E element whose "foo" attribute value is a list of
-      //    space-separated values, one of which is exactly equal
-      //    to "bar"
-
-      var tval = ' ' + value + ' ';
-      return function(elem) {
-        var ea = ' ' + getAttr(elem, attr) + ' ';
-        return (ea.indexOf(tval) >= 0);
-      }
-    },
-    '|=': function(attr, value) {
-      // E[hreflang|="en"]
-      //    an E element whose "hreflang" attribute has a
-      //    hyphen-separated list of values beginning (from the
-      //    left) with "en"
-      value = ' ' + value;
-      return function(elem) {
-        var ea = ' ' + getAttr(elem, attr);
-        return (
-          (ea == value) ||
-          (ea.indexOf(value + '-') == 0)
-        );
-      }
-    },
-    '=': function(attr, value) {
-      return function(elem) {
-        return (getAttr(elem, attr) == value);
-      }
-    }
-  };
-
-  // avoid testing for node type if we can. Defining this in the negative
-  // here to avoid negation in the fast path.
-  var noNextElementSibling = (
-    typeof goog.dom.getDocument().firstChild.nextElementSibling == 'undefined'
-  );
-  var nSibling = !noNextElementSibling ? 'nextElementSibling' : 'nextSibling';
-  var pSibling = !noNextElementSibling ?
-                    'previousElementSibling' :
-                    'previousSibling';
-  var simpleNodeTest = (noNextElementSibling ? isElement : goog.functions.TRUE);
-
-  var _lookLeft = function(node) {
-    while (node = node[pSibling]) {
-      if (simpleNodeTest(node)) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  var _lookRight = function(node) {
-    while (node = node[nSibling]) {
-      if (simpleNodeTest(node)) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  var getNodeIndex = function(node) {
-    var root = node.parentNode;
-    var i = 0,
-        tret = root[childNodesName],
-        ci = (node['_i'] || -1),
-        cl = (root['_l'] || -1);
-
-    if (!tret) {
-      return -1;
-    }
-    var l = tret.length;
-
-    // we calculate the parent length as a cheap way to invalidate the
-    // cache. It's not 100% accurate, but it's much more honest than what
-    // other libraries do
-    if (cl == l && ci >= 0 && cl >= 0) {
-      // if it's legit, tag and release
-      return ci;
-    }
-
-    // else re-key things
-    root['_l'] = l;
-    ci = -1;
-    var te = root['firstElementChild'] || root['firstChild'];
-    for (; te; te = te[nSibling]) {
-      if (simpleNodeTest(te)) {
-        te['_i'] = ++i;
-        if (node === te) {
-          // NOTE:
-          //  shortcutting the return at this step in indexing works
-          //  very well for benchmarking but we avoid it here since
-          //  it leads to potential O(n^2) behavior in sequential
-          //  getNodexIndex operations on a previously un-indexed
-          //  parent. We may revisit this at a later time, but for
-          //  now we just want to get the right answer more often
-          //  than not.
-          ci = i;
-        }
-      }
-    }
-    return ci;
-  };
-
-  var isEven = function(elem) {
-    return !((getNodeIndex(elem)) % 2);
-  };
-
-  var isOdd = function(elem) {
-    return (getNodeIndex(elem)) % 2;
-  };
-
-  var pseudos = {
-    'checked': function(name, condition) {
-      return function(elem) {
-        return elem.checked || elem.attributes['checked'];
-      }
-    },
-    'first-child': function() {
-      return _lookLeft;
-    },
-    'last-child': function() {
-      return _lookRight;
-    },
-    'only-child': function(name, condition) {
-      return function(node) {
-        if (!_lookLeft(node)) {
-          return false;
-        }
-        if (!_lookRight(node)) {
-          return false;
-        }
-        return true;
-      };
-    },
-    'empty': function(name, condition) {
-      return function(elem) {
-        // DomQuery and jQuery get this wrong, oddly enough.
-        // The CSS 3 selectors spec is pretty explicit about it, too.
-        var cn = elem.childNodes;
-        var cnl = elem.childNodes.length;
-        // if(!cnl) { return true; }
-        for (var x = cnl - 1; x >= 0; x--) {
-          var nt = cn[x].nodeType;
-          if ((nt === 1) || (nt == 3)) {
-            return false;
-          }
-        }
-        return true;
-      }
-    },
-    'contains': function(name, condition) {
-      var cz = condition.charAt(0);
-      if (cz == '"' || cz == "'") { // Remove quotes.
-        condition = condition.slice(1, -1);
-      }
-      return function(elem) {
-        return (elem.innerHTML.indexOf(condition) >= 0);
-      }
-    },
-    'not': function(name, condition) {
-      var p = getQueryParts(condition)[0];
-      var ignores = { el: 1 };
-      if (p.tag != '*') {
-        ignores.tag = 1;
-      }
-      if (!p.classes.length) {
-        ignores.classes = 1;
-      }
-      var ntf = getSimpleFilterFunc(p, ignores);
-      return function(elem) {
-        return !ntf(elem);
-      }
-    },
-    'nth-child': function(name, condition) {
-      function pi(n) {
-        return parseInt(n, 10);
-      }
-      // avoid re-defining function objects if we can
-      if (condition == 'odd') {
-        return isOdd;
-      } else if (condition == 'even') {
-        return isEven;
-      }
-      // FIXME: can we shorten this?
-      if (condition.indexOf('n') != -1) {
-        var tparts = condition.split('n', 2);
-        var pred = tparts[0] ? ((tparts[0] == '-') ? -1 : pi(tparts[0])) : 1;
-        var idx = tparts[1] ? pi(tparts[1]) : 0;
-        var lb = 0, ub = -1;
-        if (pred > 0) {
-          if (idx < 0) {
-            idx = (idx % pred) && (pred + (idx % pred));
-          } else if (idx > 0) {
-            if (idx >= pred) {
-              lb = idx - idx % pred;
-            }
-            idx = idx % pred;
-          }
-        } else if (pred < 0) {
-          pred *= -1;
-          // idx has to be greater than 0 when pred is negative;
-          // shall we throw an error here?
-          if (idx > 0) {
-            ub = idx;
-            idx = idx % pred;
-          }
-        }
-        if (pred > 0) {
-          return function(elem) {
-            var i = getNodeIndex(elem);
-            return (i >= lb) && (ub < 0 || i <= ub) && ((i % pred) == idx);
-          }
-        } else {
-          condition = idx;
-        }
-      }
-      var ncount = pi(condition);
-      return function(elem) {
-        return (getNodeIndex(elem) == ncount);
-      }
-    }
-  };
-
-  var defaultGetter = (goog.userAgent.IE) ? function(cond) {
-    var clc = cond.toLowerCase();
-    if (clc == 'class') {
-      cond = 'className';
-    }
-    return function(elem) {
-      return caseSensitive ? elem.getAttribute(cond) : elem[cond] || elem[clc];
-    }
-  } : function(cond) {
-    return function(elem) {
-      return elem && elem.getAttribute && elem.hasAttribute(cond);
-    }
-  };
-
-  var getSimpleFilterFunc = function(query, ignores) {
-    // Generates a node tester function based on the passed query part. The
-    // query part is one of the structures generated by the query parser when it
-    // creates the query AST. The 'ignores' object specifies which (if any)
-    // tests to skip, allowing the system to avoid duplicating work where it
-    // may have already been taken into account by other factors such as how
-    // the nodes to test were fetched in the first place.
-    if (!query) {
-      return goog.functions.TRUE;
-    }
-    ignores = ignores || {};
-
-    var ff = null;
-
-    if (!ignores.el) {
-      ff = agree(ff, isElement);
-    }
-
-    if (!ignores.tag) {
-      if (query.tag != '*') {
-        ff = agree(ff, function(elem) {
-          return (elem && (elem.tagName == query.getTag()));
-        });
-      }
-    }
-
-    if (!ignores.classes) {
-      goog.array.forEach(query.classes, function(cname, idx, arr) {
-        // Get the class name.
-        var re = new RegExp('(?:^|\\s)' + cname + '(?:\\s|$)');
-        ff = agree(ff, function(elem) {
-          return re.test(elem.className);
-        });
-        ff.count = idx;
-      });
-    }
-
-    if (!ignores.pseudos) {
-      goog.array.forEach(query.pseudos, function(pseudo) {
-        var pn = pseudo.name;
-        if (pseudos[pn]) {
-          ff = agree(ff, pseudos[pn](pn, pseudo.value));
-        }
-      });
-    }
-
-    if (!ignores.attrs) {
-      goog.array.forEach(query.attrs, function(attr) {
-        var matcher;
-        var a = attr.attr;
-        // type, attr, matchFor
-        if (attr.type && attrs[attr.type]) {
-          matcher = attrs[attr.type](a, attr.matchFor);
-        } else if (a.length) {
-          matcher = defaultGetter(a);
-        }
-        if (matcher) {
-          ff = agree(ff, matcher);
-        }
-      });
-    }
-
-    if (!ignores.id) {
-      if (query.id) {
-        ff = agree(ff, function(elem) {
-          return (!!elem && (elem.id == query.id));
-        });
-      }
-    }
-
-    if (!ff) {
-      if (!('default' in ignores)) {
-        ff = goog.functions.TRUE;
-      }
-    }
-    return ff;
-  };
-
-  var nextSiblingIterator = function(filterFunc) {
-    return function(node, ret, bag) {
-      while (node = node[nSibling]) {
-        if (noNextElementSibling && (!isElement(node))) {
-          continue;
-        }
-        if (
-          (!bag || _isUnique(node, bag)) &&
-          filterFunc(node)
-        ) {
-          ret.push(node);
-        }
-        break;
-      }
-      return ret;
-    };
-  };
-
-  var nextSiblingsIterator = function(filterFunc) {
-    return function(root, ret, bag) {
-      var te = root[nSibling];
-      while (te) {
-        if (simpleNodeTest(te)) {
-          if (bag && !_isUnique(te, bag)) {
-            break;
-          }
-          if (filterFunc(te)) {
-            ret.push(te);
-          }
-        }
-        te = te[nSibling];
-      }
-      return ret;
-    };
-  };
-
-  // Get an array of child *elements*, skipping text and comment nodes
-  var _childElements = function(filterFunc) {
-    filterFunc = filterFunc || goog.functions.TRUE;
-    return function(root, ret, bag) {
-      var te, x = 0, tret = root[childNodesName];
-      while (te = tret[x++]) {
-        if (
-          simpleNodeTest(te) &&
-          (!bag || _isUnique(te, bag)) &&
-          (filterFunc(te, x))
-        ) {
-          ret.push(te);
-        }
-      }
-      return ret;
-    };
-  };
-
-  // test to see if node is below root
-  var _isDescendant = function(node, root) {
-    var pn = node.parentNode;
-    while (pn) {
-      if (pn == root) {
-        break;
-      }
-      pn = pn.parentNode;
-    }
-    return !!pn;
-  };
-
-  var _getElementsFuncCache = {};
-
-  var getElementsFunc = function(query) {
-    var retFunc = _getElementsFuncCache[query.query];
-    // If we've got a cached dispatcher, just use that.
-    if (retFunc) {
-      return retFunc;
-    }
-    // Else, generate a new one.
-
-    // NOTE:
-    //    This function returns a function that searches for nodes and
-    //    filters them. The search may be specialized by infix operators
-    //    (">", "~", or "+") else it will default to searching all
-    //    descendants (the " " selector). Once a group of children is
-    //    found, a test function is applied to weed out the ones we
-    //    don't want. Many common cases can be fast-pathed. We spend a
-    //    lot of cycles to create a dispatcher that doesn't do more work
-    //    than necessary at any point since, unlike this function, the
-    //    dispatchers will be called every time. The logic of generating
-    //    efficient dispatchers looks like this in pseudo code:
-    //
-    //    # if it's a purely descendant query (no ">", "+", or "~" modifiers)
-    //    if infixOperator == " ":
-    //      if only(id):
-    //        return def(root):
-    //          return d.byId(id, root);
-    //
-    //      elif id:
-    //        return def(root):
-    //          return filter(d.byId(id, root));
-    //
-    //      elif cssClass && getElementsByClassName:
-    //        return def(root):
-    //          return filter(root.getElementsByClassName(cssClass));
-    //
-    //      elif only(tag):
-    //        return def(root):
-    //          return root.getElementsByTagName(tagName);
-    //
-    //      else:
-    //        # search by tag name, then filter
-    //        return def(root):
-    //          return filter(root.getElementsByTagName(tagName||"*"));
-    //
-    //    elif infixOperator == ">":
-    //      # search direct children
-    //      return def(root):
-    //        return filter(root.children);
-    //
-    //    elif infixOperator == "+":
-    //      # search next sibling
-    //      return def(root):
-    //        return filter(root.nextElementSibling);
-    //
-    //    elif infixOperator == "~":
-    //      # search rightward siblings
-    //      return def(root):
-    //        return filter(nextSiblings(root));
-
-    var io = query.infixOper;
-    var oper = (io ? io.oper : '');
-    // The default filter func which tests for all conditions in the query
-    // part. This is potentially inefficient, so some optimized paths may
-    // re-define it to test fewer things.
-    var filterFunc = getSimpleFilterFunc(query, { el: 1 });
-    var qt = query.tag;
-    var wildcardTag = ('*' == qt);
-    var ecs = goog.dom.getDocument()['getElementsByClassName'];
-
-    if (!oper) {
-      // If there's no infix operator, then it's a descendant query. ID
-      // and "elements by class name" variants can be accelerated so we
-      // call them out explicitly:
-      if (query.id) {
-        // Testing shows that the overhead of goog.functions.TRUE() is
-        // acceptable and can save us some bytes vs. re-defining the function
-        // everywhere.
-        filterFunc = (!query.loops && wildcardTag) ?
-          goog.functions.TRUE :
-          getSimpleFilterFunc(query, { el: 1, id: 1 });
-
-        retFunc = function(root, arr) {
-          var te = goog.dom.getDomHelper(root).getElement(query.id);
-          if (!te || !filterFunc(te)) {
-            return;
-          }
-          if (9 == root.nodeType) { // If root's a doc, we just return directly.
-            return getArr(te, arr);
-          } else { // otherwise check ancestry
-            if (_isDescendant(te, root)) {
-              return getArr(te, arr);
-            }
-          }
-        }
-      } else if (
-        ecs &&
-        // isAlien check. Workaround for Prototype.js being totally evil/dumb.
-        /\{\s*\[native code\]\s*\}/.test(String(ecs)) &&
-        query.classes.length &&
-        // WebKit bug where quirks-mode docs select by class w/o case
-        // sensitivity.
-        !cssCaseBug
-      ) {
-        // it's a class-based query and we've got a fast way to run it.
-
-        // ignore class and ID filters since we will have handled both
-        filterFunc = getSimpleFilterFunc(query, { el: 1, classes: 1, id: 1 });
-        var classesString = query.classes.join(' ');
-        retFunc = function(root, arr) {
-          var ret = getArr(0, arr), te, x = 0;
-          var tret = root.getElementsByClassName(classesString);
-          while ((te = tret[x++])) {
-            if (filterFunc(te, root)) {
-              ret.push(te);
-            }
-          }
-          return ret;
-        };
-
-      } else if (!wildcardTag && !query.loops) {
-        // it's tag only. Fast-path it.
-        retFunc = function(root, arr) {
-          var ret = getArr(0, arr), te, x = 0;
-          var tret = root.getElementsByTagName(query.getTag());
-          while ((te = tret[x++])) {
-            ret.push(te);
-          }
-          return ret;
-        };
-      } else {
-        // the common case:
-        //    a descendant selector without a fast path. By now it's got
-        //    to have a tag selector, even if it's just "*" so we query
-        //    by that and filter
-        filterFunc = getSimpleFilterFunc(query, { el: 1, tag: 1, id: 1 });
-        retFunc = function(root, arr) {
-          var ret = getArr(0, arr), te, x = 0;
-          // we use getTag() to avoid case sensitivity issues
-          var tret = root.getElementsByTagName(query.getTag());
-          while (te = tret[x++]) {
-            if (filterFunc(te, root)) {
-              ret.push(te);
-            }
-          }
-          return ret;
-        };
-      }
-    } else {
-      // the query is scoped in some way. Instead of querying by tag we
-      // use some other collection to find candidate nodes
-      var skipFilters = { el: 1 };
-      if (wildcardTag) {
-        skipFilters.tag = 1;
-      }
-      filterFunc = getSimpleFilterFunc(query, skipFilters);
-      if ('+' == oper) {
-        retFunc = nextSiblingIterator(filterFunc);
-      } else if ('~' == oper) {
-        retFunc = nextSiblingsIterator(filterFunc);
-      } else if ('>' == oper) {
-        retFunc = _childElements(filterFunc);
-      }
-    }
-    // cache it and return
-    return _getElementsFuncCache[query.query] = retFunc;
-  };
-
-  var filterDown = function(root, queryParts) {
-    // NOTE:
-    //    this is the guts of the DOM query system. It takes a list of
-    //    parsed query parts and a root and finds children which match
-    //    the selector represented by the parts
-    var candidates = getArr(root), qp, x, te, qpl = queryParts.length, bag, ret;
-
-    for (var i = 0; i < qpl; i++) {
-      ret = [];
-      qp = queryParts[i];
-      x = candidates.length - 1;
-      if (x > 0) {
-        // if we have more than one root at this level, provide a new
-        // hash to use for checking group membership but tell the
-        // system not to post-filter us since we will already have been
-        // guaranteed to be unique
-        bag = {};
-        ret.nozip = true;
-      }
-      var gef = getElementsFunc(qp);
-      for (var j = 0; te = candidates[j]; j++) {
-        // for every root, get the elements that match the descendant
-        // selector, adding them to the 'ret' array and filtering them
-        // via membership in this level's bag. If there are more query
-        // parts, then this level's return will be used as the next
-        // level's candidates
-        gef(te, ret, bag);
-      }
-      if (!ret.length) { break; }
-      candidates = ret;
-    }
-    return ret;
-  };
-
-  ////////////////////////////////////////////////////////////////////////
-  // the query runner
-  ////////////////////////////////////////////////////////////////////////
-
-  // these are the primary caches for full-query results. The query
-  // dispatcher functions are generated then stored here for hash lookup in
-  // the future
-  var _queryFuncCacheDOM = {},
-    _queryFuncCacheQSA = {};
-
-  // this is the second level of splitting, from full-length queries (e.g.,
-  // 'div.foo .bar') into simple query expressions (e.g., ['div.foo',
-  // '.bar'])
-  var getStepQueryFunc = function(query) {
-    var qparts = getQueryParts(goog.string.trim(query));
-
-    // if it's trivial, avoid iteration and zipping costs
-    if (qparts.length == 1) {
-      // We optimize this case here to prevent dispatch further down the
-      // chain, potentially slowing things down. We could more elegantly
-      // handle this in filterDown(), but it's slower for simple things
-      // that need to be fast (e.g., '#someId').
-      var tef = getElementsFunc(qparts[0]);
-      return function(root) {
-        var r = tef(root, []);
-        if (r) { r.nozip = true; }
-        return r;
-      }
-    }
-
-    // otherwise, break it up and return a runner that iterates over the parts
-    // recursively
-    return function(root) {
-      return filterDown(root, qparts);
-    }
-  };
-
-  // NOTES:
-  //  * we can't trust QSA for anything but document-rooted queries, so
-  //    caching is split into DOM query evaluators and QSA query evaluators
-  //  * caching query results is dirty and leak-prone (or, at a minimum,
-  //    prone to unbounded growth). Other toolkits may go this route, but
-  //    they totally destroy their own ability to manage their memory
-  //    footprint. If we implement it, it should only ever be with a fixed
-  //    total element reference # limit and an LRU-style algorithm since JS
-  //    has no weakref support. Caching compiled query evaluators is also
-  //    potentially problematic, but even on large documents the size of the
-  //    query evaluators is often < 100 function objects per evaluator (and
-  //    LRU can be applied if it's ever shown to be an issue).
-  //  * since IE's QSA support is currently only for HTML documents and even
-  //    then only in IE 8's 'standards mode', we have to detect our dispatch
-  //    route at query time and keep 2 separate caches. Ugg.
-
-  var qsa = 'querySelectorAll';
-
-  // some versions of Safari provided QSA, but it was buggy and crash-prone.
-  // We need to detect the right 'internal' webkit version to make this work.
-  var qsaAvail = (
-    !!goog.dom.getDocument()[qsa] &&
-    // see #5832
-    (!goog.userAgent.WEBKIT || goog.userAgent.isVersionOrHigher('526'))
-  );
-
-  /** @param {boolean=} opt_forceDOM */
-  var getQueryFunc = function(query, opt_forceDOM) {
-
-    if (qsaAvail) {
-      // if we've got a cached variant and we think we can do it, run it!
-      var qsaCached = _queryFuncCacheQSA[query];
-      if (qsaCached && !opt_forceDOM) {
-        return qsaCached;
-      }
-    }
-
-    // else if we've got a DOM cached variant, assume that we already know
-    // all we need to and use it
-    var domCached = _queryFuncCacheDOM[query];
-    if (domCached) {
-      return domCached;
-    }
-
-    // TODO:
-    //    today we're caching DOM and QSA branches separately so we
-    //    recalc useQSA every time. If we had a way to tag root+query
-    //    efficiently, we'd be in good shape to do a global cache.
-
-    var qcz = query.charAt(0);
-    var nospace = (-1 == query.indexOf(' '));
-
-    // byId searches are wicked fast compared to QSA, even when filtering
-    // is required
-    if ((query.indexOf('#') >= 0) && (nospace)) {
-      opt_forceDOM = true;
-    }
-
-    var useQSA = (
-      qsaAvail && (!opt_forceDOM) &&
-      // as per CSS 3, we can't currently start w/ combinator:
-      //    http://www.w3.org/TR/css3-selectors/#w3cselgrammar
-      (specials.indexOf(qcz) == -1) &&
-      // IE's QSA impl sucks on pseudos
-      (!goog.userAgent.IE || (query.indexOf(':') == -1)) &&
-
-      (!(cssCaseBug && (query.indexOf('.') >= 0))) &&
-
-      // FIXME:
-      //    need to tighten up browser rules on ':contains' and '|=' to
-      //    figure out which aren't good
-      (query.indexOf(':contains') == -1) &&
-      (query.indexOf('|=') == -1) // some browsers don't understand it
-    );
-
-    // TODO:
-    //    if we've got a descendant query (e.g., '> .thinger' instead of
-    //    just '.thinger') in a QSA-able doc, but are passed a child as a
-    //    root, it should be possible to give the item a synthetic ID and
-    //    trivially rewrite the query to the form '#synid > .thinger' to
-    //    use the QSA branch
-
-
-    if (useQSA) {
-      var tq = (specials.indexOf(query.charAt(query.length - 1)) >= 0) ?
-            (query + ' *') : query;
-      return _queryFuncCacheQSA[query] = function(root) {
-        try {
-          // the QSA system contains an egregious spec bug which
-          // limits us, effectively, to only running QSA queries over
-          // entire documents.  See:
-          //    http://ejohn.org/blog/thoughts-on-queryselectorall/
-          //  despite this, we can also handle QSA runs on simple
-          //  selectors, but we don't want detection to be expensive
-          //  so we're just checking for the presence of a space char
-          //  right now. Not elegant, but it's cheaper than running
-          //  the query parser when we might not need to
-          if (!((9 == root.nodeType) || nospace)) {
-            throw '';
-          }
-          var r = root[qsa](tq);
-          // IE QSA queries may incorrectly include comment nodes, so we throw
-          // the zipping function into 'remove' comments mode instead of the
-          // normal 'skip it' which every other QSA-clued browser enjoys
-          // skip expensive duplication checks and just wrap in an array.
-          if (goog.userAgent.IE) {
-            r.commentStrip = true;
-          } else {
-            r.nozip = true;
-          }
-          return r;
-        } catch (e) {
-          // else run the DOM branch on this query, ensuring that we
-          // default that way in the future
-          return getQueryFunc(query, true)(root);
-        }
-      }
-    } else {
-      // DOM branch
-      var parts = query.split(/\s*,\s*/);
-      return _queryFuncCacheDOM[query] = ((parts.length < 2) ?
-        // if not a compound query (e.g., '.foo, .bar'), cache and return a
-        // dispatcher
-        getStepQueryFunc(query) :
-        // if it *is* a complex query, break it up into its
-        // constituent parts and return a dispatcher that will
-        // merge the parts when run
-        function(root) {
-          var pindex = 0, // avoid array alloc for every invocation
-            ret = [],
-            tp;
-          while (tp = parts[pindex++]) {
-            ret = ret.concat(getStepQueryFunc(tp)(root));
-          }
-          return ret;
-        }
-      );
-    }
-  };
-
-  var _zipIdx = 0;
-
-  // NOTE:
-  //    this function is Moo inspired, but our own impl to deal correctly
-  //    with XML in IE
-  var _nodeUID = goog.userAgent.IE ? function(node) {
-    if (caseSensitive) {
-      // XML docs don't have uniqueID on their nodes
-      return node.getAttribute('_uid') ||
-          node.setAttribute('_uid', ++_zipIdx) || _zipIdx;
-
-    } else {
-      return node.uniqueID;
-    }
-  } :
-  function(node) {
-    return (node['_uid'] || (node['_uid'] = ++_zipIdx));
-  };
-
-  // determine if a node in is unique in a 'bag'. In this case we don't want
-  // to flatten a list of unique items, but rather just tell if the item in
-  // question is already in the bag. Normally we'd just use hash lookup to do
-  // this for us but IE's DOM is busted so we can't really count on that. On
-  // the upside, it gives us a built in unique ID function.
-  var _isUnique = function(node, bag) {
-    if (!bag) {
-      return 1;
-    }
-    var id = _nodeUID(node);
-    if (!bag[id]) {
-      return bag[id] = 1;
-    }
-    return 0;
-  };
-
-  // attempt to efficiently determine if an item in a list is a dupe,
-  // returning a list of 'uniques', hopefully in document order
-  var _zipIdxName = '_zipIdx';
-  var _zip = function(arr) {
-    if (arr && arr.nozip) {
-      return arr;
-    }
-    var ret = [];
-    if (!arr || !arr.length) {
-      return ret;
-    }
-    if (arr[0]) {
-      ret.push(arr[0]);
-    }
-    if (arr.length < 2) {
-      return ret;
-    }
-
-    _zipIdx++;
-
-    // we have to fork here for IE and XML docs because we can't set
-    // expandos on their nodes (apparently). *sigh*
-    if (goog.userAgent.IE && caseSensitive) {
-      var szidx = _zipIdx + '';
-      arr[0].setAttribute(_zipIdxName, szidx);
-      for (var x = 1, te; te = arr[x]; x++) {
-        if (arr[x].getAttribute(_zipIdxName) != szidx) {
-          ret.push(te);
-        }
-        te.setAttribute(_zipIdxName, szidx);
-      }
-    } else if (goog.userAgent.IE && arr.commentStrip) {
-      try {
-        for (var x = 1, te; te = arr[x]; x++) {
-          if (isElement(te)) {
-            ret.push(te);
-          }
-        }
-      } catch (e) { /* squelch */ }
-    } else {
-      if (arr[0]) {
-        arr[0][_zipIdxName] = _zipIdx;
-      }
-      for (var x = 1, te; te = arr[x]; x++) {
-        if (arr[x][_zipIdxName] != _zipIdx) {
-          ret.push(te);
-        }
-        te[_zipIdxName] = _zipIdx;
-      }
-    }
-    return ret;
-  };
-
-  /**
-   * The main executor. Type specification from above.
-   * @param {string|Array} query The query.
-   * @param {(string|Node)=} root The root.
-   * @return {!Array} The elements that matched the query.
-   */
-  var query = function(query, root) {
-    // NOTE: elementsById is not currently supported
-    // NOTE: ignores xpath-ish queries for now
-
-    //Set list constructor to desired value. This can change
-    //between calls, so always re-assign here.
-
-    if (!query) {
-      return [];
-    }
-
-    if (query.constructor == Array) {
-      return /** @type {!Array} */ (query);
-    }
-
-    if (!goog.isString(query)) {
-      return [query];
-    }
-
-    if (goog.isString(root)) {
-      root = goog.dom.getElement(root);
-      if (!root) {
-        return [];
-      }
-    }
-
-    root = root || goog.dom.getDocument();
-    var od = root.ownerDocument || root.documentElement;
-
-    // throw the big case sensitivity switch
-
-    // NOTE:
-    //    Opera in XHTML mode doesn't detect case-sensitivity correctly
-    //    and it's not clear that there's any way to test for it
-    caseSensitive =
-        root.contentType && root.contentType == 'application/xml' ||
-        goog.userAgent.OPERA &&
-          (root.doctype || od.toString() == '[object XMLDocument]') ||
-        !!od &&
-        (goog.userAgent.IE ? od.xml : (root.xmlVersion || od.xmlVersion));
-
-    // NOTE:
-    //    adding 'true' as the 2nd argument to getQueryFunc is useful for
-    //    testing the DOM branch without worrying about the
-    //    behavior/performance of the QSA branch.
-    var r = getQueryFunc(query)(root);
-
-    // FIXME(slightlyoff):
-    //    need to investigate this branch WRT dojo:#8074 and dojo:#8075
-    if (r && r.nozip) {
-      return r;
-    }
-    return _zip(r);
+
+goog.provide('goog.locale.TimeZoneFingerprint');
+
+
+/**
+ * Time zone fingerprint mapping to time zone list.
+ * @enum {Array.<string>}
+ */
+goog.locale.TimeZoneFingerprint = {
+  919994368: ['CA-America/Halifax', 'CA-America/Glace_Bay', 'GL-America/Thule',
+    'BM-Atlantic/Bermuda'],
+  6: ['AQ-Antarctica/Rothera'],
+  8: ['GY-America/Guyana'],
+  839516172: ['US-America/Denver', 'MX-America/Chihuahua', 'US-America/Boise',
+    'CA-America/Cambridge_Bay', 'CA-America/Edmonton', 'CA-America/Inuvik',
+    'MX-America/Mazatlan', 'US-America/Shiprock', 'CA-America/Yellowknife'],
+  983564836: ['UY-America/Montevideo'],
+  487587858: ['AU-Australia/Lord_Howe'],
+  20: ['KI-Pacific/Kiritimati'],
+  22: ['TO-Pacific/Tongatapu', 'KI-Pacific/Enderbury'],
+  24: ['FJ-Pacific/Fiji', 'TV-Pacific/Funafuti', 'MH-Pacific/Kwajalein',
+    'MH-Pacific/Majuro', 'NR-Pacific/Nauru', 'KI-Pacific/Tarawa',
+    'UM-Pacific/Wake', 'WF-Pacific/Wallis'],
+  25: ['NF-Pacific/Norfolk'],
+  26: ['RU-Asia/Magadan', 'VU-Pacific/Efate', 'SB-Pacific/Guadalcanal',
+    'FM-Pacific/Kosrae', 'NC-Pacific/Noumea', 'FM-Pacific/Ponape'],
+  28: ['AQ-Antarctica/DumontDUrville', 'AU-Australia/Brisbane',
+    'AU-Australia/Lindeman', 'GU-Pacific/Guam', 'PG-Pacific/Port_Moresby',
+    'MP-Pacific/Saipan', 'FM-Pacific/Truk'],
+  931091802: ['US-America/New_York', 'US-America/Detroit', 'CA-America/Iqaluit',
+    'US-America/Kentucky/Monticello', 'US-America/Louisville',
+    'CA-America/Montreal', 'BS-America/Nassau', 'CA-America/Nipigon',
+    'CA-America/Pangnirtung', 'CA-America/Thunder_Bay', 'CA-America/Toronto'],
+  30: ['JP-Asia/Tokyo', 'KR-Asia/Seoul', 'TL-Asia/Dili', 'ID-Asia/Jayapura',
+    'KP-Asia/Pyongyang', 'PW-Pacific/Palau'],
+  32: ['HK-Asia/Hong_Kong', 'CN-Asia/Shanghai', 'AU-Australia/Perth',
+    'TW-Asia/Taipei', 'SG-Asia/Singapore', 'AQ-Antarctica/Casey',
+    'BN-Asia/Brunei', 'CN-Asia/Chongqing', 'CN-Asia/Harbin',
+    'CN-Asia/Kashgar', 'MY-Asia/Kuala_Lumpur', 'MY-Asia/Kuching',
+    'MO-Asia/Macau', 'ID-Asia/Makassar', 'PH-Asia/Manila', 'CN-Asia/Urumqi'],
+  34: ['TH-Asia/Bangkok', 'AQ-Antarctica/Davis', 'ID-Asia/Jakarta',
+    'KH-Asia/Phnom_Penh', 'ID-Asia/Pontianak', 'VN-Asia/Saigon',
+    'LA-Asia/Vientiane', 'CX-Indian/Christmas'],
+  35: ['MM-Asia/Rangoon', 'CC-Indian/Cocos'],
+  941621262: ['BR-America/Sao_Paulo'],
+  37: ['IN-Asia/Calcutta'],
+  38: ['PK-Asia/Karachi', 'KZ-Asia/Aqtobe', 'TM-Asia/Ashgabat',
+    'TJ-Asia/Dushanbe', 'UZ-Asia/Samarkand', 'UZ-Asia/Tashkent',
+    'TF-Indian/Kerguelen', 'MV-Indian/Maldives'],
+  39: ['AF-Asia/Kabul'],
+  40: ['OM-Asia/Muscat', 'AE-Asia/Dubai', 'SC-Indian/Mahe',
+    'MU-Indian/Mauritius', 'RE-Indian/Reunion'],
+  626175324: ['JO-Asia/Amman'],
+  42: ['KE-Africa/Nairobi', 'SA-Asia/Riyadh', 'ET-Africa/Addis_Ababa',
+    'ER-Africa/Asmera', 'TZ-Africa/Dar_es_Salaam', 'DJ-Africa/Djibouti',
+    'UG-Africa/Kampala', 'SD-Africa/Khartoum', 'SO-Africa/Mogadishu',
+    'AQ-Antarctica/Syowa', 'YE-Asia/Aden', 'BH-Asia/Bahrain',
+    'KW-Asia/Kuwait', 'QA-Asia/Qatar', 'MG-Indian/Antananarivo',
+    'KM-Indian/Comoro', 'YT-Indian/Mayotte'],
+  44: ['ZA-Africa/Johannesburg', 'IL-Asia/Jerusalem', 'MW-Africa/Blantyre',
+    'BI-Africa/Bujumbura', 'BW-Africa/Gaborone', 'ZW-Africa/Harare',
+    'RW-Africa/Kigali', 'CD-Africa/Lubumbashi', 'ZM-Africa/Lusaka',
+    'MZ-Africa/Maputo', 'LS-Africa/Maseru', 'SZ-Africa/Mbabane',
+    'LY-Africa/Tripoli'],
+  46: ['NG-Africa/Lagos', 'DZ-Africa/Algiers', 'CF-Africa/Bangui',
+    'CG-Africa/Brazzaville', 'CM-Africa/Douala', 'CD-Africa/Kinshasa',
+    'GA-Africa/Libreville', 'AO-Africa/Luanda', 'GQ-Africa/Malabo',
+    'TD-Africa/Ndjamena', 'NE-Africa/Niamey', 'BJ-Africa/Porto-Novo'],
+  48: ['MA-Africa/Casablanca', 'CI-Africa/Abidjan', 'GH-Africa/Accra',
+    'ML-Africa/Bamako', 'GM-Africa/Banjul', 'GW-Africa/Bissau',
+    'GN-Africa/Conakry', 'SN-Africa/Dakar', 'EH-Africa/El_Aaiun',
+    'SL-Africa/Freetown', 'TG-Africa/Lome', 'LR-Africa/Monrovia',
+    'MR-Africa/Nouakchott', 'BF-Africa/Ouagadougou', 'ST-Africa/Sao_Tome',
+    'GL-America/Danmarkshavn', 'IS-Atlantic/Reykjavik',
+    'SH-Atlantic/St_Helena'],
+  570425352: ['GE-Asia/Tbilisi'],
+  50: ['CV-Atlantic/Cape_Verde'],
+  52: ['GS-Atlantic/South_Georgia', 'BR-America/Noronha'],
+  54: ['AR-America/Buenos_Aires', 'BR-America/Araguaina',
+    'AR-America/Argentina/La_Rioja', 'AR-America/Argentina/Rio_Gallegos',
+    'AR-America/Argentina/San_Juan', 'AR-America/Argentina/Tucuman',
+    'AR-America/Argentina/Ushuaia', 'BR-America/Bahia', 'BR-America/Belem',
+    'AR-America/Catamarca', 'GF-America/Cayenne', 'AR-America/Cordoba',
+    'BR-America/Fortaleza', 'AR-America/Jujuy', 'BR-America/Maceio',
+    'AR-America/Mendoza', 'SR-America/Paramaribo', 'BR-America/Recife',
+    'AQ-Antarctica/Rothera'],
+  56: ['VE-America/Caracas', 'AI-America/Anguilla', 'AG-America/Antigua',
+    'AW-America/Aruba', 'BB-America/Barbados', 'BR-America/Boa_Vista',
+    'AN-America/Curacao', 'DM-America/Dominica', 'GD-America/Grenada',
+    'GP-America/Guadeloupe', 'GY-America/Guyana', 'CU-America/Havana',
+    'BO-America/La_Paz', 'BR-America/Manaus', 'MQ-America/Martinique',
+    'MS-America/Montserrat', 'TT-America/Port_of_Spain',
+    'BR-America/Porto_Velho', 'PR-America/Puerto_Rico',
+    'DO-America/Santo_Domingo', 'KN-America/St_Kitts', 'LC-America/St_Lucia',
+    'VI-America/St_Thomas', 'VC-America/St_Vincent', 'VG-America/Tortola'],
+  58: ['US-America/Indianapolis', 'US-America/Indianapolis',
+    'CO-America/Bogota', 'KY-America/Cayman', 'CA-America/Coral_Harbour',
+    'BR-America/Eirunepe', 'EC-America/Guayaquil', 'US-America/Indiana/Knox',
+    'JM-America/Jamaica', 'PE-America/Lima', 'PA-America/Panama',
+    'BR-America/Rio_Branco'],
+  60: ['NI-America/Managua', 'CA-America/Regina', 'BZ-America/Belize',
+    'CR-America/Costa_Rica', 'SV-America/El_Salvador',
+    'CA-America/Swift_Current', 'EC-Pacific/Galapagos'],
+  62: ['US-America/Phoenix', 'CA-America/Dawson_Creek',
+    'MX-America/Hermosillo'],
+  64: ['PN-Pacific/Pitcairn'],
+  66: ['PF-Pacific/Gambier'],
+  67: ['PF-Pacific/Marquesas'],
+  68: ['US-Pacific/Honolulu', 'TK-Pacific/Fakaofo', 'UM-Pacific/Johnston',
+    'KI-Pacific/Kiritimati', 'CK-Pacific/Rarotonga', 'PF-Pacific/Tahiti'],
+  70: ['UM-Pacific/Midway', 'WS-Pacific/Apia', 'KI-Pacific/Enderbury',
+    'NU-Pacific/Niue', 'AS-Pacific/Pago_Pago'],
+  72: ['MH-Pacific/Kwajalein'],
+  49938444: ['MX-America/Chihuahua'],
+  905969678: ['CA-America/Halifax'],
+  626339164: ['EG-Africa/Cairo'],
+  939579406: ['FK-Atlantic/Stanley'],
+  487915538: ['AU-Australia/Lord_Howe'],
+  937427058: ['CL-Pacific/Easter'],
+  778043508: ['RU-Asia/Novosibirsk', 'RU-Asia/Omsk'],
+  474655352: ['RU-Asia/Anadyr', 'RU-Asia/Kamchatka'],
+  269133956: ['NZ-Pacific/Chatham'],
+  948087430: ['GL-America/Godthab'],
+  671787146: ['MN-Asia/Hovd'],
+  617261764: ['TR-Europe/Istanbul', 'RU-Europe/Kaliningrad', 'BY-Europe/Minsk'],
+  830603252: ['MX-America/Mexico_City', 'US-America/Chicago',
+    'MX-America/Cancun', 'US-America/Menominee', 'MX-America/Merida',
+    'MX-America/Monterrey', 'US-America/North_Dakota/Center',
+    'CA-America/Rainy_River', 'CA-America/Rankin_Inlet'],
+  805300897: ['LK-Asia/Colombo'],
+  805312524: ['MX-America/Mexico_City', 'HN-America/Tegucigalpa'],
+  984437412: ['GS-Atlantic/South_Georgia'],
+  850043558: ['MX-America/Chihuahua'],
+  29: ['AU-Australia/Darwin'],
+  710950176: ['MN-Asia/Ulaanbaatar'],
+  617786052: ['RO-Europe/Bucharest', 'FI-Europe/Helsinki', 'CY-Asia/Nicosia',
+    'GR-Europe/Athens', 'MD-Europe/Chisinau', 'TR-Europe/Istanbul',
+    'UA-Europe/Kiev', 'LV-Europe/Riga', 'UA-Europe/Simferopol',
+    'BG-Europe/Sofia', 'EE-Europe/Tallinn', 'UA-Europe/Uzhgorod',
+    'LT-Europe/Vilnius', 'UA-Europe/Zaporozhye'],
+  105862464: ['US-America/Juneau'],
+  581567010: ['IQ-Asia/Baghdad'],
+  1294772902: ['US-America/Los_Angeles', 'CA-America/Dawson',
+    'MX-America/Tijuana', 'CA-America/Vancouver', 'CA-America/Whitehorse'],
+  483044050: ['AU-Australia/Sydney', 'AU-Australia/Melbourne'],
+  491433170: ['AU-Australia/Hobart'],
+  36: ['NP-Asia/Katmandu', 'LK-Asia/Colombo', 'BD-Asia/Dhaka',
+    'AQ-Antarctica/Mawson', 'AQ-Antarctica/Vostok', 'KZ-Asia/Almaty',
+    'KZ-Asia/Qyzylorda', 'BT-Asia/Thimphu', 'IO-Indian/Chagos'],
+  626175196: ['IL-Asia/Jerusalem'],
+  919994592: ['CA-America/Goose_Bay'],
+  946339336: ['GB-Europe/London', 'ES-Atlantic/Canary', 'FO-Atlantic/Faeroe',
+    'PT-Atlantic/Madeira', 'IE-Europe/Dublin', 'PT-Europe/Lisbon'],
+  1037565906: ['PT-Atlantic/Azores', 'GL-America/Scoresbysund'],
+  670913918: ['TN-Africa/Tunis'],
+  41: ['IR-Asia/Tehran'],
+  572522538: ['RU-Europe/Moscow'],
+  403351686: ['MN-Asia/Choibalsan'],
+  626338524: ['PS-Asia/Gaza'],
+  411740806: ['RU-Asia/Yakutsk'],
+  635437856: ['RU-Asia/Irkutsk'],
+  617261788: ['RO-Europe/Bucharest', 'LB-Asia/Beirut'],
+  947956358: ['GL-America/Godthab', 'PM-America/Miquelon'],
+  12: ['EC-Pacific/Galapagos'],
+  626306268: ['SY-Asia/Damascus'],
+  497024903: ['AU-Australia/Adelaide', 'AU-Australia/Broken_Hill'],
+  456480044: ['RU-Asia/Vladivostok', 'RU-Asia/Sakhalin'],
+  312471854: ['NZ-Pacific/Auckland', 'AQ-Antarctica/McMurdo'],
+  626347356: ['EG-Africa/Cairo'],
+  897537370: ['CU-America/Havana'],
+  680176266: ['RU-Asia/Krasnoyarsk'],
+  1465210176: ['US-America/Anchorage'],
+  805312908: ['NI-America/Managua'],
+  492088530: ['AU-Australia/Currie', 'AU-Australia/Hobart'],
+  901076366: ['BR-America/Campo_Grande', 'BR-America/Cuiaba'],
+  943019406: ['CL-America/Santiago', 'AQ-Antarctica/Palmer'],
+  928339288: ['US-America/New_York', 'CA-America/Montreal',
+    'CA-America/Toronto', 'US-America/Detroit'],
+  939480410: ['US-America/Indiana/Marengo', 'US-America/Indiana/Vevay'],
+  626392412: ['NA-Africa/Windhoek'],
+  559943005: ['IR-Asia/Tehran'],
+  592794974: ['KZ-Asia/Aqtau', 'KZ-Asia/Oral'],
+  76502378: ['CA-America/Pangnirtung'],
+  838860812: ['US-America/Denver', 'CA-America/Edmonton'],
+  931091834: ['TC-America/Grand_Turk', 'HT-America/Port-au-Prince'],
+  662525310: ['FR-Europe/Paris', 'DE-Europe/Berlin', 'BA-Europe/Sarajevo',
+    'CS-Europe/Belgrade', 'ES-Africa/Ceuta', 'NL-Europe/Amsterdam',
+    'AD-Europe/Andorra', 'SK-Europe/Bratislava', 'BE-Europe/Brussels',
+    'HU-Europe/Budapest', 'DK-Europe/Copenhagen', 'GI-Europe/Gibraltar',
+    'SI-Europe/Ljubljana', 'LU-Europe/Luxembourg', 'ES-Europe/Madrid',
+    'MT-Europe/Malta', 'MC-Europe/Monaco', 'NO-Europe/Oslo',
+    'CZ-Europe/Prague', 'IT-Europe/Rome', 'MK-Europe/Skopje',
+    'SE-Europe/Stockholm', 'AL-Europe/Tirane', 'LI-Europe/Vaduz',
+    'AT-Europe/Vienna', 'PL-Europe/Warsaw', 'HR-Europe/Zagreb',
+    'CH-Europe/Zurich'],
+  1465865536: ['US-America/Anchorage', 'US-America/Juneau',
+    'US-America/Nome', 'US-America/Yakutat'],
+  495058823: ['AU-Australia/Adelaide', 'AU-Australia/Broken_Hill'],
+  599086472: ['GE-Asia/Tbilisi', 'AM-Asia/Yerevan', 'RU-Europe/Samara'],
+  805337484: ['GT-America/Guatemala'],
+  1001739662: ['PY-America/Asuncion'],
+  836894706: ['CA-America/Winnipeg'],
+  599086512: ['AZ-Asia/Baku'],
+  836894708: ['CA-America/Winnipeg'],
+  41025476: ['US-America/Menominee'],
+  501219282: ['RU-Asia/Magadan'],
+  970325971: ['CA-America/St_Johns'],
+  769654750: ['RU-Asia/Yekaterinburg'],
+  1286253222: ['US-America/Los_Angeles', 'CA-America/Vancouver',
+    'CA-America/Whitehorse'],
+  1373765610: ['US-America/Adak'],
+  973078513: ['CA-America/St_Johns'],
+  838860786: ['US-America/Chicago', 'CA-America/Winnipeg'],
+  970326003: ['CA-America/St_Johns'],
+  771751924: ['KG-Asia/Bishkek'],
+  952805774: ['AQ-Antarctica/Palmer'],
+  483699410: ['AU-Australia/Sydney', 'AU-Australia/Melbourne']
+};
+// Copyright 2008 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview list of native country and language names.
+ *
+ * Warning: this file is automatically generated from CLDR.
+ * Please contact i18n team or change the script and regenerate data.
+ * Code location: http://go/generate_js_native_names.py
+ *
+ */
+
+
+/**
+ * Namespace for native country and lanugage names
+ */
+goog.provide('goog.locale.nativeNameConstants');
+
+/**
+ * Native country and language names
+ * @type {Object}
+ */
+
+/* ~!@# genmethods.NativeDictAsJson() #@!~ */
+goog.locale.nativeNameConstants = {
+  'COUNTRY': {
+    'AD': 'Andorra',
+    'AE': '\u0627\u0644\u0627\u0645\u0627\u0631\u0627\u062a \u0627' +
+        '\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644' +
+        '\u0645\u062a\u062d\u062f\u0629',
+    'AF': '\u0627\u0641\u063a\u0627\u0646\u0633\u062a\u0627\u0646',
+    'AG': 'Antigua and Barbuda',
+    'AI': 'Anguilla',
+    'AL': 'Shqip\u00ebria',
+    'AM': '\u0540\u0561\u0575\u0561\u057d\u057f\u0561\u0576\u056b ' +
+        '\u0540\u0561\u0576\u0580\u0561\u057a\u0565\u057f\u0578' +
+        '\u0582\u0569\u056b\u0582\u0576',
+    'AN': 'Nederlandse Antillen',
+    'AO': 'Angola',
+    'AQ': 'Antarctica',
+    'AR': 'Argentina',
+    'AS': 'American Samoa',
+    'AT': '\u00d6sterreich',
+    'AU': 'Australia',
+    'AW': 'Aruba',
+    'AX': '\u00c5land',
+    'AZ': 'Az\u0259rbaycan',
+    'BA': 'Bosna i Hercegovina',
+    'BB': 'Barbados',
+    'BD': '\u09ac\u09be\u0982\u09b2\u09be\u09a6\u09c7\u09b6',
+    'BE': 'Belgi\u00eb',
+    'BF': 'Burkina Faso',
+    'BG': '\u0411\u044a\u043b\u0433\u0430\u0440\u0438\u044f',
+    'BH': '\u0627\u0644\u0628\u062d\u0631\u064a\u0646',
+    'BI': 'Burundi',
+    'BJ': 'B\u00e9nin',
+    'BM': 'Bermuda',
+    'BN': 'Brunei',
+    'BO': 'Bolivia',
+    'BR': 'Brasil',
+    'BS': 'Bahamas',
+    'BT': '\u092d\u0942\u091f\u093e\u0928',
+    'BV': 'Bouvet Island',
+    'BW': 'Botswana',
+    'BY': '\u0411\u0435\u043b\u0430\u0440\u0443\u0441\u044c',
+    'BZ': 'Belize',
+    'CA': 'Canada',
+    'CC': 'Cocos (Keeling) Islands',
+    'CD': 'R\u00e9publique d\u00e9mocratique du Congo',
+    'CF': 'R\u00e9publique centrafricaine',
+    'CG': 'Congo',
+    'CH': 'Schweiz',
+    'CI': 'C\u00f4te d\u2019Ivoire',
+    'CK': 'Cook Islands',
+    'CL': 'Chile',
+    'CM': 'Cameroun',
+    'CN': '\u4e2d\u56fd',
+    'CO': 'Colombia',
+    'CR': 'Costa Rica',
+    'CS': 'Serbia and Montenegro',
+    'CU': 'Cuba',
+    'CV': 'Cabo Verde',
+    'CX': 'Christmas Island',
+    'CY': '\u039a\u03cd\u03c0\u03c1\u03bf\u03c2',
+    'CZ': '\u010cesk\u00e1 republika',
+    'DD': 'East Germany',
+    'DE': 'Deutschland',
+    'DJ': 'Jabuuti',
+    'DK': 'Danmark',
+    'DM': 'Dominica',
+    'DO': 'Rep\u00fablica Dominicana',
+    'DZ': '\u0627\u0644\u062c\u0632\u0627\u0626\u0631',
+    'EC': 'Ecuador',
+    'EE': 'Eesti',
+    'EG': '\u0645\u0635\u0631',
+    'EH': '\u0627\u0644\u0635\u062d\u0631\u0627\u0621 \u0627\u0644' +
+        '\u063a\u0631\u0628\u064a\u0629',
+    'ER': '\u0627\u0631\u064a\u062a\u0631\u064a\u0627',
+    'ES': 'Espa\u00f1a',
+    'ET': '\u12a2\u1275\u12ee\u1335\u12eb',
+    'FI': 'Suomi',
+    'FJ': '\u092b\u093f\u091c\u0940',
+    'FK': 'Falkland Islands',
+    'FM': 'Micronesia',
+    'FO': 'F\u00f8royar',
+    'FR': 'France',
+    'FX': 'Metropolitan France',
+    'GA': 'Gabon',
+    'GB': 'United Kingdom',
+    'GD': 'Grenada',
+    'GE': '\u10e1\u10d0\u10e5\u10d0\u10e0\u10d7\u10d5\u10d4\u10da' +
+        '\u10dd',
+    'GF': 'Guyane fran\u00e7aise',
+    'GG': 'Guernsey',
+    'GH': 'Ghana',
+    'GI': 'Gibraltar',
+    'GL': 'Kalaallit Nunaat',
+    'GM': 'Gambia',
+    'GN': 'Guin\u00e9e',
+    'GP': 'Guadeloupe',
+    'GQ': 'Guin\u00e9e \u00e9quatoriale',
+    'GR': '\u0395\u03bb\u03bb\u03ac\u03b4\u03b1',
+    'GS': 'South Georgia and the South Sandwich Islands',
+    'GT': 'Guatemala',
+    'GU': 'Guam',
+    'GW': 'Guin\u00e9 Bissau',
+    'GY': 'Guyana',
+    'HK': '\u9999\u6e2f',
+    'HM': 'Heard Island and McDonald Islands',
+    'HN': 'Honduras',
+    'HR': 'Hrvatska',
+    'HT': 'Ha\u00efti',
+    'HU': 'Magyarorsz\u00e1g',
+    'ID': 'Indonesia',
+    'IE': 'Ireland',
+    'IL': '\u05d9\u05e9\u05e8\u05d0\u05dc',
+    'IM': 'Isle of Man',
+    'IN': '\u092d\u093e\u0930\u0924',
+    'IO': 'British Indian Ocean Territory',
+    'IQ': '\u0627\u0644\u0639\u0631\u0627\u0642',
+    'IR': '\u0627\u06cc\u0631\u0627\u0646',
+    'IS': '\u00cdsland',
+    'IT': 'Italia',
+    'JE': 'Jersey',
+    'JM': 'Jamaica',
+    'JO': '\u0627\u0644\u0623\u0631\u062f\u0646',
+    'JP': '\u65e5\u672c',
+    'KE': 'Kenya',
+    'KG': '\u041a\u044b\u0440\u0433\u044b\u0437\u0441\u0442\u0430' +
+        '\u043d',
+    'KH': '\u1780\u1798\u17d2\u1796\u17bb\u1787\u17b6',
+    'KI': 'Kiribati',
+    'KM': '\u062c\u0632\u0631 \u0627\u0644\u0642\u0645\u0631',
+    'KN': 'Saint Kitts and Nevis',
+    'KP': '\uc870\uc120 \ubbfc\uc8fc\uc8fc\uc758 \uc778\ubbfc ' +
+        '\uacf5\ud654\uad6d',
+    'KR': '\ub300\ud55c\ubbfc\uad6d',
+    'KW': '\u0627\u0644\u0643\u0648\u064a\u062a',
+    'KY': 'Cayman Islands',
+    'KZ': '\u041a\u0430\u0437\u0430\u0445\u0441\u0442\u0430\u043d',
+    'LA': '\u0e25\u0e32\u0e27',
+    'LB': '\u0644\u0628\u0646\u0627\u0646',
+    'LC': 'Saint Lucia',
+    'LI': 'Liechtenstein',
+    'LK': '\u0b87\u0bb2\u0b99\u0bcd\u0b95\u0bc8',
+    'LR': 'Liberia',
+    'LS': 'Lesotho',
+    'LT': 'Lietuva',
+    'LU': 'Luxembourg',
+    'LV': 'Latvija',
+    'LY': '\u0644\u064a\u0628\u064a\u0627',
+    'MA': '\u0627\u0644\u0645\u063a\u0631\u0628',
+    'MC': 'Monaco',
+    'MD': 'Moldova, Republica',
+    'ME': '\u0426\u0440\u043d\u0430 \u0413\u043e\u0440\u0430',
+    'MG': 'Madagascar',
+    'MH': 'Marshall Islands',
+    'MK': '\u041c\u0430\u043a\u0435\u0434\u043e\u043d\u0438\u0458' +
+        '\u0430',
+    'ML': '\u0645\u0627\u0644\u064a',
+    'MM': 'Myanmar',
+    'MN': '\u8499\u53e4',
+    'MO': '\u6fb3\u95e8',
+    'MP': 'Northern Mariana Islands',
+    'MQ': 'Martinique',
+    'MR': '\u0645\u0648\u0631\u064a\u062a\u0627\u0646\u064a\u0627',
+    'MS': 'Montserrat',
+    'MT': 'Malta',
+    'MU': 'Mauritius',
+    'MV': 'Maldives',
+    'MW': 'Malawi',
+    'MX': 'M\u00e9xico',
+    'MY': 'Malaysia',
+    'MZ': 'Mo\u00e7ambique',
+    'NA': 'Namibia',
+    'NC': 'Nouvelle-Cal\u00e9donie',
+    'NE': 'Niger',
+    'NF': 'Norfolk Island',
+    'NG': 'Nigeria',
+    'NI': 'Nicaragua',
+    'NL': 'Nederland',
+    'NO': 'Norge',
+    'NP': '\u0928\u0947\u092a\u093e\u0932',
+    'NR': 'Nauru',
+    'NT': 'Neutral Zone',
+    'NU': 'Niue',
+    'NZ': 'New Zealand',
+    'OM': '\u0639\u0645\u0627\u0646',
+    'PA': 'Panam\u00e1',
+    'PE': 'Per\u00fa',
+    'PF': 'Polyn\u00e9sie fran\u00e7aise',
+    'PG': 'Papua New Guinea',
+    'PH': 'Philippines',
+    'PK': '\u067e\u0627\u06a9\u0633\u062a\u0627\u0646',
+    'PL': 'Polska',
+    'PM': 'Saint-Pierre-et-Miquelon',
+    'PN': 'Pitcairn',
+    'PR': 'Puerto Rico',
+    'PS': '\u0641\u0644\u0633\u0637\u064a\u0646',
+    'PT': 'Portugal',
+    'PW': 'Palau',
+    'PY': 'Paraguay',
+    'QA': '\u0642\u0637\u0631',
+    'QO': 'Outlying Oceania',
+    'QU': 'European Union',
+    'RE': 'R\u00e9union',
+    'RO': 'Rom\u00e2nia',
+    'RS': '\u0421\u0440\u0431\u0438\u0458\u0430',
+    'RU': '\u0420\u043e\u0441\u0441\u0438\u044f',
+    'RW': 'Rwanda',
+    'SA': '\u0627\u0644\u0645\u0645\u0644\u0643\u0629 \u0627\u0644' +
+        '\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0633' +
+        '\u0639\u0648\u062f\u064a\u0629',
+    'SB': 'Solomon Islands',
+    'SC': 'Seychelles',
+    'SD': '\u0627\u0644\u0633\u0648\u062f\u0627\u0646',
+    'SE': 'Sverige',
+    'SG': '\u65b0\u52a0\u5761',
+    'SH': 'Saint Helena',
+    'SI': 'Slovenija',
+    'SJ': 'Svalbard og Jan Mayen',
+    'SK': 'Slovensk\u00e1 republika',
+    'SL': 'Sierra Leone',
+    'SM': 'San Marino',
+    'SN': 'S\u00e9n\u00e9gal',
+    'SO': 'Somali',
+    'SR': 'Suriname',
+    'ST': 'S\u00e3o Tom\u00e9 e Pr\u00edncipe',
+    'SU': 'Union of Soviet Socialist Republics',
+    'SV': 'El Salvador',
+    'SY': '\u0633\u0648\u0631\u064a\u0627',
+    'SZ': 'Swaziland',
+    'TC': 'Turks and Caicos Islands',
+    'TD': '\u062a\u0634\u0627\u062f',
+    'TF': 'French Southern Territories',
+    'TG': 'Togo',
+    'TH': '\u0e1b\u0e23\u0e30\u0e40\u0e17\u0e28\u0e44\u0e17\u0e22',
+    'TJ': '\u062a\u0627\u062c\u06cc\u06a9\u0633\u062a\u0627\u0646',
+    'TK': 'Tokelau',
+    'TL': 'Timor Leste',
+    'TM': '\u0422\u0443\u0440\u043a\u043c\u0435\u043d\u0438\u0441' +
+        '\u0442\u0430\u043d',
+    'TN': '\u062a\u0648\u0646\u0633',
+    'TO': 'Tonga',
+    'TR': 'T\u00fcrkiye',
+    'TT': 'Trinidad y Tobago',
+    'TV': 'Tuvalu',
+    'TW': '\u53f0\u6e7e',
+    'TZ': 'Tanzania',
+    'UA': '\u0423\u043a\u0440\u0430\u0457\u043d\u0430',
+    'UG': 'Uganda',
+    'UM': 'United States Minor Outlying Islands',
+    'US': 'United States',
+    'UY': 'Uruguay',
+    'UZ': '\u040e\u0437\u0431\u0435\u043a\u0438\u0441\u0442\u043e' +
+        '\u043d',
+    'VA': 'Vaticano',
+    'VC': 'Saint Vincent and the Grenadines',
+    'VE': 'Venezuela',
+    'VG': 'British Virgin Islands',
+    'VI': 'U.S. Virgin Islands',
+    'VN': 'Vi\u1ec7t Nam',
+    'VU': 'Vanuatu',
+    'WF': 'Wallis-et-Futuna',
+    'WS': 'Samoa',
+    'YD': 'People\'s Democratic Republic of Yemen',
+    'YE': '\u0627\u0644\u064a\u0645\u0646',
+    'YT': 'Mayotte',
+    'ZA': 'South Africa',
+    'ZM': 'Zambia',
+    'ZW': 'Zimbabwe',
+    'ZZ': 'Unknown or Invalid Region',
+    'aa_DJ': 'Jabuuti',
+    'aa_ER': '\u00c9rythr\u00e9e',
+    'aa_ER_SAAHO': '\u00c9rythr\u00e9e',
+    'aa_ET': 'Itoophiyaa',
+    'af_NA': 'Namibi\u00eb',
+    'af_ZA': 'Suid-Afrika',
+    'ak_GH': 'Ghana',
+    'am_ET': '\u12a2\u1275\u12ee\u1335\u12eb',
+    'ar_AE': '\u0627\u0644\u0627\u0645\u0627\u0631\u0627\u062a ' +
+        '\u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627' +
+        '\u0644\u0645\u062a\u062d\u062f\u0629',
+    'ar_BH': '\u0627\u0644\u0628\u062d\u0631\u064a\u0646',
+    'ar_DJ': '\u062c\u064a\u0628\u0648\u062a\u064a',
+    'ar_DZ': '\u0627\u0644\u062c\u0632\u0627\u0626\u0631',
+    'ar_EG': '\u0645\u0635\u0631',
+    'ar_EH': '\u0627\u0644\u0635\u062d\u0631\u0627\u0621 \u0627' +
+        '\u0644\u063a\u0631\u0628\u064a\u0629',
+    'ar_ER': '\u0627\u0631\u064a\u062a\u0631\u064a\u0627',
+    'ar_IL': '\u0627\u0633\u0631\u0627\u0626\u064a\u0644',
+    'ar_IQ': '\u0627\u0644\u0639\u0631\u0627\u0642',
+    'ar_JO': '\u0627\u0644\u0623\u0631\u062f\u0646',
+    'ar_KM': '\u062c\u0632\u0631 \u0627\u0644\u0642\u0645\u0631',
+    'ar_KW': '\u0627\u0644\u0643\u0648\u064a\u062a',
+    'ar_LB': '\u0644\u0628\u0646\u0627\u0646',
+    'ar_LY': '\u0644\u064a\u0628\u064a\u0627',
+    'ar_MA': '\u0627\u0644\u0645\u063a\u0631\u0628',
+    'ar_MR': '\u0645\u0648\u0631\u064a\u062a\u0627\u0646\u064a' +
+        '\u0627',
+    'ar_OM': '\u0639\u0645\u0627\u0646',
+    'ar_PS': '\u0641\u0644\u0633\u0637\u064a\u0646',
+    'ar_QA': '\u0642\u0637\u0631',
+    'ar_SA': '\u0627\u0644\u0645\u0645\u0644\u0643\u0629 \u0627' +
+        '\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644' +
+        '\u0633\u0639\u0648\u062f\u064a\u0629',
+    'ar_SD': '\u0627\u0644\u0633\u0648\u062f\u0627\u0646',
+    'ar_SY': '\u0633\u0648\u0631\u064a\u0627',
+    'ar_TD': '\u062a\u0634\u0627\u062f',
+    'ar_TN': '\u062a\u0648\u0646\u0633',
+    'ar_YE': '\u0627\u0644\u064a\u0645\u0646',
+    'as_IN': '\u09ad\u09be\u09f0\u09a4',
+    'ay_BO': 'Bolivia',
+    'az_AZ': 'Az\u0259rbaycan',
+    'az_Cyrl_AZ': '\u0410\u0437\u04d9\u0440\u0431\u0430\u0458' +
+        '\u04b9\u0430\u043d',
+    'az_Latn_AZ': 'Azerbaycan',
+    'be_BY': '\u0411\u0435\u043b\u0430\u0440\u0443\u0441\u044c',
+    'bg_BG': '\u0411\u044a\u043b\u0433\u0430\u0440\u0438\u044f',
+    'bi_VU': 'Vanuatu',
+    'bn_BD': '\u09ac\u09be\u0982\u09b2\u09be\u09a6\u09c7\u09b6',
+    'bn_IN': '\u09ad\u09be\u09b0\u09a4',
+    'bo_CN': '\u0f62\u0f92\u0fb1\u0f0b\u0f53\u0f42',
+    'bo_IN': '\u0f62\u0f92\u0fb1\u0f0b\u0f42\u0f62\u0f0b',
+    'bs_BA': 'Bosna i Hercegovina',
+    'byn_ER': '\u12a4\u122d\u1275\u122b',
+    'ca_AD': 'Andorra',
+    'ca_ES': 'Espanya',
+    'cch_NG': 'Nigeria',
+    'ch_GU': 'Guam',
+    'chk_FM': 'Micronesia',
+    'cop_Arab_EG': '\u0645\u0635\u0631',
+    'cop_Arab_US': '\u0627\u0644\u0648\u0644\u0627\u064a\u0627' +
+        '\u062a \u0627\u0644\u0645\u062a\u062d\u062f' +
+        '\u0629 \u0627\u0644\u0623\u0645\u0631\u064a' +
+        '\u0643\u064a\u0629',
+    'cop_EG': '\u0645\u0635\u0631',
+    'cop_US': '\u0627\u0644\u0648\u0644\u0627\u064a\u0627\u062a ' +
+        '\u0627\u0644\u0645\u062a\u062d\u062f\u0629 \u0627' +
+        '\u0644\u0623\u0645\u0631\u064a\u0643\u064a\u0629',
+    'cs_CZ': '\u010cesk\u00e1 republika',
+    'cy_GB': 'Prydain Fawr',
+    'da_DK': 'Danmark',
+    'da_GL': 'Gr\u00f8nland',
+    'de_AT': '\u00d6sterreich',
+    'de_BE': 'Belgien',
+    'de_CH': 'Schweiz',
+    'de_DE': 'Deutschland',
+    'de_LI': 'Liechtenstein',
+    'de_LU': 'Luxemburg',
+    'dv_MV': 'Maldives',
+    'dz_BT': 'Bhutan',
+    'ee_GH': 'Ghana',
+    'ee_TG': 'Togo',
+    'efi_NG': 'Nigeria',
+    'el_CY': '\u039a\u03cd\u03c0\u03c1\u03bf\u03c2',
+    'el_GR': '\u0395\u03bb\u03bb\u03ac\u03b4\u03b1',
+    'en_AG': 'Antigua and Barbuda',
+    'en_AI': 'Anguilla',
+    'en_AS': 'American Samoa',
+    'en_AU': 'Australia',
+    'en_BB': 'Barbados',
+    'en_BE': 'Belgium',
+    'en_BM': 'Bermuda',
+    'en_BS': 'Bahamas',
+    'en_BW': 'Botswana',
+    'en_BZ': 'Belize',
+    'en_CA': 'Canada',
+    'en_CC': 'Cocos Islands',
+    'en_CK': 'Cook Islands',
+    'en_CM': 'Cameroon',
+    'en_CX': 'Christmas Island',
+    'en_DM': 'Dominica',
+    'en_FJ': 'Fiji',
+    'en_FK': 'Falkland Islands',
+    'en_FM': 'Micronesia',
+    'en_GB': 'United Kingdom',
+    'en_GD': 'Grenada',
+    'en_GG': 'Guernsey',
+    'en_GH': 'Ghana',
+    'en_GI': 'Gibraltar',
+    'en_GM': 'Gambia',
+    'en_GU': 'Guam',
+    'en_GY': 'Guyana',
+    'en_HK': 'Hong Kong',
+    'en_HN': 'Honduras',
+    'en_IE': 'Ireland',
+    'en_IM': 'Isle of Man',
+    'en_IN': 'India',
+    'en_JE': 'Jersey',
+    'en_JM': 'Jamaica',
+    'en_KE': 'Kenya',
+    'en_KI': 'Kiribati',
+    'en_KN': 'Saint Kitts and Nevis',
+    'en_KY': 'Cayman Islands',
+    'en_LC': 'Saint Lucia',
+    'en_LR': 'Liberia',
+    'en_LS': 'Lesotho',
+    'en_MH': 'Marshall Islands',
+    'en_MP': 'Northern Mariana Islands',
+    'en_MS': 'Montserrat',
+    'en_MT': 'Malta',
+    'en_MU': 'Mauritius',
+    'en_MW': 'Malawi',
+    'en_NA': 'Namibia',
+    'en_NF': 'Norfolk Island',
+    'en_NG': 'Nigeria',
+    'en_NR': 'Nauru',
+    'en_NU': 'Niue',
+    'en_NZ': 'New Zealand',
+    'en_PG': 'Papua New Guinea',
+    'en_PH': 'Philippines',
+    'en_PK': 'Pakistan',
+    'en_PN': 'Pitcairn',
+    'en_PR': 'Puerto Rico',
+    'en_RW': 'Rwanda',
+    'en_SB': 'Solomon Islands',
+    'en_SC': 'Seychelles',
+    'en_SG': 'Singapore',
+    'en_SH': 'Saint Helena',
+    'en_SL': 'Sierra Leone',
+    'en_SZ': 'Swaziland',
+    'en_TC': 'Turks and Caicos Islands',
+    'en_TK': 'Tokelau',
+    'en_TO': 'Tonga',
+    'en_TT': 'Trinidad and Tobago',
+    'en_TV': 'Tuvalu',
+    'en_TZ': 'Tanzania',
+    'en_UG': 'Uganda',
+    'en_UM': 'United States Minor Outlying Islands',
+    'en_US': 'United States',
+    'en_US_POSIX': 'United States',
+    'en_VC': 'Saint Vincent and the Grenadines',
+    'en_VG': 'British Virgin Islands',
+    'en_VI': 'U.S. Virgin Islands',
+    'en_VU': 'Vanuatu',
+    'en_WS': 'Samoa',
+    'en_ZA': 'South Africa',
+    'en_ZM': 'Zambia',
+    'en_ZW': 'Zimbabwe',
+    'es_AR': 'Argentina',
+    'es_BO': 'Bolivia',
+    'es_CL': 'Chile',
+    'es_CO': 'Colombia',
+    'es_CR': 'Costa Rica',
+    'es_CU': 'Cuba',
+    'es_DO': 'Rep\u00fablica Dominicana',
+    'es_EC': 'Ecuador',
+    'es_ES': 'Espa\u00f1a',
+    'es_GQ': 'Guinea Ecuatorial',
+    'es_GT': 'Guatemala',
+    'es_HN': 'Honduras',
+    'es_MX': 'M\u00e9xico',
+    'es_NI': 'Nicaragua',
+    'es_PA': 'Panam\u00e1',
+    'es_PE': 'Per\u00fa',
+    'es_PH': 'Filipinas',
+    'es_PR': 'Puerto Rico',
+    'es_PY': 'Paraguay',
+    'es_SV': 'El Salvador',
+    'es_US': 'Estados Unidos',
+    'es_UY': 'Uruguay',
+    'es_VE': 'Venezuela',
+    'et_EE': 'Eesti',
+    'eu_ES': 'Espainia',
+    'fa_AF': '\u0627\u0641\u063a\u0627\u0646\u0633\u062a\u0627' +
+        '\u0646',
+    'fa_IR': '\u0627\u06cc\u0631\u0627\u0646',
+    'fi_FI': 'Suomi',
+    'fil_PH': 'Philippines',
+    'fj_FJ': 'Fiji',
+    'fo_FO': 'F\u00f8royar',
+    'fr_BE': 'Belgique',
+    'fr_BF': 'Burkina Faso',
+    'fr_BI': 'Burundi',
+    'fr_BJ': 'B\u00e9nin',
+    'fr_CA': 'Canada',
+    'fr_CD': 'R\u00e9publique d\u00e9mocratique du Congo',
+    'fr_CF': 'R\u00e9publique centrafricaine',
+    'fr_CG': 'Congo',
+    'fr_CH': 'Suisse',
+    'fr_CI': 'C\u00f4te d\u2019Ivoire',
+    'fr_CM': 'Cameroun',
+    'fr_DJ': 'Djibouti',
+    'fr_DZ': 'Alg\u00e9rie',
+    'fr_FR': 'France',
+    'fr_GA': 'Gabon',
+    'fr_GF': 'Guyane fran\u00e7aise',
+    'fr_GN': 'Guin\u00e9e',
+    'fr_GP': 'Guadeloupe',
+    'fr_GQ': 'Guin\u00e9e \u00e9quatoriale',
+    'fr_HT': 'Ha\u00efti',
+    'fr_KM': 'Comores',
+    'fr_LU': 'Luxembourg',
+    'fr_MA': 'Maroc',
+    'fr_MC': 'Monaco',
+    'fr_MG': 'Madagascar',
+    'fr_ML': 'Mali',
+    'fr_MQ': 'Martinique',
+    'fr_MU': 'Maurice',
+    'fr_NC': 'Nouvelle-Cal\u00e9donie',
+    'fr_NE': 'Niger',
+    'fr_PF': 'Polyn\u00e9sie fran\u00e7aise',
+    'fr_PM': 'Saint-Pierre-et-Miquelon',
+    'fr_RE': 'R\u00e9union',
+    'fr_RW': 'Rwanda',
+    'fr_SC': 'Seychelles',
+    'fr_SN': 'S\u00e9n\u00e9gal',
+    'fr_SY': 'Syrie',
+    'fr_TD': 'Tchad',
+    'fr_TG': 'Togo',
+    'fr_TN': 'Tunisie',
+    'fr_VU': 'Vanuatu',
+    'fr_WF': 'Wallis-et-Futuna',
+    'fr_YT': 'Mayotte',
+    'fur_IT': 'Italia',
+    'ga_IE': '\u00c9ire',
+    'gaa_GH': 'Ghana',
+    'gez_ER': '\u12a4\u122d\u1275\u122b',
+    'gez_ET': '\u12a2\u1275\u12ee\u1335\u12eb',
+    'gil_KI': 'Kiribati',
+    'gl_ES': 'Espa\u00f1a',
+    'gn_PY': 'Paraguay',
+    'gu_IN': '\u0aad\u0abe\u0ab0\u0aa4',
+    'gv_GB': 'Rywvaneth Unys',
+    'ha_Arab_NG': '\u0646\u064a\u062c\u064a\u0631\u064a\u0627',
+    'ha_GH': '\u063a\u0627\u0646\u0627',
+    'ha_Latn_GH': 'Ghana',
+    'ha_Latn_NE': 'Niger',
+    'ha_Latn_NG': 'Nig\u00e9ria',
+    'ha_NE': '\u0627\u0644\u0646\u064a\u062c\u0631',
+    'ha_NG': '\u0646\u064a\u062c\u064a\u0631\u064a\u0627',
+    'haw_US': '\u02bbAmelika Hui P\u016b \u02bbIa',
+    'he_IL': '\u05d9\u05e9\u05e8\u05d0\u05dc',
+    'hi_IN': '\u092d\u093e\u0930\u0924',
+    'ho_PG': 'Papua New Guinea',
+    'hr_BA': 'Bosna i Hercegovina',
+    'hr_HR': 'Hrvatska',
+    'ht_HT': 'Ha\u00efti',
+    'hu_HU': 'Magyarorsz\u00e1g',
+    'hy_AM': '\u0540\u0561\u0575\u0561\u057d\u057f\u0561\u0576' +
+        '\u056b \u0540\u0561\u0576\u0580\u0561\u057a\u0565' +
+        '\u057f\u0578\u0582\u0569\u056b\u0582\u0576',
+    'hy_AM_REVISED': '\u0540\u0561\u0575\u0561\u057d\u057f\u0561' +
+        '\u0576\u056b \u0540\u0561\u0576\u0580\u0561' +
+        '\u057a\u0565\u057f\u0578\u0582\u0569\u056b' +
+        '\u0582\u0576',
+    'id_ID': 'Indonesia',
+    'ig_NG': 'Nigeria',
+    'ii_CN': '\ua34f\ua1e9',
+    'is_IS': '\u00cdsland',
+    'it_CH': 'Svizzera',
+    'it_IT': 'Italia',
+    'it_SM': 'San Marino',
+    'ja_JP': '\u65e5\u672c',
+    'ka_GE': '\u10e1\u10d0\u10e5\u10d0\u10e0\u10d7\u10d5\u10d4' +
+        '\u10da\u10dd',
+    'kaj_NG': 'Nigeria',
+    'kam_KE': 'Kenya',
+    'kcg_NG': 'Nigeria',
+    'kfo_NG': 'Nig\u00e9ria',
+    'kk_KZ': '\u049a\u0430\u0437\u0430\u049b\u0441\u0442\u0430' +
+        '\u043d',
+    'kl_GL': 'Kalaallit Nunaat',
+    'km_KH': '\u1780\u1798\u17d2\u1796\u17bb\u1787\u17b6',
+    'kn_IN': '\u0cad\u0cbe\u0cb0\u0ca4',
+    'ko_KP': '\uc870\uc120 \ubbfc\uc8fc\uc8fc\uc758 \uc778\ubbfc ' +
+        '\uacf5\ud654\uad6d',
+    'ko_KR': '\ub300\ud55c\ubbfc\uad6d',
+    'kok_IN': '\u092d\u093e\u0930\u0924',
+    'kos_FM': 'Micronesia',
+    'kpe_GN': 'Guin\u00e9e',
+    'kpe_LR': 'Lib\u00e9ria',
+    'ks_IN': '\u092d\u093e\u0930\u0924',
+    'ku_IQ': 'Irak',
+    'ku_IR': '\u0130ran',
+    'ku_Latn_IQ': 'Irak',
+    'ku_Latn_IR': '\u0130ran',
+    'ku_Latn_SY': 'Suriye',
+    'ku_Latn_TR': 'T\u00fcrkiye',
+    'ku_SY': 'Suriye',
+    'ku_TR': 'T\u00fcrkiye',
+    'kw_GB': 'Rywvaneth Unys',
+    'ky_Cyrl_KG': '\u041a\u044b\u0440\u0433\u044b\u0437\u0441' +
+        '\u0442\u0430\u043d',
+    'ky_KG': 'K\u0131rg\u0131zistan',
+    'la_VA': 'Vaticano',
+    'lb_LU': 'Luxembourg',
+    'ln_CD': 'R\u00e9publique d\u00e9mocratique du Congo',
+    'ln_CG': 'Kongo',
+    'lo_LA': 'Laos',
+    'lt_LT': 'Lietuva',
+    'lv_LV': 'Latvija',
+    'mg_MG': 'Madagascar',
+    'mh_MH': 'Marshall Islands',
+    'mi_NZ': 'New Zealand',
+    'mk_MK': '\u041c\u0430\u043a\u0435\u0434\u043e\u043d\u0438' +
+        '\u0458\u0430',
+    'ml_IN': '\u0d07\u0d28\u0d4d\u0d24\u0d4d\u0d2f',
+    'mn_Cyrl_MN': '\u041c\u043e\u043d\u0433\u043e\u043b\u0438' +
+        '\u044f',
+    'mn_MN': '\u041c\u043e\u043d\u0433\u043e\u043b\u0438\u044f',
+    'mr_IN': '\u092d\u093e\u0930\u0924',
+    'ms_BN': 'Brunei',
+    'ms_MY': 'Malaysia',
+    'ms_SG': 'Singapura',
+    'mt_MT': 'Malta',
+    'my_MM': 'Myanmar',
+    'na_NR': 'Nauru',
+    'nb_NO': 'Norge',
+    'nb_SJ': 'Svalbard og Jan Mayen',
+    'ne_NP': '\u0928\u0947\u092a\u093e\u0932',
+    'niu_NU': 'Niue',
+    'nl_AN': 'Nederlandse Antillen',
+    'nl_AW': 'Aruba',
+    'nl_BE': 'Belgi\u00eb',
+    'nl_NL': 'Nederland',
+    'nl_SR': 'Suriname',
+    'nn_NO': 'Noreg',
+    'nr_ZA': 'South Africa',
+    'nso_ZA': 'South Africa',
+    'ny_MW': 'Malawi',
+    'om_ET': 'Itoophiyaa',
+    'om_KE': 'Keeniyaa',
+    'or_IN': '\u0b2d\u0b3e\u0b30\u0b24',
+    'pa_Arab_PK': '\u067e\u0627\u06a9\u0633\u062a\u0627\u0646',
+    'pa_Guru_IN': '\u0a2d\u0a3e\u0a30\u0a24',
+    'pa_IN': '\u0a2d\u0a3e\u0a30\u0a24',
+    'pa_PK': '\u067e\u0627\u06a9\u0633\u062a\u0627\u0646',
+    'pap_AN': 'Nederlandse Antillen',
+    'pau_PW': 'Palau',
+    'pl_PL': 'Polska',
+    'pon_FM': 'Micronesia',
+    'ps_AF': '\u0627\u0641\u063a\u0627\u0646\u0633\u062a\u0627' +
+        '\u0646',
+    'pt_AO': 'Angola',
+    'pt_BR': 'Brasil',
+    'pt_CV': 'Cabo Verde',
+    'pt_GW': 'Guin\u00e9 Bissau',
+    'pt_MZ': 'Mo\u00e7ambique',
+    'pt_PT': 'Portugal',
+    'pt_ST': 'S\u00e3o Tom\u00e9 e Pr\u00edncipe',
+    'pt_TL': 'Timor Leste',
+    'qu_BO': 'Bolivia',
+    'qu_PE': 'Per\u00fa',
+    'rm_CH': 'Schweiz',
+    'rn_BI': 'Burundi',
+    'ro_MD': 'Moldova, Republica',
+    'ro_RO': 'Rom\u00e2nia',
+    'ru_BY': '\u0411\u0435\u043b\u0430\u0440\u0443\u0441\u044c',
+    'ru_KG': '\u041a\u044b\u0440\u0433\u044b\u0437\u0441\u0442' +
+        '\u0430\u043d',
+    'ru_KZ': '\u041a\u0430\u0437\u0430\u0445\u0441\u0442\u0430' +
+        '\u043d',
+    'ru_RU': '\u0420\u043e\u0441\u0441\u0438\u044f',
+    'ru_UA': '\u0423\u043a\u0440\u0430\u0438\u043d\u0430',
+    'rw_RW': 'Rwanda',
+    'sa_IN': '\u092d\u093e\u0930\u0924',
+    'sd_Deva_IN': '\u092d\u093e\u0930\u0924',
+    'sd_IN': '\u092d\u093e\u0930\u0924',
+    'se_FI': 'Finland',
+    'se_NO': 'Norge',
+    'sg_CF': 'R\u00e9publique centrafricaine',
+    'sh_BA': 'Bosnia and Herzegovina',
+    'sh_CS': 'Serbia and Montenegro',
+    'si_LK': 'Sri Lanka',
+    'sid_ET': 'Itoophiyaa',
+    'sk_SK': 'Slovensk\u00e1 republika',
+    'sl_SI': 'Slovenija',
+    'sm_AS': 'American Samoa',
+    'sm_WS': 'Samoa',
+    'so_DJ': 'Jabuuti',
+    'so_ET': 'Itoobiya',
+    'so_KE': 'Kiiniya',
+    'so_SO': 'Soomaaliya',
+    'sq_AL': 'Shqip\u00ebria',
+    'sr_BA': '\u0411\u043e\u0441\u043d\u0430 \u0438 \u0425\u0435' +
+        '\u0440\u0446\u0435\u0433\u043e\u0432\u0438\u043d' +
+        '\u0430',
+    'sr_CS': '\u0421\u0440\u0431\u0438\u0458\u0430 \u0438 \u0426' +
+        '\u0440\u043d\u0430 \u0413\u043e\u0440\u0430',
+    'sr_Cyrl_BA': '\u0411\u043e\u0441\u043d\u0438\u044f',
+    'sr_Cyrl_CS': '\u0421\u0435\u0440\u0431\u0438\u044f \u0438 ' +
+        '\u0427\u0435\u0440\u043d\u043e\u0433\u043e' +
+        '\u0440\u0438\u044f',
+    'sr_Cyrl_ME': '\u0427\u0435\u0440\u043d\u043e\u0433\u043e' +
+        '\u0440\u0438\u044f',
+    'sr_Cyrl_RS': '\u0421\u0435\u0440\u0431\u0438\u044f',
+    'sr_Latn_BA': 'Bosna i Hercegovina',
+    'sr_Latn_CS': 'Srbija i Crna Gora',
+    'sr_Latn_ME': 'Crna Gora',
+    'sr_Latn_RS': 'Srbija',
+    'sr_ME': '\u0426\u0440\u043d\u0430 \u0413\u043e\u0440\u0430',
+    'sr_RS': '\u0421\u0440\u0431\u0438\u0458\u0430',
+    'ss_SZ': 'Swaziland',
+    'ss_ZA': 'South Africa',
+    'st_LS': 'Lesotho',
+    'st_ZA': 'South Africa',
+    'su_ID': 'Indonesia',
+    'sv_AX': '\u00c5land',
+    'sv_FI': 'Finland',
+    'sv_SE': 'Sverige',
+    'sw_KE': 'Kenya',
+    'sw_TZ': 'Tanzania',
+    'sw_UG': 'Uganda',
+    'swb_KM': '\u062c\u0632\u0631 \u0627\u0644\u0642\u0645\u0631',
+    'syr_SY': 'Syria',
+    'ta_IN': '\u0b87\u0ba8\u0bcd\u0ba4\u0bbf\u0baf\u0bbe',
+    'ta_LK': '\u0b87\u0bb2\u0b99\u0bcd\u0b95\u0bc8',
+    'ta_SG': '\u0b9a\u0bbf\u0b99\u0bcd\u0b95\u0baa\u0bcd\u0baa' +
+        '\u0bc2\u0bb0\u0bcd',
+    'te_IN': '\u0c2d\u0c3e\u0c30\u0c24 \u0c26\u0c47\u0c33\u0c02',
+    'tet_TL': 'Timor Leste',
+    'tg_Cyrl_TJ': '\u0422\u0430\u0434\u0436\u0438\u043a\u0438' +
+        '\u0441\u0442\u0430\u043d',
+    'tg_TJ': '\u062a\u0627\u062c\u06a9\u0633\u062a\u0627\u0646',
+    'th_TH': '\u0e1b\u0e23\u0e30\u0e40\u0e17\u0e28\u0e44\u0e17' +
+        '\u0e22',
+    'ti_ER': '\u12a4\u122d\u1275\u122b',
+    'ti_ET': '\u12a2\u1275\u12ee\u1335\u12eb',
+    'tig_ER': '\u12a4\u122d\u1275\u122b',
+    'tk_TM': '\u062a\u0631\u06a9\u0645\u0646\u0633\u062a\u0627' +
+        '\u0646',
+    'tkl_TK': 'Tokelau',
+    'tn_BW': 'Botswana',
+    'tn_ZA': 'South Africa',
+    'to_TO': 'Tonga',
+    'tpi_PG': 'Papua New Guinea',
+    'tr_CY': 'G\u00fcney K\u0131br\u0131s Rum Kesimi',
+    'tr_TR': 'T\u00fcrkiye',
+    'ts_ZA': 'South Africa',
+    'tt_RU': '\u0420\u043e\u0441\u0441\u0438\u044f',
+    'tvl_TV': 'Tuvalu',
+    'ty_PF': 'Polyn\u00e9sie fran\u00e7aise',
+    'uk_UA': '\u0423\u043a\u0440\u0430\u0457\u043d\u0430',
+    'uli_FM': 'Micronesia',
+    'und_ZZ': 'Unknown or Invalid Region',
+    'ur_IN': '\u0628\u06be\u0627\u0631\u062a',
+    'ur_PK': '\u067e\u0627\u06a9\u0633\u062a\u0627\u0646',
+    'uz_AF': 'Afganistan',
+    'uz_Arab_AF': '\u0627\u0641\u063a\u0627\u0646\u0633\u062a' +
+        '\u0627\u0646',
+    'uz_Cyrl_UZ': '\u0423\u0437\u0431\u0435\u043a\u0438\u0441' +
+        '\u0442\u0430\u043d',
+    'uz_Latn_UZ': 'O\u02bfzbekiston',
+    'uz_UZ': '\u040e\u0437\u0431\u0435\u043a\u0438\u0441\u0442' +
+        '\u043e\u043d',
+    've_ZA': 'South Africa',
+    'vi_VN': 'Vi\u1ec7t Nam',
+    'wal_ET': '\u12a2\u1275\u12ee\u1335\u12eb',
+    'wo_Arab_SN': '\u0627\u0644\u0633\u0646\u063a\u0627\u0644',
+    'wo_Latn_SN': 'S\u00e9n\u00e9gal',
+    'wo_SN': 'S\u00e9n\u00e9gal',
+    'xh_ZA': 'South Africa',
+    'yap_FM': 'Micronesia',
+    'yo_NG': 'Nigeria',
+    'zh_CN': '\u4e2d\u56fd',
+    'zh_HK': '\u9999\u6e2f',
+    'zh_Hans_CN': '\u4e2d\u56fd',
+    'zh_Hans_SG': '\u65b0\u52a0\u5761',
+    'zh_Hant_HK': '\u4e2d\u83ef\u4eba\u6c11\u5171\u548c\u570b' +
+        '\u9999\u6e2f\u7279\u5225\u884c\u653f\u5340',
+    'zh_Hant_MO': '\u6fb3\u9580',
+    'zh_Hant_TW': '\u81fa\u7063',
+    'zh_MO': '\u6fb3\u95e8',
+    'zh_SG': '\u65b0\u52a0\u5761',
+    'zh_TW': '\u53f0\u6e7e',
+    'zu_ZA': 'South Africa'
+  },
+  'LANGUAGE': {
+    'aa': 'afar',
+    'ab': '\u0430\u0431\u0445\u0430\u0437\u0441\u043a\u0438\u0439',
+    'ace': 'Aceh',
+    'ach': 'Acoli',
+    'ada': 'Adangme',
+    'ady': '\u0430\u0434\u044b\u0433\u0435\u0439\u0441\u043a' +
+        '\u0438\u0439',
+    'ae': 'Avestan',
+    'af': 'Afrikaans',
+    'afa': 'Afro-Asiatic Language',
+    'afh': 'Afrihili',
+    'ain': 'Ainu',
+    'ak': 'Akan',
+    'akk': 'Akkadian',
+    'ale': 'Aleut',
+    'alg': 'Algonquian Language',
+    'alt': 'Southern Altai',
+    'am': '\u12a0\u121b\u122d\u129b',
+    'an': 'Aragonese',
+    'ang': 'Old English',
+    'anp': 'Angika',
+    'apa': 'Apache Language',
+    'ar': '\u0627\u0644\u0639\u0631\u0628\u064a\u0629',
+    'arc': 'Aramaic',
+    'arn': 'Araucanian',
+    'arp': 'Arapaho',
+    'art': 'Artificial Language',
+    'arw': 'Arawak',
+    'as': '\u0985\u09b8\u09ae\u09c0\u09af\u09bc\u09be',
+    'ast': 'asturiano',
+    'ath': 'Athapascan Language',
+    'aus': 'Australian Language',
+    'av': '\u0430\u0432\u0430\u0440\u0441\u043a\u0438\u0439',
+    'awa': 'Awadhi',
+    'ay': 'aimara',
+    'az': 'az\u0259rbaycanca',
+    'az_Arab': '\u062a\u0631\u06a9\u06cc \u0622\u0630\u0631\u0628' +
+        '\u0627\u06cc\u062c\u0627\u0646\u06cc',
+    'az_Cyrl': '\u0410\u0437\u04d9\u0440\u0431\u0430\u0458\u04b9' +
+        '\u0430\u043d',
+    'az_Latn': 'Azerice',
+    'ba': '\u0431\u0430\u0448\u043a\u0438\u0440\u0441\u043a\u0438' +
+        '\u0439',
+    'bad': 'Banda',
+    'bai': 'Bamileke Language',
+    'bal': '\u0628\u0644\u0648\u0686\u06cc',
+    'ban': 'Balin',
+    'bas': 'Basa',
+    'bat': 'Baltic Language',
+    'be': '\u0431\u0435\u043b\u0430\u0440\u0443\u0441\u043a\u0430' +
+        '\u044f',
+    'bej': 'Beja',
+    'bem': 'Bemba',
+    'ber': 'Berber',
+    'bg': '\u0431\u044a\u043b\u0433\u0430\u0440\u0441\u043a\u0438',
+    'bh': '\u092c\u093f\u0939\u093e\u0930\u0940',
+    'bho': 'Bhojpuri',
+    'bi': 'bichelamar ; bislama',
+    'bik': 'Bikol',
+    'bin': 'Bini',
+    'bla': 'Siksika',
+    'bm': 'bambara',
+    'bn': '\u09ac\u09be\u0982\u09b2\u09be',
+    'bnt': 'Bantu',
+    'bo': '\u0f54\u0f7c\u0f51\u0f0b\u0f66\u0f90\u0f51\u0f0b',
+    'br': 'breton',
+    'bra': 'Braj',
+    'bs': 'Bosanski',
+    'btk': 'Batak',
+    'bua': 'Buriat',
+    'bug': 'Bugis',
+    'byn': '\u1265\u120a\u1295',
+    'ca': 'catal\u00e0',
+    'cad': 'Caddo',
+    'cai': 'Central American Indian Language',
+    'car': 'Carib',
+    'cau': 'Caucasian Language',
+    'cch': 'Atsam',
+    'ce': '\u0447\u0435\u0447\u0435\u043d\u0441\u043a\u0438\u0439',
+    'ceb': 'Cebuano',
+    'cel': 'Celtic Language',
+    'ch': 'Chamorro',
+    'chb': 'Chibcha',
+    'chg': 'Chagatai',
+    'chk': 'Chuukese',
+    'chm': '\u043c\u0430\u0440\u0438\u0439\u0441\u043a\u0438' +
+        '\u0439 (\u0447\u0435\u0440\u0435\u043c\u0438\u0441' +
+        '\u0441\u043a\u0438\u0439)',
+    'chn': 'Chinook Jargon',
+    'cho': 'Choctaw',
+    'chp': 'Chipewyan',
+    'chr': 'Cherokee',
+    'chy': 'Cheyenne',
+    'cmc': 'Chamic Language',
+    'co': 'corse',
+    'cop': '\u0642\u0628\u0637\u064a\u0629',
+    'cop_Arab': '\u0642\u0628\u0637\u064a\u0629',
+    'cpe': 'English-based Creole or Pidgin',
+    'cpf': 'French-based Creole or Pidgin',
+    'cpp': 'Portuguese-based Creole or Pidgin',
+    'cr': 'Cree',
+    'crh': 'Crimean Turkish',
+    'crp': 'Creole or Pidgin',
+    'cs': '\u010de\u0161tina',
+    'csb': 'Kashubian',
+    'cu': 'Church Slavic',
+    'cus': 'Cushitic Language',
+    'cv': '\u0447\u0443\u0432\u0430\u0448\u0441\u043a\u0438\u0439',
+    'cy': 'Cymraeg',
+    'da': 'dansk',
+    'dak': 'Dakota',
+    'dar': '\u0434\u0430\u0440\u0433\u0432\u0430',
+    'day': 'Dayak',
+    'de': 'Deutsch',
+    'del': 'Delaware',
+    'den': 'Slave',
+    'dgr': 'Dogrib',
+    'din': 'Dinka',
+    'doi': '\u0627\u0644\u062f\u0648\u062c\u0631\u0649',
+    'dra': 'Dravidian Language',
+    'dsb': 'Lower Sorbian',
+    'dua': 'Duala',
+    'dum': 'Middle Dutch',
+    'dv': 'Divehi',
+    'dyu': 'dioula',
+    'dz': '\u0f62\u0fab\u0f7c\u0f44\u0f0b\u0f41',
+    'ee': 'Ewe',
+    'efi': 'Efik',
+    'egy': 'Ancient Egyptian',
+    'eka': 'Ekajuk',
+    'el': '\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac',
+    'elx': 'Elamite',
+    'en': 'English',
+    'enm': 'Middle English',
+    'eo': 'esperanto',
+    'es': 'espa\u00f1ol',
+    'et': 'eesti',
+    'eu': 'euskara',
+    'ewo': 'Ewondo',
+    'fa': '\u0641\u0627\u0631\u0633\u06cc',
+    'fan': 'fang',
+    'fat': 'Fanti',
+    'ff': 'Fulah',
+    'fi': 'suomi',
+    'fil': 'Filipino',
+    'fiu': 'Finno-Ugrian Language',
+    'fj': 'Fijian',
+    'fo': 'f\u00f8royskt',
+    'fon': 'Fon',
+    'fr': 'fran\u00e7ais',
+    'frm': 'Middle French',
+    'fro': 'Old French',
+    'frr': 'Northern Frisian',
+    'frs': 'Eastern Frisian',
+    'fur': 'friulano',
+    'fy': 'Fries',
+    'ga': 'Gaeilge',
+    'gaa': 'Ga',
+    'gay': 'Gayo',
+    'gba': 'Gbaya',
+    'gd': 'Scottish Gaelic',
+    'gem': 'Germanic Language',
+    'gez': '\u130d\u12d5\u12dd\u129b',
+    'gil': 'Gilbertese',
+    'gl': 'galego',
+    'gmh': 'Middle High German',
+    'gn': 'guaran\u00ed',
+    'goh': 'Old High German',
+    'gon': 'Gondi',
+    'gor': 'Gorontalo',
+    'got': 'Gothic',
+    'grb': 'Grebo',
+    'grc': '\u0391\u03c1\u03c7\u03b1\u03af\u03b1 \u0395\u03bb' +
+        '\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac',
+    'gsw': 'Schweizerdeutsch',
+    'gu': '\u0a97\u0ac1\u0a9c\u0ab0\u0abe\u0aa4\u0ac0',
+    'gv': 'Gaelg',
+    'gwi': 'Gwich\u02bcin',
+    'ha': '\u0627\u0644\u0647\u0648\u0633\u0627',
+    'ha_Arab': '\u0627\u0644\u0647\u0648\u0633\u0627',
+    'ha_Latn': 'haoussa',
+    'hai': 'Haida',
+    'haw': '\u02bb\u014dlelo Hawai\u02bbi',
+    'he': '\u05e2\u05d1\u05e8\u05d9\u05ea',
+    'hi': '\u0939\u093f\u0902\u0926\u0940',
+    'hil': 'Hiligaynon',
+    'him': 'Himachali',
+    'hit': 'Hittite',
+    'hmn': 'Hmong',
+    'ho': 'Hiri Motu',
+    'hr': 'hrvatski',
+    'hsb': 'Upper Sorbian',
+    'ht': 'ha\u00eftien',
+    'hu': 'magyar',
+    'hup': 'Hupa',
+    'hy': '\u0540\u0561\u0575\u0565\u0580\u0567\u0576',
+    'hz': 'Herero',
+    'ia': 'interlingvao',
+    'iba': 'Iban',
+    'id': 'Bahasa Indonesia',
+    'ie': 'Interlingue',
+    'ig': 'Igbo',
+    'ii': '\ua188\ua320\ua259',
+    'ijo': 'Ijo',
+    'ik': 'Inupiaq',
+    'ilo': 'Iloko',
+    'inc': 'Indic Language',
+    'ine': 'Indo-European Language',
+    'inh': '\u0438\u043d\u0433\u0443\u0448\u0441\u043a\u0438' +
+        '\u0439',
+    'io': 'Ido',
+    'ira': 'Iranian Language',
+    'iro': 'Iroquoian Language',
+    'is': '\u00edslenska',
+    'it': 'italiano',
+    'iu': 'Inuktitut',
+    'ja': '\u65e5\u672c\u8a9e',
+    'jbo': 'Lojban',
+    'jpr': 'Judeo-Persian',
+    'jrb': 'Judeo-Arabic',
+    'jv': 'Jawa',
+    'ka': '\u10e5\u10d0\u10e0\u10d7\u10e3\u10da\u10d8',
+    'kaa': '\u043a\u0430\u0440\u0430\u043a\u0430\u043b\u043f' +
+        '\u0430\u043a\u0441\u043a\u0438\u0439',
+    'kab': 'kabyle',
+    'kac': 'Kachin',
+    'kaj': 'Jju',
+    'kam': 'Kamba',
+    'kar': 'Karen',
+    'kaw': 'Kawi',
+    'kbd': '\u043a\u0430\u0431\u0430\u0440\u0434\u0438\u043d' +
+        '\u0441\u043a\u0438\u0439',
+    'kcg': 'Tyap',
+    'kfo': 'koro',
+    'kg': 'Kongo',
+    'kha': 'Khasi',
+    'khi': 'Khoisan Language',
+    'kho': 'Khotanese',
+    'ki': 'Kikuyu',
+    'kj': 'Kuanyama',
+    'kk': '\u049a\u0430\u0437\u0430\u049b',
+    'kl': 'kalaallisut',
+    'km': '\u1797\u17b6\u179f\u17b6\u1781\u17d2\u1798\u17c2\u179a',
+    'kmb': 'quimbundo',
+    'kn': '\u0c95\u0ca8\u0ccd\u0ca8\u0ca1',
+    'ko': '\ud55c\uad6d\uc5b4',
+    'kok': '\u0915\u094b\u0902\u0915\u0923\u0940',
+    'kos': 'Kosraean',
+    'kpe': 'kpell\u00e9',
+    'kr': 'Kanuri',
+    'krc': '\u043a\u0430\u0440\u0430\u0447\u0430\u0435\u0432' +
+        '\u043e-\u0431\u0430\u043b\u043a\u0430\u0440\u0441' +
+        '\u043a\u0438\u0439',
+    'krl': '\u043a\u0430\u0440\u0435\u043b\u044c\u0441\u043a' +
+        '\u0438\u0439',
+    'kro': 'Kru',
+    'kru': 'Kurukh',
+    'ks': '\u0915\u093e\u0936\u094d\u092e\u093f\u0930\u0940',
+    'ku': 'K\u00fcrt\u00e7e',
+    'ku_Arab': '\u0627\u0644\u0643\u0631\u062f\u064a\u0629',
+    'ku_Latn': 'K\u00fcrt\u00e7e',
+    'kum': '\u043a\u0443\u043c\u044b\u043a\u0441\u043a\u0438' +
+        '\u0439',
+    'kut': 'Kutenai',
+    'kv': 'Komi',
+    'kw': 'kernewek',
+    'ky': 'K\u0131rg\u0131zca',
+    'ky_Arab': '\u0627\u0644\u0642\u064a\u0631\u063a\u0633\u062a' +
+        '\u0627\u0646\u064a\u0629',
+    'ky_Cyrl': '\u043a\u0438\u0440\u0433\u0438\u0437\u0441\u043a' +
+        '\u0438\u0439',
+    'la': 'latino',
+    'lad': '\u05dc\u05d3\u05d9\u05e0\u05d5',
+    'lah': '\u0644\u0627\u0647\u0646\u062f\u0627',
+    'lam': 'Lamba',
+    'lb': 'luxembourgeois',
+    'lez': '\u043b\u0435\u0437\u0433\u0438\u043d\u0441\u043a' +
+        '\u0438\u0439',
+    'lg': 'Ganda',
+    'li': 'Limburgs',
+    'ln': 'lingala',
+    'lo': 'Lao',
+    'lol': 'mongo',
+    'loz': 'Lozi',
+    'lt': 'lietuvi\u0173',
+    'lu': 'luba-katanga',
+    'lua': 'luba-lulua',
+    'lui': 'Luiseno',
+    'lun': 'Lunda',
+    'luo': 'Luo',
+    'lus': 'Lushai',
+    'lv': 'latvie\u0161u',
+    'mad': 'Madura',
+    'mag': 'Magahi',
+    'mai': 'Maithili',
+    'mak': 'Makassar',
+    'man': 'Mandingo',
+    'map': 'Austronesian',
+    'mas': 'Masai',
+    'mdf': '\u043c\u043e\u043a\u0448\u0430',
+    'mdr': 'Mandar',
+    'men': 'Mende',
+    'mg': 'malgache',
+    'mga': 'Middle Irish',
+    'mh': 'Marshallese',
+    'mi': 'Maori',
+    'mic': 'Micmac',
+    'min': 'Minangkabau',
+    'mis': 'Miscellaneous Language',
+    'mk': '\u043c\u0430\u043a\u0435\u0434\u043e\u043d\u0441\u043a' +
+        '\u0438',
+    'mkh': 'Mon-Khmer Language',
+    'ml': '\u0d2e\u0d32\u0d2f\u0d3e\u0d33\u0d02',
+    'mn': '\u043c\u043e\u043d\u0433\u043e\u043b\u044c\u0441\u043a' +
+        '\u0438\u0439',
+    'mn_Cyrl': '\u043c\u043e\u043d\u0433\u043e\u043b\u044c\u0441' +
+        '\u043a\u0438\u0439',
+    'mn_Mong': '\u043c\u043e\u043d\u0433\u043e\u043b\u044c\u0441' +
+        '\u043a\u0438\u0439',
+    'mnc': 'Manchu',
+    'mni': 'Manipuri',
+    'mno': 'Manobo Language',
+    'mo': 'Moldavian',
+    'moh': 'Mohawk',
+    'mos': 'mor\u00e9 ; mossi',
+    'mr': '\u092e\u0930\u093e\u0920\u0940',
+    'ms': 'Bahasa Melayu',
+    'mt': 'Malti',
+    'mul': 'Multiple Languages',
+    'mun': 'Munda Language',
+    'mus': 'Creek',
+    'mwl': 'Mirandese',
+    'mwr': 'Marwari',
+    'my': 'Burmese',
+    'myn': 'Mayan Language',
+    'myv': '\u044d\u0440\u0437\u044f',
+    'na': 'Nauru',
+    'nah': 'Nahuatl',
+    'nai': 'North American Indian Language',
+    'nap': 'napoletano',
+    'nb': 'norsk bokm\u00e5l',
+    'nd': 'North Ndebele',
+    'nds': 'Low German',
+    'ne': '\u0928\u0947\u092a\u093e\u0932\u0940',
+    'new': 'Newari',
+    'ng': 'Ndonga',
+    'nia': 'Nias',
+    'nic': 'Niger-Kordofanian Language',
+    'niu': 'Niuean',
+    'nl': 'Nederlands',
+    'nn': 'nynorsk',
+    'no': 'Norwegian',
+    'nog': '\u043d\u043e\u0433\u0430\u0439\u0441\u043a\u0438' +
+        '\u0439',
+    'non': 'Old Norse',
+    'nqo': 'N\u2019Ko',
+    'nr': 'South Ndebele',
+    'nso': 'Northern Sotho',
+    'nub': 'Nubian Language',
+    'nv': 'Navajo',
+    'nwc': 'Classical Newari',
+    'ny': 'nianja; chicheua; cheua',
+    'nym': 'Nyamwezi',
+    'nyn': 'Nyankole',
+    'nyo': 'Nyoro',
+    'nzi': 'Nzima',
+    'oc': 'occitan',
+    'oj': 'Ojibwa',
+    'om': 'Oromoo',
+    'or': '\u0b13\u0b21\u0b3c\u0b3f\u0b06',
+    'os': '\u043e\u0441\u0435\u0442\u0438\u043d\u0441\u043a\u0438' +
+        '\u0439',
+    'osa': 'Osage',
+    'ota': 'Ottoman Turkish',
+    'oto': 'Otomian Language',
+    'pa': '\u0a2a\u0a70\u0a1c\u0a3e\u0a2c\u0a40',
+    'pa_Arab': '\u067e\u0646\u062c\u0627\u0628',
+    'pa_Guru': '\u0a2a\u0a70\u0a1c\u0a3e\u0a2c\u0a40',
+    'paa': 'Papuan Language',
+    'pag': 'Pangasinan',
+    'pal': 'Pahlavi',
+    'pam': 'Pampanga',
+    'pap': 'Papiamento',
+    'pau': 'Palauan',
+    'peo': 'Old Persian',
+    'phi': 'Philippine Language',
+    'phn': 'Phoenician',
+    'pi': '\u0e1a\u0e32\u0e25\u0e35',
+    'pl': 'polski',
+    'pon': 'Pohnpeian',
+    'pra': 'Prakrit Language',
+    'pro': 'Old Proven\u00e7al',
+    'ps': '\u067e\u069a\u062a\u0648',
+    'pt': 'portugu\u00eas',
+    'qu': 'quechua',
+    'raj': 'Rajasthani',
+    'rap': 'Rapanui',
+    'rar': 'Rarotongan',
+    'rm': 'R\u00e4toromanisch',
+    'rn': 'roundi',
+    'ro': 'rom\u00e2n\u0103',
+    'roa': 'Romance Language',
+    'rom': 'Romany',
+    'ru': '\u0440\u0443\u0441\u0441\u043a\u0438\u0439',
+    'rup': 'Aromanian',
+    'rw': 'rwanda',
+    'sa': '\u0938\u0902\u0938\u094d\u0915\u0943\u0924 \u092d' +
+        '\u093e\u0937\u093e',
+    'sad': 'Sandawe',
+    'sah': '\u044f\u043a\u0443\u0442\u0441\u043a\u0438\u0439',
+    'sai': 'South American Indian Language',
+    'sal': 'Salishan Language',
+    'sam': '\u05d0\u05e8\u05de\u05d9\u05ea \u05e9\u05d5\u05de' +
+        '\u05e8\u05d5\u05e0\u05d9\u05ea',
+    'sas': 'Sasak',
+    'sat': 'Santali',
+    'sc': 'Sardinian',
+    'scn': 'siciliano',
+    'sco': 'Scots',
+    'sd': '\u0938\u093f\u0928\u094d\u0927\u0940',
+    'sd_Arab': '\u0633\u0646\u062f\u06cc',
+    'sd_Deva': '\u0938\u093f\u0928\u094d\u0927\u0940',
+    'se': 'nordsamiska',
+    'sel': '\u0441\u0435\u043b\u044c\u043a\u0443\u043f\u0441' +
+        '\u043a\u0438\u0439',
+    'sem': 'Semitic Language',
+    'sg': 'sangho',
+    'sga': 'Old Irish',
+    'sgn': 'Sign Language',
+    'sh': 'Serbo-Croatian',
+    'shn': 'Shan',
+    'si': 'Sinhalese',
+    'sid': 'Sidamo',
+    'sio': 'Siouan Language',
+    'sit': 'Sino-Tibetan Language',
+    'sk': 'slovensk\u00fd',
+    'sl': 'sloven\u0161\u010dina',
+    'sla': 'Slavic Language',
+    'sm': 'Samoan',
+    'sma': 'sydsamiska',
+    'smi': 'Sami Language',
+    'smj': 'lulesamiska',
+    'smn': 'Inari Sami',
+    'sms': 'Skolt Sami',
+    'sn': 'Shona',
+    'snk': 'sonink\u00e9',
+    'so': 'Soomaali',
+    'sog': 'Sogdien',
+    'son': 'Songhai',
+    'sq': 'shqipe',
+    'sr': '\u0421\u0440\u043f\u0441\u043a\u0438',
+    'sr_Cyrl': '\u0441\u0435\u0440\u0431\u0441\u043a\u0438\u0439',
+    'sr_Latn': 'Srpski',
+    'srn': 'Sranantongo',
+    'srr': 's\u00e9r\u00e8re',
+    'ss': 'Swati',
+    'ssa': 'Nilo-Saharan Language',
+    'st': 'Sesotho',
+    'su': 'Sundan',
+    'suk': 'Sukuma',
+    'sus': 'soussou',
+    'sux': 'Sumerian',
+    'sv': 'svenska',
+    'sw': 'Kiswahili',
+    'syc': 'Classical Syriac',
+    'syr': 'Syriac',
+    'ta': '\u0ba4\u0bae\u0bbf\u0bb4\u0bcd',
+    'tai': 'Tai Language',
+    'te': '\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41',
+    'tem': 'Timne',
+    'ter': 'Tereno',
+    'tet': 't\u00e9tum',
+    'tg': '\u062a\u0627\u062c\u06a9',
+    'tg_Arab': '\u062a\u0627\u062c\u06a9',
+    'tg_Cyrl': '\u0442\u0430\u0434\u0436\u0438\u043a\u0441\u043a' +
+        '\u0438\u0439',
+    'th': '\u0e44\u0e17\u0e22',
+    'ti': '\u1275\u130d\u122d\u129b',
+    'tig': '\u1275\u130d\u1228',
+    'tiv': 'Tiv',
+    'tk': '\u062a\u0631\u06a9\u0645\u0646\u06cc',
+    'tkl': 'Tokelau',
+    'tl': 'Tagalog',
+    'tlh': 'Klingon',
+    'tli': 'Tlingit',
+    'tmh': 'tamacheq',
+    'tn': 'Tswana',
+    'to': 'Tonga',
+    'tog': 'Nyasa Tonga',
+    'tpi': 'Tok Pisin',
+    'tr': 'T\u00fcrk\u00e7e',
+    'ts': 'Tsonga',
+    'tsi': 'Tsimshian',
+    'tt': '\u0442\u0430\u0442\u0430\u0440\u0441\u043a\u0438\u0439',
+    'tum': 'Tumbuka',
+    'tup': 'Tupi Language',
+    'tut': '\u0430\u043b\u0442\u0430\u0439\u0441\u043a\u0438' +
+        '\u0435 (\u0434\u0440\u0443\u0433\u0438\u0435)',
+    'tvl': 'Tuvalu',
+    'tw': 'Twi',
+    'ty': 'tahitien',
+    'tyv': '\u0442\u0443\u0432\u0438\u043d\u0441\u043a\u0438' +
+        '\u0439',
+    'udm': '\u0443\u0434\u043c\u0443\u0440\u0442\u0441\u043a' +
+        '\u0438\u0439',
+    'ug': '\u0443\u0439\u0433\u0443\u0440\u0441\u043a\u0438\u0439',
+    'uga': 'Ugaritic',
+    'uk': '\u0443\u043a\u0440\u0430\u0457\u043d\u0441\u044c\u043a' +
+        '\u0430',
+    'umb': 'umbundu',
+    'und': 'English',
+    'ur': '\u0627\u0631\u062f\u0648',
+    'uz': '\u040e\u0437\u0431\u0435\u043a',
+    'uz_Arab': '\u0627\u06c9\u0632\u0628\u06d0\u06a9',
+    'uz_Cyrl': '\u0443\u0437\u0431\u0435\u043a\u0441\u043a\u0438' +
+        '\u0439',
+    'uz_Latn': 'o\'zbekcha',
+    'vai': 'Vai',
+    've': 'Venda',
+    'vi': 'Ti\u1ebfng Vi\u1ec7t',
+    'vo': 'volapuko',
+    'vot': 'Votic',
+    'wa': 'Wallonisch',
+    'wak': 'Wakashan Language',
+    'wal': 'Walamo',
+    'war': 'Waray',
+    'was': 'Washo',
+    'wen': 'Sorbian Language',
+    'wo': 'wolof',
+    'wo_Arab': '\u0627\u0644\u0648\u0644\u0648\u0641',
+    'wo_Latn': 'wolof',
+    'xal': '\u043a\u0430\u043b\u043c\u044b\u0446\u043a\u0438' +
+        '\u0439',
+    'xh': 'Xhosa',
+    'yao': 'iao',
+    'yap': 'Yapese',
+    'yi': '\u05d9\u05d9\u05d3\u05d9\u05e9',
+    'yo': 'Yoruba',
+    'ypk': 'Yupik Language',
+    'za': 'Zhuang',
+    'zap': 'Zapotec',
+    'zen': 'Zenaga',
+    'zh': '\u4e2d\u6587',
+    'zh_Hans': '\u4e2d\u6587',
+    'zh_Hant': '\u4e2d\u6587',
+    'znd': 'Zande',
+    'zu': 'Zulu',
+    'zun': 'Zuni',
+    'zxx': 'No linguistic content',
+    'zza': 'Zaza'
+  }
+};
+/* ~!@# END #@!~ */
+// Copyright 2006 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Functions for dealing with Date formatting & Parsing,
+ * County and language name, TimeZone list.
+ * @suppress {deprecated} Use goog.i18n instead.
+ */
+
+
+/**
+ * Namespace for locale related functions.
+ */
+goog.provide('goog.locale');
+
+goog.require('goog.locale.nativeNameConstants');
+
+
+/**
+ * Set currnet locale to the specified one.
+ * @param {string} localeName Locale name string. We are following the usage
+ *     in CLDR, but can make a few compromise for existing name compatibility.
+ */
+goog.locale.setLocale = function(localeName) {
+  // it is common to see people use '-' as locale part separator, normalize it.
+  localeName = localeName.replace(/-/g, '_');
+  goog.locale.activeLocale_ = localeName;
+};
+
+
+/**
+ * Retrieve the current locale
+ * @return {string} Current locale name string.
+ * @deprecated Use goog.LOCALE and goog.i18n instead.
+ */
+goog.locale.getLocale = function() {
+  if (!goog.locale.activeLocale_) {
+    goog.locale.activeLocale_ = 'en';
+  }
+  return goog.locale.activeLocale_;
+};
+
+
+// Couple of constants to represent predefined Date/Time format type.
+/**
+ * Enum of resources that can be registered.
+ * @enum {string}
+ */
+goog.locale.Resource = {
+  DATE_TIME_CONSTANTS: 'DateTimeConstants',
+  NUMBER_FORMAT_CONSTANTS: 'NumberFormatConstants',
+  TIME_ZONE_CONSTANTS: 'TimeZoneConstants',
+  LOCAL_NAME_CONSTANTS: 'LocaleNameConstants',
+
+  TIME_ZONE_SELECTED_IDS: 'TimeZoneSelectedIds',
+  TIME_ZONE_SELECTED_SHORT_NAMES: 'TimeZoneSelectedShortNames',
+  TIME_ZONE_SELECTED_LONG_NAMES: 'TimeZoneSelectedLongNames',
+  TIME_ZONE_ALL_LONG_NAMES: 'TimeZoneAllLongNames'
+};
+
+
+// BCP 47 language code:
+//
+// LanguageCode := LanguageSubtag
+//                ("-" ScriptSubtag)?
+//                ("-" RegionSubtag)?
+//                ("-" VariantSubtag)?
+//                ("@" Keyword "=" Value ("," Keyword "=" Value)* )?
+//
+// e.g. en-Latn-GB
+//
+// NOTICE:
+// No special format checking is performed. If you pass a none valid
+// language code as parameter to the following functions,
+// you might get an unexpected result.
+
+
+/**
+ * Returns the language-subtag of the given language code.
+ *
+ * @param {string} languageCode Language code to extract language subtag from.
+ * @return {string} Language subtag (in lowercase).
+ */
+goog.locale.getLanguageSubTag = function(languageCode) {
+  var result = languageCode.match(/^\w{2,3}([-_]|$)/);
+  return result ? result[0].replace(/[_-]/g, '') : '';
+};
+
+
+/**
+ * Returns the region-sub-tag of the given language code.
+ *
+ * @param {string} languageCode Language code to extract region subtag from.
+ * @return {string} Region sub-tag (in uppercase).
+ */
+goog.locale.getRegionSubTag = function(languageCode) {
+  var result = languageCode.match(/[-_]([a-zA-Z]{2}|\d{3})([-_]|$)/);
+  return result ? result[0].replace(/[_-]/g, '') : '';
+};
+
+
+/**
+ * Returns the script subtag of the locale with the first alphabet in uppercase
+ * and the rest 3 characters in lower case.
+ *
+ * @param {string} languageCode Language Code to extract script subtag from.
+ * @return {string} Script subtag.
+ */
+goog.locale.getScriptSubTag = function(languageCode) {
+  var result = languageCode.split(/[-_]/g);
+  return result.length > 1 && result[1].match(/^[a-zA-Z]{4}$/) ?
+      result[1] : '';
+};
+
+
+/**
+ * Returns the variant-sub-tag of the given language code.
+ *
+ * @param {string} languageCode Language code to extract variant subtag from.
+ * @return {string} Variant sub-tag.
+ */
+goog.locale.getVariantSubTag = function(languageCode) {
+  var result = languageCode.match(/[-_]([a-z]{2,})/);
+  return result ? result[1] : '';
+};
+
+
+/**
+ * Returns the country name of the provided language code in its native
+ * language.
+ *
+ * This method depends on goog.locale.nativeNameConstants available from
+ * nativenameconstants.js. User of this method has to add dependency to this.
+ *
+ * @param {string} countryCode Code to lookup the country name for.
+ *
+ * @return {string} Country name for the provided language code.
+ */
+goog.locale.getNativeCountryName = function(countryCode) {
+  var key = goog.locale.getLanguageSubTag(countryCode) + '_' +
+            goog.locale.getRegionSubTag(countryCode);
+  return key in goog.locale.nativeNameConstants['COUNTRY'] ?
+      goog.locale.nativeNameConstants['COUNTRY'][key] : countryCode;
+};
+
+
+/**
+ * Returns the localized country name for the provided language code in the
+ * current or provided locale symbols set.
+ *
+ * This method depends on goog.locale.LocaleNameConstants__<locale> available
+ * from http://go/js_locale_data. User of this method has to add dependency to
+ * this.
+ *
+ * @param {string} languageCode Language code to lookup the country name for.
+ * @param {Object=} opt_localeSymbols If omitted the current locale symbol
+ *     set is used.
+ *
+ * @return {string} Localized country name.
+ */
+goog.locale.getLocalizedCountryName = function(languageCode,
+                                               opt_localeSymbols) {
+  if (!opt_localeSymbols) {
+    opt_localeSymbols = goog.locale.getResource('LocaleNameConstants',
+        goog.locale.getLocale());
+  }
+  var code = goog.locale.getRegionSubTag(languageCode);
+  return code in opt_localeSymbols['COUNTRY'] ?
+      opt_localeSymbols['COUNTRY'][code] : languageCode;
+};
+
+
+/**
+ * Returns the language name of the provided language code in its native
+ * language.
+ *
+ * This method depends on goog.locale.nativeNameConstants available from
+ * nativenameconstants.js. User of this method has to add dependency to this.
+ *
+ * @param {string} languageCode Language code to lookup the language name for.
+ *
+ * @return {string} Language name for the provided language code.
+ */
+goog.locale.getNativeLanguageName = function(languageCode) {
+  if (languageCode in goog.locale.nativeNameConstants['LANGUAGE'])
+    return goog.locale.nativeNameConstants['LANGUAGE'][languageCode];
+  var code = goog.locale.getLanguageSubTag(languageCode);
+  return code in goog.locale.nativeNameConstants['LANGUAGE'] ?
+      goog.locale.nativeNameConstants['LANGUAGE'][code] : languageCode;
+};
+
+
+/**
+ * Returns the localized language name for the provided language code in
+ * the current or provided locale symbols set.
+ *
+ * This method depends on goog.locale.LocaleNameConstants__<locale> available
+ * from http://go/js_locale_data. User of this method has to add dependency to
+ * this.
+ *
+ * @param {string} languageCode Language code to lookup the language name for.
+ * @param {Object=} opt_localeSymbols locale symbol set if given.
+ *
+ * @return {string} Localized language name of the provided language code.
+ */
+goog.locale.getLocalizedLanguageName = function(languageCode,
+                                                opt_localeSymbols) {
+  if (!opt_localeSymbols) {
+    opt_localeSymbols = goog.locale.getResource('LocaleNameConstants',
+        goog.locale.getLocale());
+  }
+  if (languageCode in opt_localeSymbols['LANGUAGE'])
+    return opt_localeSymbols['LANGUAGE'][languageCode];
+  var code = goog.locale.getLanguageSubTag(languageCode);
+  return code in opt_localeSymbols['LANGUAGE'] ?
+      opt_localeSymbols['LANGUAGE'][code] : languageCode;
+};
+
+
+/**
+ * Register a resource object for certain locale.
+ * @param {Object} dataObj The resource object being registered.
+ * @param {goog.locale.Resource|string} resourceName String that represents
+ *     the type of resource.
+ * @param {string} localeName Locale ID.
+ */
+goog.locale.registerResource = function(dataObj, resourceName, localeName) {
+  if (!goog.locale.resourceRegistry_[resourceName]) {
+    goog.locale.resourceRegistry_[resourceName] = {};
+  }
+  goog.locale.resourceRegistry_[resourceName][localeName] = dataObj;
+  // the first registered locale becomes active one. Usually there will be
+  // only one locale per js binary bundle.
+  if (!goog.locale.activeLocale_) {
+    goog.locale.activeLocale_ = localeName;
+  }
+};
+
+
+/**
+ * Returns true if the required resource has already been registered.
+ * @param {goog.locale.Resource|string} resourceName String that represents
+ *     the type of resource.
+ * @param {string} localeName Locale ID.
+ * @return {boolean} Whether the required resource has already been registered.
+ */
+goog.locale.isResourceRegistered = function(resourceName, localeName) {
+  return resourceName in goog.locale.resourceRegistry_ &&
+      localeName in goog.locale.resourceRegistry_[resourceName];
+};
+
+
+/**
+ * This object maps (resourceName, localeName) to a resourceObj.
+ * @type {Object}
+ * @private
+ */
+goog.locale.resourceRegistry_ = {};
+
+
+/**
+ * Registers the timezone constants object for a given locale name.
+ * @param {Object} dataObj The resource object.
+ * @param {string} localeName Locale ID.
+ * @deprecated Use goog.i18n.TimeZone, no longer need this.
+ */
+goog.locale.registerTimeZoneConstants = function(dataObj, localeName) {
+  goog.locale.registerResource(
+      dataObj, goog.locale.Resource.TIME_ZONE_CONSTANTS, localeName);
+};
+
+
+/**
+ * Registers the LocaleNameConstants constants object for a given locale name.
+ * @param {Object} dataObj The resource object.
+ * @param {string} localeName Locale ID.
+ */
+goog.locale.registerLocaleNameConstants = function(dataObj, localeName) {
+  goog.locale.registerResource(
+      dataObj, goog.locale.Resource.LOCAL_NAME_CONSTANTS, localeName);
+};
+
+
+/**
+ * Registers the TimeZoneSelectedIds constants object for a given locale name.
+ * @param {Object} dataObj The resource object.
+ * @param {string} localeName Locale ID.
+ */
+goog.locale.registerTimeZoneSelectedIds = function(dataObj, localeName) {
+  goog.locale.registerResource(
+      dataObj, goog.locale.Resource.TIME_ZONE_SELECTED_IDS, localeName);
+};
+
+
+/**
+ * Registers the TimeZoneSelectedShortNames constants object for a given
+ *     locale name.
+ * @param {Object} dataObj The resource object.
+ * @param {string} localeName Locale ID.
+ */
+goog.locale.registerTimeZoneSelectedShortNames = function(dataObj, localeName) {
+  goog.locale.registerResource(
+      dataObj, goog.locale.Resource.TIME_ZONE_SELECTED_SHORT_NAMES, localeName);
+};
+
+
+/**
+ * Registers the TimeZoneSelectedLongNames constants object for a given locale
+ *     name.
+ * @param {Object} dataObj The resource object.
+ * @param {string} localeName Locale ID.
+ */
+goog.locale.registerTimeZoneSelectedLongNames = function(dataObj, localeName) {
+  goog.locale.registerResource(
+      dataObj, goog.locale.Resource.TIME_ZONE_SELECTED_LONG_NAMES, localeName);
+};
+
+
+/**
+ * Registers the TimeZoneAllLongNames constants object for a given locale name.
+ * @param {Object} dataObj The resource object.
+ * @param {string} localeName Locale ID.
+ */
+goog.locale.registerTimeZoneAllLongNames = function(dataObj, localeName) {
+  goog.locale.registerResource(
+      dataObj, goog.locale.Resource.TIME_ZONE_ALL_LONG_NAMES, localeName);
+};
+
+
+/**
+ * Retrieve specified resource for certain locale.
+ * @param {string} resourceName String that represents the type of resource.
+ * @param {string=} opt_locale Locale ID, if not given, current locale
+ *     will be assumed.
+ * @return {Object|undefined} The resource object that hold all the resource
+ *     data, or undefined if not available.
+ */
+goog.locale.getResource = function(resourceName, opt_locale) {
+  var locale = opt_locale ? opt_locale : goog.locale.getLocale();
+
+  if (!(resourceName in goog.locale.resourceRegistry_)) {
+    return undefined;
+  }
+  return goog.locale.resourceRegistry_[resourceName][locale];
+};
+
+
+/**
+ * Retrieve specified resource for certain locale with fallback. For example,
+ * request of 'zh_CN' will be resolved in following order: zh_CN, zh, en.
+ * If none of the above succeeds, of if the resource as indicated by
+ * resourceName does not exist at all, undefined will be returned.
+ *
+ * @param {string} resourceName String that represents the type of resource.
+ * @param {string=} opt_locale locale ID, if not given, current locale
+ *     will be assumed.
+ * @return {Object|undefined} The resource object for desired locale.
+ */
+goog.locale.getResourceWithFallback = function(resourceName, opt_locale) {
+  var locale = opt_locale ? opt_locale : goog.locale.getLocale();
+
+  if (!(resourceName in goog.locale.resourceRegistry_)) {
+    return undefined;
   }
 
-  // FIXME: need to add infrastructure for post-filtering pseudos, ala :last
-  query.pseudos = pseudos;
+  if (locale in goog.locale.resourceRegistry_[resourceName]) {
+    return goog.locale.resourceRegistry_[resourceName][locale];
+  }
 
-  return query;
-})();
+  // if locale has multiple parts (2 atmost in reality), fallback to base part.
+  var locale_parts = locale.split('_');
+  if (locale_parts.length > 1 &&
+      locale_parts[0] in goog.locale.resourceRegistry_[resourceName]) {
+    return goog.locale.resourceRegistry_[resourceName][locale_parts[0]];
+  }
 
-// TODO(arv): Please don't export here since it clobbers dead code elimination.
-goog.exportSymbol('goog.dom.query', goog.dom.query);
-goog.exportSymbol('goog.dom.query.pseudos', goog.dom.query.pseudos);
+  // otherwise, fallback to 'en'
+  return goog.locale.resourceRegistry_[resourceName]['en'];
+};
+
+
+// Export global functions that are used by the date time constants files.
+// See http://go/js_locale_data
+var registerLocalNameConstants = goog.locale.registerLocaleNameConstants;
+
+var registerTimeZoneSelectedIds = goog.locale.registerTimeZoneSelectedIds;
+var registerTimeZoneSelectedShortNames =
+    goog.locale.registerTimeZoneSelectedShortNames;
+var registerTimeZoneSelectedLongNames =
+    goog.locale.registerTimeZoneSelectedLongNames;
+var registerTimeZoneAllLongNames = goog.locale.registerTimeZoneAllLongNames;
+
+// Copyright 2008 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Functions for detecting user's time zone.
+ * This work is based on Charlie Luo and Hong Yan's time zone detection work
+ * for CBG.
+ */
+goog.provide('goog.locale.timeZoneDetection');
+
+goog.require('goog.locale');
+goog.require('goog.locale.TimeZoneFingerprint');
+
+
+/**
+ * Array of time instances for checking the time zone offset.
+ * @type {Array.<number>}
+ * @private
+ */
+goog.locale.timeZoneDetection.TZ_POKE_POINTS_ = [
+  1109635200, 1128902400, 1130657000, 1143333000, 1143806400, 1145000000,
+  1146380000, 1152489600, 1159800000, 1159500000, 1162095000, 1162075000,
+  1162105500];
+
+
+/**
+ * Calculates time zone fingerprint by poking time zone offsets for 13
+ * preselected time points.
+ * See {@link goog.locale.timeZoneDetection.TZ_POKE_POINTS_}
+ * @param {Date} date Date for calculating the fingerprint.
+ * @return {number} Fingerprint of user's time zone setting.
+ */
+goog.locale.timeZoneDetection.getFingerprint = function(date) {
+  var hash = 0;
+  var stdOffset;
+  var isComplex = false;
+  for (var i = 0;
+       i < goog.locale.timeZoneDetection.TZ_POKE_POINTS_.length; i++) {
+    date.setTime(goog.locale.timeZoneDetection.TZ_POKE_POINTS_[i] * 1000);
+    var offset = date.getTimezoneOffset() / 30 + 48;
+    if (i == 0) {
+      stdOffset = offset;
+    } else if (stdOffset != offset) {
+      isComplex = true;
+    }
+    hash = (hash << 2) ^ offset;
+  }
+  return isComplex ? hash : /** @type {number} */ (stdOffset);
+};
+
+
+/**
+ * Detects browser's time zone setting. If user's country is known, a better
+ * time zone choice could be guessed.
+ * @param {string=} opt_country Two-letter ISO 3166 country code.
+ * @param {Date=} opt_date Date for calculating the fingerprint. Defaults to the
+ *     current date.
+ * @return {string} Time zone ID of best guess.
+ */
+goog.locale.timeZoneDetection.detectTimeZone = function(opt_country, opt_date) {
+  var date = opt_date || new Date();
+  var fingerprint = goog.locale.timeZoneDetection.getFingerprint(date);
+  var timeZoneList = goog.locale.TimeZoneFingerprint[fingerprint];
+  // Timezones in goog.locale.TimeZoneDetection.TimeZoneMap are in the format
+  // US-America/Los_Angeles. Country code needs to be stripped before a
+  // timezone is returned.
+  if (timeZoneList) {
+    if (opt_country) {
+      for (var i = 0; i < timeZoneList.length; ++i) {
+        if (timeZoneList[i].indexOf(opt_country) == 0) {
+          return timeZoneList[i].substring(3);
+        }
+      }
+    }
+    return timeZoneList[0].substring(3);
+  }
+  return '';
+};
+
+
+/**
+ * Returns an array of time zones that are consistent with user's platform
+ * setting. If user's country is given, only the time zone for that country is
+ * returned.
+ * @param {string=} opt_country 2 letter ISO 3166 country code. Helps in making
+ *     a better guess for user's time zone.
+ * @param {Date=} opt_date Date for retrieving timezone list. Defaults to the
+ *     current date.
+ * @return {Array.<string>} Array of time zone IDs.
+ */
+goog.locale.timeZoneDetection.getTimeZoneList = function(opt_country,
+    opt_date) {
+  var date = opt_date || new Date();
+  var fingerprint = goog.locale.timeZoneDetection.getFingerprint(date);
+  var timeZoneList = goog.locale.TimeZoneFingerprint[fingerprint];
+  if (!timeZoneList) {
+    return [];
+  }
+  var chosenList = [];
+  for (var i = 0; i < timeZoneList.length; i++) {
+    if (!opt_country || timeZoneList[i].indexOf(opt_country) == 0) {
+      chosenList.push(timeZoneList[i].substring(3));
+    }
+  }
+  return chosenList;
+};
+// Copyright 2011 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Extended date/time patterns.
+ *
+ * This file is autogenerated by script.  See
+ * http://go/generate_datetime_pattern.cc
+ *
+ * This file is generated using ICU's implementation of
+ * DateTimePatternGenerator. The whole set has two files:
+ * datetimepatterns.js and datetimepatternsext.js. The former covers
+ * frequently used locales, the latter covers the rest. There won't be any
+ * difference in compiled code, but some developing environments have
+ * difficulty in dealing large js files. So we do the separation.
+
+ * Only locales that can be enumerated in ICU are supported. For the rest
+ * of the locales, it will fallback to 'en'.
+ * The code is designed to work with Closure compiler using
+ * ADVANCED_OPTIMIZATIONS. We will continue to add popular date/time
+ * patterns over time. There is no intention cover all possible
+ * usages. If simple pattern works fine, it won't be covered here either.
+ * For example, pattern 'MMM' will work well to get short month name for
+ * almost all locales thus won't be included here.
+ */
+
+/* File generated from CLDR ver. 24.0 */
+
+goog.provide('goog.i18n.DateTimePatterns');
+
+goog.provide('goog.i18n.DateTimePatterns_af');
+goog.provide('goog.i18n.DateTimePatterns_am');
+goog.provide('goog.i18n.DateTimePatterns_ar');
+goog.provide('goog.i18n.DateTimePatterns_bg');
+goog.provide('goog.i18n.DateTimePatterns_bn');
+goog.provide('goog.i18n.DateTimePatterns_br');
+goog.provide('goog.i18n.DateTimePatterns_ca');
+goog.provide('goog.i18n.DateTimePatterns_chr');
+goog.provide('goog.i18n.DateTimePatterns_cs');
+goog.provide('goog.i18n.DateTimePatterns_cy');
+goog.provide('goog.i18n.DateTimePatterns_da');
+goog.provide('goog.i18n.DateTimePatterns_de');
+goog.provide('goog.i18n.DateTimePatterns_de_AT');
+goog.provide('goog.i18n.DateTimePatterns_de_CH');
+goog.provide('goog.i18n.DateTimePatterns_el');
+goog.provide('goog.i18n.DateTimePatterns_en');
+goog.provide('goog.i18n.DateTimePatterns_en_AU');
+goog.provide('goog.i18n.DateTimePatterns_en_GB');
+goog.provide('goog.i18n.DateTimePatterns_en_IE');
+goog.provide('goog.i18n.DateTimePatterns_en_IN');
+goog.provide('goog.i18n.DateTimePatterns_en_SG');
+goog.provide('goog.i18n.DateTimePatterns_en_US');
+goog.provide('goog.i18n.DateTimePatterns_en_ZA');
+goog.provide('goog.i18n.DateTimePatterns_es');
+goog.provide('goog.i18n.DateTimePatterns_es_419');
+goog.provide('goog.i18n.DateTimePatterns_es_ES');
+goog.provide('goog.i18n.DateTimePatterns_et');
+goog.provide('goog.i18n.DateTimePatterns_eu');
+goog.provide('goog.i18n.DateTimePatterns_fa');
+goog.provide('goog.i18n.DateTimePatterns_fi');
+goog.provide('goog.i18n.DateTimePatterns_fil');
+goog.provide('goog.i18n.DateTimePatterns_fr');
+goog.provide('goog.i18n.DateTimePatterns_fr_CA');
+goog.provide('goog.i18n.DateTimePatterns_gl');
+goog.provide('goog.i18n.DateTimePatterns_gsw');
+goog.provide('goog.i18n.DateTimePatterns_gu');
+goog.provide('goog.i18n.DateTimePatterns_haw');
+goog.provide('goog.i18n.DateTimePatterns_he');
+goog.provide('goog.i18n.DateTimePatterns_hi');
+goog.provide('goog.i18n.DateTimePatterns_hr');
+goog.provide('goog.i18n.DateTimePatterns_hu');
+goog.provide('goog.i18n.DateTimePatterns_id');
+goog.provide('goog.i18n.DateTimePatterns_in');
+goog.provide('goog.i18n.DateTimePatterns_is');
+goog.provide('goog.i18n.DateTimePatterns_it');
+goog.provide('goog.i18n.DateTimePatterns_iw');
+goog.provide('goog.i18n.DateTimePatterns_ja');
+goog.provide('goog.i18n.DateTimePatterns_kn');
+goog.provide('goog.i18n.DateTimePatterns_ko');
+goog.provide('goog.i18n.DateTimePatterns_ln');
+goog.provide('goog.i18n.DateTimePatterns_lt');
+goog.provide('goog.i18n.DateTimePatterns_lv');
+goog.provide('goog.i18n.DateTimePatterns_ml');
+goog.provide('goog.i18n.DateTimePatterns_mo');
+goog.provide('goog.i18n.DateTimePatterns_mr');
+goog.provide('goog.i18n.DateTimePatterns_ms');
+goog.provide('goog.i18n.DateTimePatterns_mt');
+goog.provide('goog.i18n.DateTimePatterns_nb');
+goog.provide('goog.i18n.DateTimePatterns_nl');
+goog.provide('goog.i18n.DateTimePatterns_no');
+goog.provide('goog.i18n.DateTimePatterns_or');
+goog.provide('goog.i18n.DateTimePatterns_pl');
+goog.provide('goog.i18n.DateTimePatterns_pt');
+goog.provide('goog.i18n.DateTimePatterns_pt_BR');
+goog.provide('goog.i18n.DateTimePatterns_pt_PT');
+goog.provide('goog.i18n.DateTimePatterns_ro');
+goog.provide('goog.i18n.DateTimePatterns_ru');
+goog.provide('goog.i18n.DateTimePatterns_sk');
+goog.provide('goog.i18n.DateTimePatterns_sl');
+goog.provide('goog.i18n.DateTimePatterns_sq');
+goog.provide('goog.i18n.DateTimePatterns_sr');
+goog.provide('goog.i18n.DateTimePatterns_sv');
+goog.provide('goog.i18n.DateTimePatterns_sw');
+goog.provide('goog.i18n.DateTimePatterns_ta');
+goog.provide('goog.i18n.DateTimePatterns_te');
+goog.provide('goog.i18n.DateTimePatterns_th');
+goog.provide('goog.i18n.DateTimePatterns_tl');
+goog.provide('goog.i18n.DateTimePatterns_tr');
+goog.provide('goog.i18n.DateTimePatterns_uk');
+goog.provide('goog.i18n.DateTimePatterns_ur');
+goog.provide('goog.i18n.DateTimePatterns_vi');
+goog.provide('goog.i18n.DateTimePatterns_zh');
+goog.provide('goog.i18n.DateTimePatterns_zh_CN');
+goog.provide('goog.i18n.DateTimePatterns_zh_HK');
+goog.provide('goog.i18n.DateTimePatterns_zh_TW');
+goog.provide('goog.i18n.DateTimePatterns_zu');
+
+
+/**
+ * Extended set of localized date/time patterns for locale af.
+ */
+goog.i18n.DateTimePatterns_af = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, MMM d',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale am.
+ */
+goog.i18n.DateTimePatterns_am = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, MMM d',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE፣ MMM d y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale ar.
+ */
+goog.i18n.DateTimePatterns_ar = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/‏M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM، y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE، d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE، d MMM، y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale bg.
+ */
+goog.i18n.DateTimePatterns_bg = {
+  YEAR_FULL: 'yyyy \'г\'.',
+  YEAR_MONTH_ABBR: 'MMM y \'г\'.',
+  YEAR_MONTH_FULL: 'MMMM yyyy \'г\'.',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'd MMMM',
+  MONTH_DAY_SHORT: 'd.MM',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y \'г\'.',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y \'г\'.',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale bn.
+ */
+goog.i18n.DateTimePatterns_bn = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale br.
+ */
+goog.i18n.DateTimePatterns_br = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'y MMM',
+  YEAR_MONTH_FULL: 'yyyy MMMM',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'MM-dd',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'y MMM d',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'MMM d, EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y MMM d, EEE',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale ca.
+ */
+goog.i18n.DateTimePatterns_ca = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'LLL y',
+  YEAR_MONTH_FULL: 'LLLL \'de\' yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale chr.
+ */
+goog.i18n.DateTimePatterns_chr = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'MMM d, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'MMM d, EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, MMM d, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale cs.
+ */
+goog.i18n.DateTimePatterns_cs = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'LLLL y',
+  YEAR_MONTH_FULL: 'LLLL yyyy',
+  MONTH_DAY_ABBR: 'd. M.',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd. M.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. M. y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d. M.',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d. M. y',
+  DAY_ABBR: 'd.'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale cy.
+ */
+goog.i18n.DateTimePatterns_cy = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale da.
+ */
+goog.i18n.DateTimePatterns_da = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d. MMM y',
+  DAY_ABBR: 'd.'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale de.
+ */
+goog.i18n.DateTimePatterns_de = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd.M.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d. MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale de_AT.
+ */
+goog.i18n.DateTimePatterns_de_AT = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd.M.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d. MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale de_CH.
+ */
+goog.i18n.DateTimePatterns_de_CH = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd.M.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d. MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale el.
+ */
+goog.i18n.DateTimePatterns_el = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'LLL y',
+  YEAR_MONTH_FULL: 'LLLL yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale en.
+ */
+goog.i18n.DateTimePatterns_en = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'MMM d, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, MMM d',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, MMM d, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale en_AU.
+ */
+goog.i18n.DateTimePatterns_en_AU = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'dd/MM',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale en_GB.
+ */
+goog.i18n.DateTimePatterns_en_GB = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'dd/MM',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale en_IE.
+ */
+goog.i18n.DateTimePatterns_en_IE = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale en_IN.
+ */
+goog.i18n.DateTimePatterns_en_IN = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'dd/MM',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d MMM, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale en_SG.
+ */
+goog.i18n.DateTimePatterns_en_SG = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'dd/MM',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale en_US.
+ */
+goog.i18n.DateTimePatterns_en_US = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'MMM d, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, MMM d',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, MMM d, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale en_ZA.
+ */
+goog.i18n.DateTimePatterns_en_ZA = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'dd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'MM/dd',
+  MONTH_DAY_MEDIUM: 'dd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'dd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE dd MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, dd MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale es.
+ */
+goog.i18n.DateTimePatterns_es = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM \'de\' y',
+  YEAR_MONTH_FULL: 'MMMM \'de\' yyyy',
+  MONTH_DAY_ABBR: 'd \'de\' MMM',
+  MONTH_DAY_FULL: 'dd \'de\' MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd \'de\' MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd \'de\' MMM \'de\' y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d \'de\' MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d \'de\' MMMM \'de\' y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale es_419.
+ */
+goog.i18n.DateTimePatterns_es_419 = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM \'de\' y',
+  YEAR_MONTH_FULL: 'MMMM \'de\' yyyy',
+  MONTH_DAY_ABBR: 'd \'de\' MMM',
+  MONTH_DAY_FULL: 'dd \'de\' MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd \'de\' MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd \'de\' MMM \'de\' y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d \'de\' MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d \'de\' MMMM \'de\' y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale es_ES.
+ */
+goog.i18n.DateTimePatterns_es_ES = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM \'de\' y',
+  YEAR_MONTH_FULL: 'MMMM \'de\' yyyy',
+  MONTH_DAY_ABBR: 'd \'de\' MMM',
+  MONTH_DAY_FULL: 'dd \'de\' MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd \'de\' MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd \'de\' MMM \'de\' y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d \'de\' MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d \'de\' MMMM \'de\' y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale et.
+ */
+goog.i18n.DateTimePatterns_et = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd.M',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d. MMMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale eu.
+ */
+goog.i18n.DateTimePatterns_eu = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'y(\'e\')\'ko\' MMM',
+  YEAR_MONTH_FULL: 'yyyy(\'e\')\'ko\' MMMM',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'y(\'e\')\'ko\' MMM d',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'MMM d, EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y(\'e\')\'ko\' MMM d, EEE',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale fa.
+ */
+goog.i18n.DateTimePatterns_fa = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd LLL',
+  MONTH_DAY_FULL: 'dd LLLL',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'd LLLL',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d LLL',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale fi.
+ */
+goog.i18n.DateTimePatterns_fi = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'LLL y',
+  YEAR_MONTH_FULL: 'LLLL yyyy',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd.M.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'ccc d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d. MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale fil.
+ */
+goog.i18n.DateTimePatterns_fil = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'MMM d, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, MMM d',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, MMM d, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale fr.
+ */
+goog.i18n.DateTimePatterns_fr = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale fr_CA.
+ */
+goog.i18n.DateTimePatterns_fr_CA = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'M-d',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale gl.
+ */
+goog.i18n.DateTimePatterns_gl = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd-M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale gsw.
+ */
+goog.i18n.DateTimePatterns_gsw = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd.M.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'y MMM d',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d. MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale gu.
+ */
+goog.i18n.DateTimePatterns_gu = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale haw.
+ */
+goog.i18n.DateTimePatterns_haw = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'y MMM',
+  YEAR_MONTH_FULL: 'yyyy MMMM',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'MM-dd',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'y MMM d',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'MMM d, EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y MMM d, EEE',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale he.
+ */
+goog.i18n.DateTimePatterns_he = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd בMMM',
+  MONTH_DAY_FULL: 'dd בMMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd בMMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd בMMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d בMMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d בMMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale hi.
+ */
+goog.i18n.DateTimePatterns_hi = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale hr.
+ */
+goog.i18n.DateTimePatterns_hr = {
+  YEAR_FULL: 'yyyy.',
+  YEAR_MONTH_ABBR: 'LLL y.',
+  YEAR_MONTH_FULL: 'LLLL yyyy.',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd. M.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. MMM y.',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d. MMM y.',
+  DAY_ABBR: 'd.'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale hu.
+ */
+goog.i18n.DateTimePatterns_hu = {
+  YEAR_FULL: 'yyyy.',
+  YEAR_MONTH_ABBR: 'y. MMM',
+  YEAR_MONTH_FULL: 'yyyy. MMMM',
+  MONTH_DAY_ABBR: 'MMM d.',
+  MONTH_DAY_FULL: 'MMMM dd.',
+  MONTH_DAY_SHORT: 'M. d.',
+  MONTH_DAY_MEDIUM: 'MMMM d.',
+  MONTH_DAY_YEAR_MEDIUM: 'y. MMM d.',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'MMM d., EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y. MMM d., EEE',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale id.
+ */
+goog.i18n.DateTimePatterns_id = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale in.
+ */
+goog.i18n.DateTimePatterns_in = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale is.
+ */
+goog.i18n.DateTimePatterns_is = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd.M.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d. MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale it.
+ */
+goog.i18n.DateTimePatterns_it = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale iw.
+ */
+goog.i18n.DateTimePatterns_iw = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd בMMM',
+  MONTH_DAY_FULL: 'dd בMMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd בMMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd בMMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d בMMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d בMMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale ja.
+ */
+goog.i18n.DateTimePatterns_ja = {
+  YEAR_FULL: 'yyyy年',
+  YEAR_MONTH_ABBR: 'y年M月',
+  YEAR_MONTH_FULL: 'yyyy年M月',
+  MONTH_DAY_ABBR: 'M月d日',
+  MONTH_DAY_FULL: 'M月dd日',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'M月d日',
+  MONTH_DAY_YEAR_MEDIUM: 'y年M月d日',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'M月d日(EEE)',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y年M月d日(EEE)',
+  DAY_ABBR: 'd日'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale kn.
+ */
+goog.i18n.DateTimePatterns_kn = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd, MMM, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'd MMM, y EEE',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale ko.
+ */
+goog.i18n.DateTimePatterns_ko = {
+  YEAR_FULL: 'yyyy년',
+  YEAR_MONTH_ABBR: 'y년 MMM',
+  YEAR_MONTH_FULL: 'yyyy년 MMMM',
+  MONTH_DAY_ABBR: 'MMM d일',
+  MONTH_DAY_FULL: 'MMMM dd일',
+  MONTH_DAY_SHORT: 'M. d.',
+  MONTH_DAY_MEDIUM: 'MMMM d일',
+  MONTH_DAY_YEAR_MEDIUM: 'y년 MMM d일',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'MMM d일 (EEE)',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y년 MMM d일 (EEE)',
+  DAY_ABBR: 'd일'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale ln.
+ */
+goog.i18n.DateTimePatterns_ln = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale lt.
+ */
+goog.i18n.DateTimePatterns_lt = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'y MMM',
+  YEAR_MONTH_FULL: 'yyyy MMMM',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'MM-d',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'y MMM d',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'MMM d, EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y MMM d, EEE',
+  DAY_ABBR: 'dd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale lv.
+ */
+goog.i18n.DateTimePatterns_lv = {
+  YEAR_FULL: 'yyyy. \'g\'.',
+  YEAR_MONTH_ABBR: 'y. \'g\'. MMM',
+  YEAR_MONTH_FULL: 'yyyy. \'g\'. MMMM',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'dd.MM.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'y. \'g\'. d. MMM',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, y. \'g\'. d. MMM',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale ml.
+ */
+goog.i18n.DateTimePatterns_ml = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'y MMM',
+  YEAR_MONTH_FULL: 'yyyy MMMM',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'y MMM d',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'MMM d, EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y MMM d, EEE',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale mo.
+ */
+goog.i18n.DateTimePatterns_mo = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'dd.MM',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale mr.
+ */
+goog.i18n.DateTimePatterns_mr = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d, MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale ms.
+ */
+goog.i18n.DateTimePatterns_ms = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd-M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale mt.
+ */
+goog.i18n.DateTimePatterns_mt = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'y MMM',
+  YEAR_MONTH_FULL: 'yyyy MMMM',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'MM-dd',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'y MMM d',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'MMM d, EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y MMM d, EEE',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale nb.
+ */
+goog.i18n.DateTimePatterns_nb = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd.M.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d. MMM y',
+  DAY_ABBR: 'd.'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale nl.
+ */
+goog.i18n.DateTimePatterns_nl = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd-M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale no.
+ */
+goog.i18n.DateTimePatterns_no = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd.M.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d. MMM y',
+  DAY_ABBR: 'd.'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale or.
+ */
+goog.i18n.DateTimePatterns_or = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'y MMM',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'd-M',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'MMM d, EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y MMM d, EEE',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale pl.
+ */
+goog.i18n.DateTimePatterns_pl = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'LLL y',
+  YEAR_MONTH_FULL: 'LLLL yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd.MM',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale pt.
+ */
+goog.i18n.DateTimePatterns_pt = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM \'de\' y',
+  YEAR_MONTH_FULL: 'MMMM \'de\' yyyy',
+  MONTH_DAY_ABBR: 'd \'de\' MMM',
+  MONTH_DAY_FULL: 'dd \'de\' MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd \'de\' MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd \'de\' MMM \'de\' y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d \'de\' MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d \'de\' MMM \'de\' y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale pt_BR.
+ */
+goog.i18n.DateTimePatterns_pt_BR = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM \'de\' y',
+  YEAR_MONTH_FULL: 'MMMM \'de\' yyyy',
+  MONTH_DAY_ABBR: 'd \'de\' MMM',
+  MONTH_DAY_FULL: 'dd \'de\' MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd \'de\' MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd \'de\' MMM \'de\' y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d \'de\' MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d \'de\' MMM \'de\' y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale pt_PT.
+ */
+goog.i18n.DateTimePatterns_pt_PT = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MM/y',
+  YEAR_MONTH_FULL: 'MMMM \'de\' yyyy',
+  MONTH_DAY_ABBR: 'd/MM',
+  MONTH_DAY_FULL: 'dd \'de\' MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd \'de\' MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd/MM/y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d/MM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d/MM/y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale ro.
+ */
+goog.i18n.DateTimePatterns_ro = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'dd.MM',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale ru.
+ */
+goog.i18n.DateTimePatterns_ru = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'LLL y',
+  YEAR_MONTH_FULL: 'LLLL yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'dd.MM',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y \'г\'.',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'ccc, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale sk.
+ */
+goog.i18n.DateTimePatterns_sk = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'LLL y',
+  YEAR_MONTH_FULL: 'LLLL yyyy',
+  MONTH_DAY_ABBR: 'd. MMM.',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd.M.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd.M.y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d. MMM.',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d. MMM y',
+  DAY_ABBR: 'd.'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale sl.
+ */
+goog.i18n.DateTimePatterns_sl = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd. M.',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d. MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale sq.
+ */
+goog.i18n.DateTimePatterns_sq = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale sr.
+ */
+goog.i18n.DateTimePatterns_sr = {
+  YEAR_FULL: 'yyyy.',
+  YEAR_MONTH_ABBR: 'MMM y.',
+  YEAR_MONTH_FULL: 'MMMM yyyy.',
+  MONTH_DAY_ABBR: 'd. MMM',
+  MONTH_DAY_FULL: 'dd. MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd. MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd. MMM y.',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d. MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d. MMM y.',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale sv.
+ */
+goog.i18n.DateTimePatterns_sv = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd:\'e\' MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd:\'e\' MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale sw.
+ */
+goog.i18n.DateTimePatterns_sw = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd-M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, MMM d, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale ta.
+ */
+goog.i18n.DateTimePatterns_ta = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'MMM d, EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale te.
+ */
+goog.i18n.DateTimePatterns_te = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd, MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d, MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale th.
+ */
+goog.i18n.DateTimePatterns_th = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale tl.
+ */
+goog.i18n.DateTimePatterns_tl = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'MMM d, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, MMM d',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, MMM d, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale tr.
+ */
+goog.i18n.DateTimePatterns_tr = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'dd/MM',
+  MONTH_DAY_MEDIUM: 'dd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'dd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'd MMMM EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'd MMM y EEE',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale uk.
+ */
+goog.i18n.DateTimePatterns_uk = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'LLL y',
+  YEAR_MONTH_FULL: 'LLLL yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'dd.MM',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, d MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale ur.
+ */
+goog.i18n.DateTimePatterns_ur = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'd MMM، y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE، d MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE، d MMM، y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale vi.
+ */
+goog.i18n.DateTimePatterns_vi = {
+  YEAR_FULL: '\'Năm\' yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'dd MMM',
+  MONTH_DAY_FULL: 'dd MMMM',
+  MONTH_DAY_SHORT: 'dd-M',
+  MONTH_DAY_MEDIUM: 'dd MMMM',
+  MONTH_DAY_YEAR_MEDIUM: 'dd MMM, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, dd MMM',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, dd MMM y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale zh.
+ */
+goog.i18n.DateTimePatterns_zh = {
+  YEAR_FULL: 'yyyy年',
+  YEAR_MONTH_ABBR: 'y年M月',
+  YEAR_MONTH_FULL: 'yyyy年M月',
+  MONTH_DAY_ABBR: 'M月d日',
+  MONTH_DAY_FULL: 'M月dd日',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'M月d日',
+  MONTH_DAY_YEAR_MEDIUM: 'y年M月d日',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'M月d日EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y年M月d日EEE',
+  DAY_ABBR: 'd日'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale zh_CN.
+ */
+goog.i18n.DateTimePatterns_zh_CN = {
+  YEAR_FULL: 'yyyy年',
+  YEAR_MONTH_ABBR: 'y年M月',
+  YEAR_MONTH_FULL: 'yyyy年M月',
+  MONTH_DAY_ABBR: 'M月d日',
+  MONTH_DAY_FULL: 'M月dd日',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'M月d日',
+  MONTH_DAY_YEAR_MEDIUM: 'y年M月d日',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'M月d日EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y年M月d日EEE',
+  DAY_ABBR: 'd日'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale zh_HK.
+ */
+goog.i18n.DateTimePatterns_zh_HK = {
+  YEAR_FULL: 'yyyy年',
+  YEAR_MONTH_ABBR: 'y 年 M 月',
+  YEAR_MONTH_FULL: 'yyyy 年 M 月',
+  MONTH_DAY_ABBR: 'M月d日',
+  MONTH_DAY_FULL: 'M月dd日',
+  MONTH_DAY_SHORT: 'd/M',
+  MONTH_DAY_MEDIUM: 'M月d日',
+  MONTH_DAY_YEAR_MEDIUM: 'y 年 M 月 d 日',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'M月d日 (EEE)',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y 年 M 月 d 日 (EEE)',
+  DAY_ABBR: 'd日'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale zh_TW.
+ */
+goog.i18n.DateTimePatterns_zh_TW = {
+  YEAR_FULL: 'yyyy年',
+  YEAR_MONTH_ABBR: 'y年M月',
+  YEAR_MONTH_FULL: 'yyyy年M月',
+  MONTH_DAY_ABBR: 'M月d日',
+  MONTH_DAY_FULL: 'M月dd日',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'M月d日',
+  MONTH_DAY_YEAR_MEDIUM: 'y年M月d日',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'M月d日EEE',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'y年M月d日EEE',
+  DAY_ABBR: 'd日'
+};
+
+
+/**
+ * Extended set of localized date/time patterns for locale zu.
+ */
+goog.i18n.DateTimePatterns_zu = {
+  YEAR_FULL: 'yyyy',
+  YEAR_MONTH_ABBR: 'MMM y',
+  YEAR_MONTH_FULL: 'MMMM yyyy',
+  MONTH_DAY_ABBR: 'MMM d',
+  MONTH_DAY_FULL: 'MMMM dd',
+  MONTH_DAY_SHORT: 'M/d',
+  MONTH_DAY_MEDIUM: 'MMMM d',
+  MONTH_DAY_YEAR_MEDIUM: 'MMM d, y',
+  WEEKDAY_MONTH_DAY_MEDIUM: 'EEE, MMM d',
+  WEEKDAY_MONTH_DAY_YEAR_MEDIUM: 'EEE, MMM d, y',
+  DAY_ABBR: 'd'
+};
+
+
+/**
+/* Select date/time pattern by locale.
+ */
+goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_en;
+
+if (goog.LOCALE == 'af') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_af;
+}
+
+if (goog.LOCALE == 'am') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_am;
+}
+
+if (goog.LOCALE == 'ar') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_ar;
+}
+
+if (goog.LOCALE == 'bg') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_bg;
+}
+
+if (goog.LOCALE == 'bn') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_bn;
+}
+
+if (goog.LOCALE == 'br') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_br;
+}
+
+if (goog.LOCALE == 'ca') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_ca;
+}
+
+if (goog.LOCALE == 'chr') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_chr;
+}
+
+if (goog.LOCALE == 'cs') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_cs;
+}
+
+if (goog.LOCALE == 'cy') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_cy;
+}
+
+if (goog.LOCALE == 'da') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_da;
+}
+
+if (goog.LOCALE == 'de') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_de;
+}
+
+if (goog.LOCALE == 'de_AT' || goog.LOCALE == 'de-AT') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_de_AT;
+}
+
+if (goog.LOCALE == 'de_CH' || goog.LOCALE == 'de-CH') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_de_CH;
+}
+
+if (goog.LOCALE == 'el') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_el;
+}
+
+if (goog.LOCALE == 'en') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_en;
+}
+
+if (goog.LOCALE == 'en_AU' || goog.LOCALE == 'en-AU') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_en_AU;
+}
+
+if (goog.LOCALE == 'en_GB' || goog.LOCALE == 'en-GB') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_en_GB;
+}
+
+if (goog.LOCALE == 'en_IE' || goog.LOCALE == 'en-IE') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_en_IE;
+}
+
+if (goog.LOCALE == 'en_IN' || goog.LOCALE == 'en-IN') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_en_IN;
+}
+
+if (goog.LOCALE == 'en_SG' || goog.LOCALE == 'en-SG') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_en_SG;
+}
+
+if (goog.LOCALE == 'en_US' || goog.LOCALE == 'en-US') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_en_US;
+}
+
+if (goog.LOCALE == 'en_ZA' || goog.LOCALE == 'en-ZA') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_en_ZA;
+}
+
+if (goog.LOCALE == 'es') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_es;
+}
+
+if (goog.LOCALE == 'es_419' || goog.LOCALE == 'es-419') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_es_419;
+}
+
+if (goog.LOCALE == 'es_ES' || goog.LOCALE == 'es-ES') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_es_ES;
+}
+
+if (goog.LOCALE == 'et') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_et;
+}
+
+if (goog.LOCALE == 'eu') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_eu;
+}
+
+if (goog.LOCALE == 'fa') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_fa;
+}
+
+if (goog.LOCALE == 'fi') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_fi;
+}
+
+if (goog.LOCALE == 'fil') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_fil;
+}
+
+if (goog.LOCALE == 'fr') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_fr;
+}
+
+if (goog.LOCALE == 'fr_CA' || goog.LOCALE == 'fr-CA') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_fr_CA;
+}
+
+if (goog.LOCALE == 'gl') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_gl;
+}
+
+if (goog.LOCALE == 'gsw') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_gsw;
+}
+
+if (goog.LOCALE == 'gu') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_gu;
+}
+
+if (goog.LOCALE == 'haw') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_haw;
+}
+
+if (goog.LOCALE == 'he') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_he;
+}
+
+if (goog.LOCALE == 'hi') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_hi;
+}
+
+if (goog.LOCALE == 'hr') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_hr;
+}
+
+if (goog.LOCALE == 'hu') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_hu;
+}
+
+if (goog.LOCALE == 'id') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_id;
+}
+
+if (goog.LOCALE == 'in') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_in;
+}
+
+if (goog.LOCALE == 'is') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_is;
+}
+
+if (goog.LOCALE == 'it') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_it;
+}
+
+if (goog.LOCALE == 'iw') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_iw;
+}
+
+if (goog.LOCALE == 'ja') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_ja;
+}
+
+if (goog.LOCALE == 'kn') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_kn;
+}
+
+if (goog.LOCALE == 'ko') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_ko;
+}
+
+if (goog.LOCALE == 'ln') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_ln;
+}
+
+if (goog.LOCALE == 'lt') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_lt;
+}
+
+if (goog.LOCALE == 'lv') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_lv;
+}
+
+if (goog.LOCALE == 'ml') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_ml;
+}
+
+if (goog.LOCALE == 'mo') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_mo;
+}
+
+if (goog.LOCALE == 'mr') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_mr;
+}
+
+if (goog.LOCALE == 'ms') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_ms;
+}
+
+if (goog.LOCALE == 'mt') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_mt;
+}
+
+if (goog.LOCALE == 'nb') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_nb;
+}
+
+if (goog.LOCALE == 'nl') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_nl;
+}
+
+if (goog.LOCALE == 'no') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_no;
+}
+
+if (goog.LOCALE == 'or') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_or;
+}
+
+if (goog.LOCALE == 'pl') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_pl;
+}
+
+if (goog.LOCALE == 'pt') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_pt;
+}
+
+if (goog.LOCALE == 'pt_BR' || goog.LOCALE == 'pt-BR') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_pt_BR;
+}
+
+if (goog.LOCALE == 'pt_PT' || goog.LOCALE == 'pt-PT') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_pt_PT;
+}
+
+if (goog.LOCALE == 'ro') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_ro;
+}
+
+if (goog.LOCALE == 'ru') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_ru;
+}
+
+if (goog.LOCALE == 'sk') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_sk;
+}
+
+if (goog.LOCALE == 'sl') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_sl;
+}
+
+if (goog.LOCALE == 'sq') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_sq;
+}
+
+if (goog.LOCALE == 'sr') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_sr;
+}
+
+if (goog.LOCALE == 'sv') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_sv;
+}
+
+if (goog.LOCALE == 'sw') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_sw;
+}
+
+if (goog.LOCALE == 'ta') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_ta;
+}
+
+if (goog.LOCALE == 'te') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_te;
+}
+
+if (goog.LOCALE == 'th') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_th;
+}
+
+if (goog.LOCALE == 'tl') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_tl;
+}
+
+if (goog.LOCALE == 'tr') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_tr;
+}
+
+if (goog.LOCALE == 'uk') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_uk;
+}
+
+if (goog.LOCALE == 'ur') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_ur;
+}
+
+if (goog.LOCALE == 'vi') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_vi;
+}
+
+if (goog.LOCALE == 'zh') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_zh;
+}
+
+if (goog.LOCALE == 'zh_CN' || goog.LOCALE == 'zh-CN') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_zh_CN;
+}
+
+if (goog.LOCALE == 'zh_HK' || goog.LOCALE == 'zh-HK') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_zh_HK;
+}
+
+if (goog.LOCALE == 'zh_TW' || goog.LOCALE == 'zh-TW') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_zh_TW;
+}
+
+if (goog.LOCALE == 'zu') {
+  goog.i18n.DateTimePatterns = goog.i18n.DateTimePatterns_zu;
+}
+
 // Copyright 2006 The Closure Library Authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -32894,6 +35505,9173 @@ goog.style.getCssTranslation = function(element) {
   return new goog.math.Coordinate(parseFloat(matches[1]),
                                   parseFloat(matches[2]));
 };
+// Copyright 2005 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Class to create objects which want to handle multiple events
+ * and have their listeners easily cleaned up via a dispose method.
+ *
+ * Example:
+ * <pre>
+ * function Something() {
+ *   goog.base(this);
+ *
+ *   ... set up object ...
+ *
+ *   // Add event listeners
+ *   this.listen(this.starEl, goog.events.EventType.CLICK, this.handleStar);
+ *   this.listen(this.headerEl, goog.events.EventType.CLICK, this.expand);
+ *   this.listen(this.collapseEl, goog.events.EventType.CLICK, this.collapse);
+ *   this.listen(this.infoEl, goog.events.EventType.MOUSEOVER, this.showHover);
+ *   this.listen(this.infoEl, goog.events.EventType.MOUSEOUT, this.hideHover);
+ * }
+ * goog.inherits(Something, goog.events.EventHandler);
+ *
+ * Something.prototype.disposeInternal = function() {
+ *   goog.base(this, 'disposeInternal');
+ *   goog.dom.removeNode(this.container);
+ * };
+ *
+ *
+ * // Then elsewhere:
+ *
+ * var activeSomething = null;
+ * function openSomething() {
+ *   activeSomething = new Something();
+ * }
+ *
+ * function closeSomething() {
+ *   if (activeSomething) {
+ *     activeSomething.dispose();  // Remove event listeners
+ *     activeSomething = null;
+ *   }
+ * }
+ * </pre>
+ *
+ */
+
+goog.provide('goog.events.EventHandler');
+
+goog.require('goog.Disposable');
+goog.require('goog.events');
+goog.require('goog.object');
+
+
+
+/**
+ * Super class for objects that want to easily manage a number of event
+ * listeners.  It allows a short cut to listen and also provides a quick way
+ * to remove all events listeners belonging to this object.
+ * @param {SCOPE=} opt_scope Object in whose scope to call the listeners.
+ * @constructor
+ * @extends {goog.Disposable}
+ * @template SCOPE
+ */
+goog.events.EventHandler = function(opt_scope) {
+  goog.Disposable.call(this);
+  // TODO(user): Rename this to this.scope_ and fix the classes in google3
+  // that access this private variable. :(
+  this.handler_ = opt_scope;
+
+  /**
+   * Keys for events that are being listened to.
+   * @type {!Object.<!goog.events.Key>}
+   * @private
+   */
+  this.keys_ = {};
+};
+goog.inherits(goog.events.EventHandler, goog.Disposable);
+
+
+/**
+ * Utility array used to unify the cases of listening for an array of types
+ * and listening for a single event, without using recursion or allocating
+ * an array each time.
+ * @type {Array.<string>}
+ * @private
+ */
+goog.events.EventHandler.typeArray_ = [];
+
+
+/**
+ * Listen to an event on a Listenable.  If the function is omitted then the
+ * EventHandler's handleEvent method will be used.
+ * @param {goog.events.ListenableType} src Event source.
+ * @param {string|Array.<string>} type Event type to listen for or array of
+ *     event types.
+ * @param {function(this:SCOPE, ?):?|{handleEvent:function(?):?}|null=} opt_fn
+ *    Optional callback function to be used as the listener or an object with
+ *    handleEvent function.
+ * @param {boolean=} opt_capture Optional whether to use capture phase.
+ * @return {goog.events.EventHandler} This object, allowing for chaining of
+ *     calls.
+ */
+goog.events.EventHandler.prototype.listen = function(
+    src, type, opt_fn, opt_capture) {
+  return this.listen_(src, type, opt_fn, opt_capture);
+};
+
+
+/**
+ * Listen to an event on a Listenable.  If the function is omitted then the
+ * EventHandler's handleEvent method will be used.
+ * @param {goog.events.ListenableType} src Event source.
+ * @param {string|Array.<string>} type Event type to listen for or array of
+ *     event types.
+ * @param {function(this:T, ?):?|{handleEvent:function(this:T, ?):?}|
+ *     null|undefined} fn Optional callback function to be used as the
+ *     listener or an object with handleEvent function.
+ * @param {boolean|undefined} capture Optional whether to use capture phase.
+ * @param {T} scope Object in whose scope to call the listener.
+ * @return {goog.events.EventHandler} This object, allowing for chaining of
+ *     calls.
+ * @template T
+ */
+goog.events.EventHandler.prototype.listenWithScope = function(
+    src, type, fn, capture, scope) {
+  // TODO(user): Deprecate this function.
+  return this.listen_(src, type, fn, capture, scope);
+};
+
+
+/**
+ * Listen to an event on a Listenable.  If the function is omitted then the
+ * EventHandler's handleEvent method will be used.
+ * @param {goog.events.ListenableType} src Event source.
+ * @param {string|Array.<string>} type Event type to listen for or array of
+ *     event types.
+ * @param {function(?):?|{handleEvent:function(?):?}|null=} opt_fn Optional
+ *     callback function to be used as the listener or an object with
+ *     handleEvent function.
+ * @param {boolean=} opt_capture Optional whether to use capture phase.
+ * @param {Object=} opt_scope Object in whose scope to call the listener.
+ * @return {goog.events.EventHandler} This object, allowing for chaining of
+ *     calls.
+ * @private
+ */
+goog.events.EventHandler.prototype.listen_ = function(src, type, opt_fn,
+                                                      opt_capture,
+                                                      opt_scope) {
+  if (!goog.isArray(type)) {
+    goog.events.EventHandler.typeArray_[0] = /** @type {string} */(type);
+    type = goog.events.EventHandler.typeArray_;
+  }
+  for (var i = 0; i < type.length; i++) {
+    var listenerObj = goog.events.listen(
+        src, type[i], opt_fn || this.handleEvent,
+        opt_capture || false,
+        opt_scope || this.handler_ || this);
+
+    if (!listenerObj) {
+      // When goog.events.listen run on OFF_AND_FAIL or OFF_AND_SILENT
+      // (goog.events.CaptureSimulationMode) in IE8-, it will return null
+      // value.
+      return this;
+    }
+
+    var key = listenerObj.key;
+    this.keys_[key] = listenerObj;
+  }
+
+  return this;
+};
+
+
+/**
+ * Listen to an event on a Listenable.  If the function is omitted, then the
+ * EventHandler's handleEvent method will be used. After the event has fired the
+ * event listener is removed from the target. If an array of event types is
+ * provided, each event type will be listened to once.
+ * @param {goog.events.ListenableType} src Event source.
+ * @param {string|Array.<string>} type Event type to listen for or array of
+ *     event types.
+ * @param {function(this:SCOPE, ?):?|{handleEvent:function(?):?}|null=} opt_fn
+ *    Optional callback function to be used as the listener or an object with
+ *    handleEvent function.
+ * @param {boolean=} opt_capture Optional whether to use capture phase.
+ * @return {goog.events.EventHandler} This object, allowing for chaining of
+ *     calls.
+ */
+goog.events.EventHandler.prototype.listenOnce = function(
+    src, type, opt_fn, opt_capture) {
+  // TODO(user): Remove the opt_scope from this function and then
+  // templatize it.
+  return this.listenOnce_(src, type, opt_fn, opt_capture);
+};
+
+
+/**
+ * Listen to an event on a Listenable.  If the function is omitted, then the
+ * EventHandler's handleEvent method will be used. After the event has fired the
+ * event listener is removed from the target. If an array of event types is
+ * provided, each event type will be listened to once.
+ * @param {goog.events.ListenableType} src Event source.
+ * @param {string|Array.<string>} type Event type to listen for or array of
+ *     event types.
+ * @param {function(this:T, ?):?|{handleEvent:function(this:T, ?):?}|
+ *     null|undefined} fn Optional callback function to be used as the
+ *     listener or an object with handleEvent function.
+ * @param {boolean|undefined} capture Optional whether to use capture phase.
+ * @param {T} scope Object in whose scope to call the listener.
+ * @return {goog.events.EventHandler} This object, allowing for chaining of
+ *     calls.
+ * @template T
+ */
+goog.events.EventHandler.prototype.listenOnceWithScope = function(
+    src, type, fn, capture, scope) {
+  // TODO(user): Deprecate this function.
+  return this.listenOnce_(src, type, fn, capture, scope);
+};
+
+
+/**
+ * Listen to an event on a Listenable.  If the function is omitted, then the
+ * EventHandler's handleEvent method will be used. After the event has fired
+ * the event listener is removed from the target. If an array of event types is
+ * provided, each event type will be listened to once.
+ * @param {goog.events.ListenableType} src Event source.
+ * @param {string|Array.<string>} type Event type to listen for or array of
+ *     event types.
+ * @param {function(?):?|{handleEvent:function(?):?}|null=} opt_fn Optional
+ *    callback function to be used as the listener or an object with
+ *    handleEvent function.
+ * @param {boolean=} opt_capture Optional whether to use capture phase.
+ * @param {Object=} opt_scope Object in whose scope to call the listener.
+ * @return {goog.events.EventHandler} This object, allowing for chaining of
+ *     calls.
+ * @private
+ */
+goog.events.EventHandler.prototype.listenOnce_ = function(
+    src, type, opt_fn, opt_capture, opt_scope) {
+  if (goog.isArray(type)) {
+    for (var i = 0; i < type.length; i++) {
+      this.listenOnce_(src, type[i], opt_fn, opt_capture, opt_scope);
+    }
+  } else {
+    var listenerObj = goog.events.listenOnce(
+        src, type, opt_fn || this.handleEvent, opt_capture,
+        opt_scope || this.handler_ || this);
+    if (!listenerObj) {
+      // When goog.events.listen run on OFF_AND_FAIL or OFF_AND_SILENT
+      // (goog.events.CaptureSimulationMode) in IE8-, it will return null
+      // value.
+      return this;
+    }
+
+    var key = listenerObj.key;
+    this.keys_[key] = listenerObj;
+  }
+
+  return this;
+};
+
+
+/**
+ * Adds an event listener with a specific event wrapper on a DOM Node or an
+ * object that has implemented {@link goog.events.EventTarget}. A listener can
+ * only be added once to an object.
+ *
+ * @param {EventTarget|goog.events.EventTarget} src The node to listen to
+ *     events on.
+ * @param {goog.events.EventWrapper} wrapper Event wrapper to use.
+ * @param {function(this:SCOPE, ?):?|{handleEvent:function(?):?}|null} listener
+ *     Callback method, or an object with a handleEvent function.
+ * @param {boolean=} opt_capt Whether to fire in capture phase (defaults to
+ *     false).
+ * @return {goog.events.EventHandler} This object, allowing for chaining of
+ *     calls.
+ */
+goog.events.EventHandler.prototype.listenWithWrapper = function(
+    src, wrapper, listener, opt_capt) {
+  // TODO(user): Remove the opt_scope from this function and then
+  // templatize it.
+  return this.listenWithWrapper_(src, wrapper, listener, opt_capt);
+};
+
+
+/**
+ * Adds an event listener with a specific event wrapper on a DOM Node or an
+ * object that has implemented {@link goog.events.EventTarget}. A listener can
+ * only be added once to an object.
+ *
+ * @param {EventTarget|goog.events.EventTarget} src The node to listen to
+ *     events on.
+ * @param {goog.events.EventWrapper} wrapper Event wrapper to use.
+ * @param {function(this:T, ?):?|{handleEvent:function(this:T, ?):?}|null}
+ *     listener Optional callback function to be used as the
+ *     listener or an object with handleEvent function.
+ * @param {boolean|undefined} capture Optional whether to use capture phase.
+ * @param {T} scope Object in whose scope to call the listener.
+ * @return {goog.events.EventHandler} This object, allowing for chaining of
+ *     calls.
+ * @template T
+ */
+goog.events.EventHandler.prototype.listenWithWrapperAndScope = function(
+    src, wrapper, listener, capture, scope) {
+  // TODO(user): Deprecate this function.
+  return this.listenWithWrapper_(src, wrapper, listener, capture, scope);
+};
+
+
+/**
+ * Adds an event listener with a specific event wrapper on a DOM Node or an
+ * object that has implemented {@link goog.events.EventTarget}. A listener can
+ * only be added once to an object.
+ *
+ * @param {EventTarget|goog.events.EventTarget} src The node to listen to
+ *     events on.
+ * @param {goog.events.EventWrapper} wrapper Event wrapper to use.
+ * @param {function(?):?|{handleEvent:function(?):?}|null} listener Callback
+ *     method, or an object with a handleEvent function.
+ * @param {boolean=} opt_capt Whether to fire in capture phase (defaults to
+ *     false).
+ * @param {Object=} opt_scope Element in whose scope to call the listener.
+ * @return {goog.events.EventHandler} This object, allowing for chaining of
+ *     calls.
+ * @private
+ */
+goog.events.EventHandler.prototype.listenWithWrapper_ = function(
+    src, wrapper, listener, opt_capt, opt_scope) {
+  wrapper.listen(src, listener, opt_capt, opt_scope || this.handler_ || this,
+                 this);
+  return this;
+};
+
+
+/**
+ * @return {number} Number of listeners registered by this handler.
+ */
+goog.events.EventHandler.prototype.getListenerCount = function() {
+  var count = 0;
+  for (var key in this.keys_) {
+    if (Object.prototype.hasOwnProperty.call(this.keys_, key)) {
+      count++;
+    }
+  }
+  return count;
+};
+
+
+/**
+ * Unlistens on an event.
+ * @param {goog.events.ListenableType} src Event source.
+ * @param {string|Array.<string>} type Event type to listen for.
+ * @param {function(?):?|{handleEvent:function(?):?}|null=} opt_fn Optional
+ *    callback function to be used as the listener or an object with
+ *    handleEvent function.
+ * @param {boolean=} opt_capture Optional whether to use capture phase.
+ * @param {Object=} opt_scope Object in whose scope to call the listener.
+ * @return {goog.events.EventHandler} This object, allowing for chaining of
+ *     calls.
+ */
+goog.events.EventHandler.prototype.unlisten = function(src, type, opt_fn,
+                                                       opt_capture,
+                                                       opt_scope) {
+  if (goog.isArray(type)) {
+    for (var i = 0; i < type.length; i++) {
+      this.unlisten(src, type[i], opt_fn, opt_capture, opt_scope);
+    }
+  } else {
+    var listener = goog.events.getListener(src, type,
+        opt_fn || this.handleEvent,
+        opt_capture, opt_scope || this.handler_ || this);
+
+    if (listener) {
+      goog.events.unlistenByKey(listener);
+      delete this.keys_[listener.key];
+    }
+  }
+
+  return this;
+};
+
+
+/**
+ * Removes an event listener which was added with listenWithWrapper().
+ *
+ * @param {EventTarget|goog.events.EventTarget} src The target to stop
+ *     listening to events on.
+ * @param {goog.events.EventWrapper} wrapper Event wrapper to use.
+ * @param {function(?):?|{handleEvent:function(?):?}|null} listener The
+ *     listener function to remove.
+ * @param {boolean=} opt_capt In DOM-compliant browsers, this determines
+ *     whether the listener is fired during the capture or bubble phase of the
+ *     event.
+ * @param {Object=} opt_scope Element in whose scope to call the listener.
+ * @return {goog.events.EventHandler} This object, allowing for chaining of
+ *     calls.
+ */
+goog.events.EventHandler.prototype.unlistenWithWrapper = function(src, wrapper,
+    listener, opt_capt, opt_scope) {
+  wrapper.unlisten(src, listener, opt_capt,
+                   opt_scope || this.handler_ || this, this);
+  return this;
+};
+
+
+/**
+ * Unlistens to all events.
+ */
+goog.events.EventHandler.prototype.removeAll = function() {
+  goog.object.forEach(this.keys_, goog.events.unlistenByKey);
+  this.keys_ = {};
+};
+
+
+/**
+ * Disposes of this EventHandler and removes all listeners that it registered.
+ * @override
+ * @protected
+ */
+goog.events.EventHandler.prototype.disposeInternal = function() {
+  goog.events.EventHandler.superClass_.disposeInternal.call(this);
+  this.removeAll();
+};
+
+
+/**
+ * Default event handler
+ * @param {goog.events.Event} e Event object.
+ */
+goog.events.EventHandler.prototype.handleEvent = function(e) {
+  throw Error('EventHandler.handleEvent not implemented');
+};
+// Copyright 2008 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Generator for unique element IDs.
+ *
+ */
+
+goog.provide('goog.ui.IdGenerator');
+
+
+
+/**
+ * Creates a new id generator.
+ * @constructor
+ * @final
+ */
+goog.ui.IdGenerator = function() {
+};
+goog.addSingletonGetter(goog.ui.IdGenerator);
+
+
+/**
+ * Next unique ID to use
+ * @type {number}
+ * @private
+ */
+goog.ui.IdGenerator.prototype.nextId_ = 0;
+
+
+/**
+ * Gets the next unique ID.
+ * @return {string} The next unique identifier.
+ */
+goog.ui.IdGenerator.prototype.getNextUniqueId = function() {
+  return ':' + (this.nextId_++).toString(36);
+};
+// Copyright 2007 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Abstract class for all UI components. This defines the standard
+ * design pattern that all UI components should follow.
+ *
+ * @see ../demos/samplecomponent.html
+ * @see http://code.google.com/p/closure-library/wiki/IntroToComponents
+ */
+
+goog.provide('goog.ui.Component');
+goog.provide('goog.ui.Component.Error');
+goog.provide('goog.ui.Component.EventType');
+goog.provide('goog.ui.Component.State');
+
+goog.require('goog.array');
+goog.require('goog.asserts');
+goog.require('goog.dom');
+goog.require('goog.dom.NodeType');
+goog.require('goog.events.EventHandler');
+goog.require('goog.events.EventTarget');
+goog.require('goog.object');
+goog.require('goog.style');
+goog.require('goog.ui.IdGenerator');
+
+
+
+/**
+ * Default implementation of UI component.
+ *
+ * @param {goog.dom.DomHelper=} opt_domHelper Optional DOM helper.
+ * @constructor
+ * @extends {goog.events.EventTarget}
+ */
+goog.ui.Component = function(opt_domHelper) {
+  goog.events.EventTarget.call(this);
+  this.dom_ = opt_domHelper || goog.dom.getDomHelper();
+
+  // Set the defalt right to left value.
+  this.rightToLeft_ = goog.ui.Component.defaultRightToLeft_;
+};
+goog.inherits(goog.ui.Component, goog.events.EventTarget);
+
+
+/**
+ * @define {boolean} Whether to support calling decorate with an element that is
+ *     not yet in the document. If true, we check if the element is in the
+ *     document, and avoid calling enterDocument if it isn't. If false, we
+ *     maintain legacy behavior (always call enterDocument from decorate).
+ */
+goog.define('goog.ui.Component.ALLOW_DETACHED_DECORATION', false);
+
+
+/**
+ * Generator for unique IDs.
+ * @type {goog.ui.IdGenerator}
+ * @private
+ */
+goog.ui.Component.prototype.idGenerator_ = goog.ui.IdGenerator.getInstance();
+
+
+// TODO(gboyer): See if we can remove this and just check goog.i18n.bidi.IS_RTL.
+/**
+ * @define {number} Defines the default BIDI directionality.
+ *     0: Unknown.
+ *     1: Left-to-right.
+ *     -1: Right-to-left.
+ */
+goog.define('goog.ui.Component.DEFAULT_BIDI_DIR', 0);
+
+
+/**
+ * The default right to left value.
+ * @type {?boolean}
+ * @private
+ */
+goog.ui.Component.defaultRightToLeft_ =
+    (goog.ui.Component.DEFAULT_BIDI_DIR == 1) ? false :
+    (goog.ui.Component.DEFAULT_BIDI_DIR == -1) ? true : null;
+
+
+/**
+ * Common events fired by components so that event propagation is useful.  Not
+ * all components are expected to dispatch or listen for all event types.
+ * Events dispatched before a state transition should be cancelable to prevent
+ * the corresponding state change.
+ * @enum {string}
+ */
+goog.ui.Component.EventType = {
+  /** Dispatched before the component becomes visible. */
+  BEFORE_SHOW: 'beforeshow',
+
+  /**
+   * Dispatched after the component becomes visible.
+   * NOTE(user): For goog.ui.Container, this actually fires before containers
+   * are shown.  Use goog.ui.Container.EventType.AFTER_SHOW if you want an event
+   * that fires after a goog.ui.Container is shown.
+   */
+  SHOW: 'show',
+
+  /** Dispatched before the component becomes hidden. */
+  HIDE: 'hide',
+
+  /** Dispatched before the component becomes disabled. */
+  DISABLE: 'disable',
+
+  /** Dispatched before the component becomes enabled. */
+  ENABLE: 'enable',
+
+  /** Dispatched before the component becomes highlighted. */
+  HIGHLIGHT: 'highlight',
+
+  /** Dispatched before the component becomes un-highlighted. */
+  UNHIGHLIGHT: 'unhighlight',
+
+  /** Dispatched before the component becomes activated. */
+  ACTIVATE: 'activate',
+
+  /** Dispatched before the component becomes deactivated. */
+  DEACTIVATE: 'deactivate',
+
+  /** Dispatched before the component becomes selected. */
+  SELECT: 'select',
+
+  /** Dispatched before the component becomes un-selected. */
+  UNSELECT: 'unselect',
+
+  /** Dispatched before a component becomes checked. */
+  CHECK: 'check',
+
+  /** Dispatched before a component becomes un-checked. */
+  UNCHECK: 'uncheck',
+
+  /** Dispatched before a component becomes focused. */
+  FOCUS: 'focus',
+
+  /** Dispatched before a component becomes blurred. */
+  BLUR: 'blur',
+
+  /** Dispatched before a component is opened (expanded). */
+  OPEN: 'open',
+
+  /** Dispatched before a component is closed (collapsed). */
+  CLOSE: 'close',
+
+  /** Dispatched after a component is moused over. */
+  ENTER: 'enter',
+
+  /** Dispatched after a component is moused out of. */
+  LEAVE: 'leave',
+
+  /** Dispatched after the user activates the component. */
+  ACTION: 'action',
+
+  /** Dispatched after the external-facing state of a component is changed. */
+  CHANGE: 'change'
+};
+
+
+/**
+ * Errors thrown by the component.
+ * @enum {string}
+ */
+goog.ui.Component.Error = {
+  /**
+   * Error when a method is not supported.
+   */
+  NOT_SUPPORTED: 'Method not supported',
+
+  /**
+   * Error when the given element can not be decorated.
+   */
+  DECORATE_INVALID: 'Invalid element to decorate',
+
+  /**
+   * Error when the component is already rendered and another render attempt is
+   * made.
+   */
+  ALREADY_RENDERED: 'Component already rendered',
+
+  /**
+   * Error when an attempt is made to set the parent of a component in a way
+   * that would result in an inconsistent object graph.
+   */
+  PARENT_UNABLE_TO_BE_SET: 'Unable to set parent component',
+
+  /**
+   * Error when an attempt is made to add a child component at an out-of-bounds
+   * index.  We don't support sparse child arrays.
+   */
+  CHILD_INDEX_OUT_OF_BOUNDS: 'Child component index out of bounds',
+
+  /**
+   * Error when an attempt is made to remove a child component from a component
+   * other than its parent.
+   */
+  NOT_OUR_CHILD: 'Child is not in parent component',
+
+  /**
+   * Error when an operation requiring DOM interaction is made when the
+   * component is not in the document
+   */
+  NOT_IN_DOCUMENT: 'Operation not supported while component is not in document',
+
+  /**
+   * Error when an invalid component state is encountered.
+   */
+  STATE_INVALID: 'Invalid component state'
+};
+
+
+/**
+ * Common component states.  Components may have distinct appearance depending
+ * on what state(s) apply to them.  Not all components are expected to support
+ * all states.
+ * @enum {number}
+ */
+goog.ui.Component.State = {
+  /**
+   * Union of all supported component states.
+   */
+  ALL: 0xFF,
+
+  /**
+   * Component is disabled.
+   * @see goog.ui.Component.EventType.DISABLE
+   * @see goog.ui.Component.EventType.ENABLE
+   */
+  DISABLED: 0x01,
+
+  /**
+   * Component is highlighted.
+   * @see goog.ui.Component.EventType.HIGHLIGHT
+   * @see goog.ui.Component.EventType.UNHIGHLIGHT
+   */
+  HOVER: 0x02,
+
+  /**
+   * Component is active (or "pressed").
+   * @see goog.ui.Component.EventType.ACTIVATE
+   * @see goog.ui.Component.EventType.DEACTIVATE
+   */
+  ACTIVE: 0x04,
+
+  /**
+   * Component is selected.
+   * @see goog.ui.Component.EventType.SELECT
+   * @see goog.ui.Component.EventType.UNSELECT
+   */
+  SELECTED: 0x08,
+
+  /**
+   * Component is checked.
+   * @see goog.ui.Component.EventType.CHECK
+   * @see goog.ui.Component.EventType.UNCHECK
+   */
+  CHECKED: 0x10,
+
+  /**
+   * Component has focus.
+   * @see goog.ui.Component.EventType.FOCUS
+   * @see goog.ui.Component.EventType.BLUR
+   */
+  FOCUSED: 0x20,
+
+  /**
+   * Component is opened (expanded).  Applies to tree nodes, menu buttons,
+   * submenus, zippys (zippies?), etc.
+   * @see goog.ui.Component.EventType.OPEN
+   * @see goog.ui.Component.EventType.CLOSE
+   */
+  OPENED: 0x40
+};
+
+
+/**
+ * Static helper method; returns the type of event components are expected to
+ * dispatch when transitioning to or from the given state.
+ * @param {goog.ui.Component.State} state State to/from which the component
+ *     is transitioning.
+ * @param {boolean} isEntering Whether the component is entering or leaving the
+ *     state.
+ * @return {goog.ui.Component.EventType} Event type to dispatch.
+ */
+goog.ui.Component.getStateTransitionEvent = function(state, isEntering) {
+  switch (state) {
+    case goog.ui.Component.State.DISABLED:
+      return isEntering ? goog.ui.Component.EventType.DISABLE :
+          goog.ui.Component.EventType.ENABLE;
+    case goog.ui.Component.State.HOVER:
+      return isEntering ? goog.ui.Component.EventType.HIGHLIGHT :
+          goog.ui.Component.EventType.UNHIGHLIGHT;
+    case goog.ui.Component.State.ACTIVE:
+      return isEntering ? goog.ui.Component.EventType.ACTIVATE :
+          goog.ui.Component.EventType.DEACTIVATE;
+    case goog.ui.Component.State.SELECTED:
+      return isEntering ? goog.ui.Component.EventType.SELECT :
+          goog.ui.Component.EventType.UNSELECT;
+    case goog.ui.Component.State.CHECKED:
+      return isEntering ? goog.ui.Component.EventType.CHECK :
+          goog.ui.Component.EventType.UNCHECK;
+    case goog.ui.Component.State.FOCUSED:
+      return isEntering ? goog.ui.Component.EventType.FOCUS :
+          goog.ui.Component.EventType.BLUR;
+    case goog.ui.Component.State.OPENED:
+      return isEntering ? goog.ui.Component.EventType.OPEN :
+          goog.ui.Component.EventType.CLOSE;
+    default:
+      // Fall through.
+  }
+
+  // Invalid state.
+  throw Error(goog.ui.Component.Error.STATE_INVALID);
+};
+
+
+/**
+ * Set the default right-to-left value. This causes all component's created from
+ * this point foward to have the given value. This is useful for cases where
+ * a given page is always in one directionality, avoiding unnecessary
+ * right to left determinations.
+ * @param {?boolean} rightToLeft Whether the components should be rendered
+ *     right-to-left. Null iff components should determine their directionality.
+ */
+goog.ui.Component.setDefaultRightToLeft = function(rightToLeft) {
+  goog.ui.Component.defaultRightToLeft_ = rightToLeft;
+};
+
+
+/**
+ * Unique ID of the component, lazily initialized in {@link
+ * goog.ui.Component#getId} if needed.  This property is strictly private and
+ * must not be accessed directly outside of this class!
+ * @type {?string}
+ * @private
+ */
+goog.ui.Component.prototype.id_ = null;
+
+
+/**
+ * DomHelper used to interact with the document, allowing components to be
+ * created in a different window.
+ * @type {!goog.dom.DomHelper}
+ * @protected
+ * @suppress {underscore|visibility}
+ */
+goog.ui.Component.prototype.dom_;
+
+
+/**
+ * Whether the component is in the document.
+ * @type {boolean}
+ * @private
+ */
+goog.ui.Component.prototype.inDocument_ = false;
+
+
+// TODO(attila): Stop referring to this private field in subclasses.
+/**
+ * The DOM element for the component.
+ * @type {Element}
+ * @private
+ */
+goog.ui.Component.prototype.element_ = null;
+
+
+/**
+ * Event handler.
+ * TODO(user): rename it to handler_ after all component subclasses in
+ * inside Google have been cleaned up.
+ * Code search: http://go/component_code_search
+ * @type {goog.events.EventHandler}
+ * @private
+ */
+goog.ui.Component.prototype.googUiComponentHandler_;
+
+
+/**
+ * Whether the component is rendered right-to-left.  Right-to-left is set
+ * lazily when {@link #isRightToLeft} is called the first time, unless it has
+ * been set by calling {@link #setRightToLeft} explicitly.
+ * @type {?boolean}
+ * @private
+ */
+goog.ui.Component.prototype.rightToLeft_ = null;
+
+
+/**
+ * Arbitrary data object associated with the component.  Such as meta-data.
+ * @type {*}
+ * @private
+ */
+goog.ui.Component.prototype.model_ = null;
+
+
+/**
+ * Parent component to which events will be propagated.  This property is
+ * strictly private and must not be accessed directly outside of this class!
+ * @type {goog.ui.Component?}
+ * @private
+ */
+goog.ui.Component.prototype.parent_ = null;
+
+
+/**
+ * Array of child components.  Lazily initialized on first use.  Must be kept in
+ * sync with {@code childIndex_}.  This property is strictly private and must
+ * not be accessed directly outside of this class!
+ * @type {Array.<goog.ui.Component>?}
+ * @private
+ */
+goog.ui.Component.prototype.children_ = null;
+
+
+/**
+ * Map of child component IDs to child components.  Used for constant-time
+ * random access to child components by ID.  Lazily initialized on first use.
+ * Must be kept in sync with {@code children_}.  This property is strictly
+ * private and must not be accessed directly outside of this class!
+ *
+ * We use a plain Object, not a {@link goog.structs.Map}, for simplicity.
+ * This means components can't have children with IDs such as 'constructor' or
+ * 'valueOf', but this shouldn't really be an issue in practice, and if it is,
+ * we can always fix it later without changing the API.
+ *
+ * @type {Object}
+ * @private
+ */
+goog.ui.Component.prototype.childIndex_ = null;
+
+
+/**
+ * Flag used to keep track of whether a component decorated an already existing
+ * element or whether it created the DOM itself.
+ *
+ * If an element is decorated, dispose will leave the node in the document.
+ * It is up to the app to remove the node.
+ *
+ * If an element was rendered, dispose will remove the node automatically.
+ *
+ * @type {boolean}
+ * @private
+ */
+goog.ui.Component.prototype.wasDecorated_ = false;
+
+
+/**
+ * Gets the unique ID for the instance of this component.  If the instance
+ * doesn't already have an ID, generates one on the fly.
+ * @return {string} Unique component ID.
+ */
+goog.ui.Component.prototype.getId = function() {
+  return this.id_ || (this.id_ = this.idGenerator_.getNextUniqueId());
+};
+
+
+/**
+ * Assigns an ID to this component instance.  It is the caller's responsibility
+ * to guarantee that the ID is unique.  If the component is a child of a parent
+ * component, then the parent component's child index is updated to reflect the
+ * new ID; this may throw an error if the parent already has a child with an ID
+ * that conflicts with the new ID.
+ * @param {string} id Unique component ID.
+ */
+goog.ui.Component.prototype.setId = function(id) {
+  if (this.parent_ && this.parent_.childIndex_) {
+    // Update the parent's child index.
+    goog.object.remove(this.parent_.childIndex_, this.id_);
+    goog.object.add(this.parent_.childIndex_, id, this);
+  }
+
+  // Update the component ID.
+  this.id_ = id;
+};
+
+
+/**
+ * Gets the component's element.
+ * @return {Element} The element for the component.
+ */
+goog.ui.Component.prototype.getElement = function() {
+  return this.element_;
+};
+
+
+/**
+ * Gets the component's element. This differs from getElement in that
+ * it assumes that the element exists (i.e. the component has been
+ * rendered/decorated) and will cause an assertion error otherwise (if
+ * assertion is enabled).
+ * @return {!Element} The element for the component.
+ */
+goog.ui.Component.prototype.getElementStrict = function() {
+  var el = this.element_;
+  goog.asserts.assert(
+      el, 'Can not call getElementStrict before rendering/decorating.');
+  return el;
+};
+
+
+/**
+ * Sets the component's root element to the given element.  Considered
+ * protected and final.
+ *
+ * This should generally only be called during createDom. Setting the element
+ * does not actually change which element is rendered, only the element that is
+ * associated with this UI component.
+ *
+ * This should only be used by subclasses and its associated renderers.
+ *
+ * @param {Element} element Root element for the component.
+ */
+goog.ui.Component.prototype.setElementInternal = function(element) {
+  this.element_ = element;
+};
+
+
+/**
+ * Returns an array of all the elements in this component's DOM with the
+ * provided className.
+ * @param {string} className The name of the class to look for.
+ * @return {!goog.array.ArrayLike} The items found with the class name provided.
+ */
+goog.ui.Component.prototype.getElementsByClass = function(className) {
+  return this.element_ ?
+      this.dom_.getElementsByClass(className, this.element_) : [];
+};
+
+
+/**
+ * Returns the first element in this component's DOM with the provided
+ * className.
+ * @param {string} className The name of the class to look for.
+ * @return {Element} The first item with the class name provided.
+ */
+goog.ui.Component.prototype.getElementByClass = function(className) {
+  return this.element_ ?
+      this.dom_.getElementByClass(className, this.element_) : null;
+};
+
+
+/**
+ * Similar to {@code getElementByClass} except that it expects the
+ * element to be present in the dom thus returning a required value. Otherwise,
+ * will assert.
+ * @param {string} className The name of the class to look for.
+ * @return {!Element} The first item with the class name provided.
+ */
+goog.ui.Component.prototype.getRequiredElementByClass = function(className) {
+  var el = this.getElementByClass(className);
+  goog.asserts.assert(el, 'Expected element in component with class: %s',
+      className);
+  return el;
+};
+
+
+/**
+ * Returns the event handler for this component, lazily created the first time
+ * this method is called.
+ * @return {!goog.events.EventHandler.<T>} Event handler for this component.
+ * @protected
+ * @this T
+ * @template T
+ */
+goog.ui.Component.prototype.getHandler = function() {
+  if (!this.googUiComponentHandler_) {
+    this.googUiComponentHandler_ = new goog.events.EventHandler(this);
+  }
+  return this.googUiComponentHandler_;
+};
+
+
+/**
+ * Sets the parent of this component to use for event bubbling.  Throws an error
+ * if the component already has a parent or if an attempt is made to add a
+ * component to itself as a child.  Callers must use {@code removeChild}
+ * or {@code removeChildAt} to remove components from their containers before
+ * calling this method.
+ * @see goog.ui.Component#removeChild
+ * @see goog.ui.Component#removeChildAt
+ * @param {goog.ui.Component} parent The parent component.
+ */
+goog.ui.Component.prototype.setParent = function(parent) {
+  if (this == parent) {
+    // Attempting to add a child to itself is an error.
+    throw Error(goog.ui.Component.Error.PARENT_UNABLE_TO_BE_SET);
+  }
+
+  if (parent && this.parent_ && this.id_ && this.parent_.getChild(this.id_) &&
+      this.parent_ != parent) {
+    // This component is already the child of some parent, so it should be
+    // removed using removeChild/removeChildAt first.
+    throw Error(goog.ui.Component.Error.PARENT_UNABLE_TO_BE_SET);
+  }
+
+  this.parent_ = parent;
+  goog.ui.Component.superClass_.setParentEventTarget.call(this, parent);
+};
+
+
+/**
+ * Returns the component's parent, if any.
+ * @return {goog.ui.Component?} The parent component.
+ */
+goog.ui.Component.prototype.getParent = function() {
+  return this.parent_;
+};
+
+
+/**
+ * Overrides {@link goog.events.EventTarget#setParentEventTarget} to throw an
+ * error if the parent component is set, and the argument is not the parent.
+ * @override
+ */
+goog.ui.Component.prototype.setParentEventTarget = function(parent) {
+  if (this.parent_ && this.parent_ != parent) {
+    throw Error(goog.ui.Component.Error.NOT_SUPPORTED);
+  }
+  goog.ui.Component.superClass_.setParentEventTarget.call(this, parent);
+};
+
+
+/**
+ * Returns the dom helper that is being used on this component.
+ * @return {!goog.dom.DomHelper} The dom helper used on this component.
+ */
+goog.ui.Component.prototype.getDomHelper = function() {
+  return this.dom_;
+};
+
+
+/**
+ * Determines whether the component has been added to the document.
+ * @return {boolean} TRUE if rendered. Otherwise, FALSE.
+ */
+goog.ui.Component.prototype.isInDocument = function() {
+  return this.inDocument_;
+};
+
+
+/**
+ * Creates the initial DOM representation for the component.  The default
+ * implementation is to set this.element_ = div.
+ */
+goog.ui.Component.prototype.createDom = function() {
+  this.element_ = this.dom_.createElement('div');
+};
+
+
+/**
+ * Renders the component.  If a parent element is supplied, the component's
+ * element will be appended to it.  If there is no optional parent element and
+ * the element doesn't have a parentNode then it will be appended to the
+ * document body.
+ *
+ * If this component has a parent component, and the parent component is
+ * not in the document already, then this will not call {@code enterDocument}
+ * on this component.
+ *
+ * Throws an Error if the component is already rendered.
+ *
+ * @param {Element=} opt_parentElement Optional parent element to render the
+ *    component into.
+ */
+goog.ui.Component.prototype.render = function(opt_parentElement) {
+  this.render_(opt_parentElement);
+};
+
+
+/**
+ * Renders the component before another element. The other element should be in
+ * the document already.
+ *
+ * Throws an Error if the component is already rendered.
+ *
+ * @param {Node} sibling Node to render the component before.
+ */
+goog.ui.Component.prototype.renderBefore = function(sibling) {
+  this.render_(/** @type {Element} */ (sibling.parentNode),
+               sibling);
+};
+
+
+/**
+ * Renders the component.  If a parent element is supplied, the component's
+ * element will be appended to it.  If there is no optional parent element and
+ * the element doesn't have a parentNode then it will be appended to the
+ * document body.
+ *
+ * If this component has a parent component, and the parent component is
+ * not in the document already, then this will not call {@code enterDocument}
+ * on this component.
+ *
+ * Throws an Error if the component is already rendered.
+ *
+ * @param {Element=} opt_parentElement Optional parent element to render the
+ *    component into.
+ * @param {Node=} opt_beforeNode Node before which the component is to
+ *    be rendered.  If left out the node is appended to the parent element.
+ * @private
+ */
+goog.ui.Component.prototype.render_ = function(opt_parentElement,
+                                               opt_beforeNode) {
+  if (this.inDocument_) {
+    throw Error(goog.ui.Component.Error.ALREADY_RENDERED);
+  }
+
+  if (!this.element_) {
+    this.createDom();
+  }
+
+  if (opt_parentElement) {
+    opt_parentElement.insertBefore(this.element_, opt_beforeNode || null);
+  } else {
+    this.dom_.getDocument().body.appendChild(this.element_);
+  }
+
+  // If this component has a parent component that isn't in the document yet,
+  // we don't call enterDocument() here.  Instead, when the parent component
+  // enters the document, the enterDocument() call will propagate to its
+  // children, including this one.  If the component doesn't have a parent
+  // or if the parent is already in the document, we call enterDocument().
+  if (!this.parent_ || this.parent_.isInDocument()) {
+    this.enterDocument();
+  }
+};
+
+
+/**
+ * Decorates the element for the UI component. If the element is in the
+ * document, the enterDocument method will be called.
+ *
+ * If goog.ui.Component.ALLOW_DETACHED_DECORATION is false, the caller must
+ * pass an element that is in the document.
+ *
+ * @param {Element} element Element to decorate.
+ */
+goog.ui.Component.prototype.decorate = function(element) {
+  if (this.inDocument_) {
+    throw Error(goog.ui.Component.Error.ALREADY_RENDERED);
+  } else if (element && this.canDecorate(element)) {
+    this.wasDecorated_ = true;
+
+    // Set the DOM helper of the component to match the decorated element.
+    var doc = goog.dom.getOwnerDocument(element);
+    if (!this.dom_ || this.dom_.getDocument() != doc) {
+      this.dom_ = goog.dom.getDomHelper(element);
+    }
+
+    // Call specific component decorate logic.
+    this.decorateInternal(element);
+
+    // If supporting detached decoration, check that element is in doc.
+    if (!goog.ui.Component.ALLOW_DETACHED_DECORATION ||
+        goog.dom.contains(doc, element)) {
+      this.enterDocument();
+    }
+  } else {
+    throw Error(goog.ui.Component.Error.DECORATE_INVALID);
+  }
+};
+
+
+/**
+ * Determines if a given element can be decorated by this type of component.
+ * This method should be overridden by inheriting objects.
+ * @param {Element} element Element to decorate.
+ * @return {boolean} True if the element can be decorated, false otherwise.
+ */
+goog.ui.Component.prototype.canDecorate = function(element) {
+  return true;
+};
+
+
+/**
+ * @return {boolean} Whether the component was decorated.
+ */
+goog.ui.Component.prototype.wasDecorated = function() {
+  return this.wasDecorated_;
+};
+
+
+/**
+ * Actually decorates the element. Should be overridden by inheriting objects.
+ * This method can assume there are checks to ensure the component has not
+ * already been rendered have occurred and that enter document will be called
+ * afterwards. This method is considered protected.
+ * @param {Element} element Element to decorate.
+ * @protected
+ */
+goog.ui.Component.prototype.decorateInternal = function(element) {
+  this.element_ = element;
+};
+
+
+/**
+ * Called when the component's element is known to be in the document. Anything
+ * using document.getElementById etc. should be done at this stage.
+ *
+ * If the component contains child components, this call is propagated to its
+ * children.
+ */
+goog.ui.Component.prototype.enterDocument = function() {
+  this.inDocument_ = true;
+
+  // Propagate enterDocument to child components that have a DOM, if any.
+  // If a child was decorated before entering the document (permitted when
+  // goog.ui.Component.ALLOW_DETACHED_DECORATION is true), its enterDocument
+  // will be called here.
+  this.forEachChild(function(child) {
+    if (!child.isInDocument() && child.getElement()) {
+      child.enterDocument();
+    }
+  });
+};
+
+
+/**
+ * Called by dispose to clean up the elements and listeners created by a
+ * component, or by a parent component/application who has removed the
+ * component from the document but wants to reuse it later.
+ *
+ * If the component contains child components, this call is propagated to its
+ * children.
+ *
+ * It should be possible for the component to be rendered again once this method
+ * has been called.
+ */
+goog.ui.Component.prototype.exitDocument = function() {
+  // Propagate exitDocument to child components that have been rendered, if any.
+  this.forEachChild(function(child) {
+    if (child.isInDocument()) {
+      child.exitDocument();
+    }
+  });
+
+  if (this.googUiComponentHandler_) {
+    this.googUiComponentHandler_.removeAll();
+  }
+
+  this.inDocument_ = false;
+};
+
+
+/**
+ * Disposes of the component.  Calls {@code exitDocument}, which is expected to
+ * remove event handlers and clean up the component.  Propagates the call to
+ * the component's children, if any. Removes the component's DOM from the
+ * document unless it was decorated.
+ * @override
+ * @protected
+ */
+goog.ui.Component.prototype.disposeInternal = function() {
+  if (this.inDocument_) {
+    this.exitDocument();
+  }
+
+  if (this.googUiComponentHandler_) {
+    this.googUiComponentHandler_.dispose();
+    delete this.googUiComponentHandler_;
+  }
+
+  // Disposes of the component's children, if any.
+  this.forEachChild(function(child) {
+    child.dispose();
+  });
+
+  // Detach the component's element from the DOM, unless it was decorated.
+  if (!this.wasDecorated_ && this.element_) {
+    goog.dom.removeNode(this.element_);
+  }
+
+  this.children_ = null;
+  this.childIndex_ = null;
+  this.element_ = null;
+  this.model_ = null;
+  this.parent_ = null;
+
+  goog.ui.Component.superClass_.disposeInternal.call(this);
+};
+
+
+/**
+ * Helper function for subclasses that gets a unique id for a given fragment,
+ * this can be used by components to generate unique string ids for DOM
+ * elements.
+ * @param {string} idFragment A partial id.
+ * @return {string} Unique element id.
+ */
+goog.ui.Component.prototype.makeId = function(idFragment) {
+  return this.getId() + '.' + idFragment;
+};
+
+
+/**
+ * Makes a collection of ids.  This is a convenience method for makeId.  The
+ * object's values are the id fragments and the new values are the generated
+ * ids.  The key will remain the same.
+ * @param {Object} object The object that will be used to create the ids.
+ * @return {Object} An object of id keys to generated ids.
+ */
+goog.ui.Component.prototype.makeIds = function(object) {
+  var ids = {};
+  for (var key in object) {
+    ids[key] = this.makeId(object[key]);
+  }
+  return ids;
+};
+
+
+/**
+ * Returns the model associated with the UI component.
+ * @return {*} The model.
+ */
+goog.ui.Component.prototype.getModel = function() {
+  return this.model_;
+};
+
+
+/**
+ * Sets the model associated with the UI component.
+ * @param {*} obj The model.
+ */
+goog.ui.Component.prototype.setModel = function(obj) {
+  this.model_ = obj;
+};
+
+
+/**
+ * Helper function for returning the fragment portion of an id generated using
+ * makeId().
+ * @param {string} id Id generated with makeId().
+ * @return {string} Fragment.
+ */
+goog.ui.Component.prototype.getFragmentFromId = function(id) {
+  return id.substring(this.getId().length + 1);
+};
+
+
+/**
+ * Helper function for returning an element in the document with a unique id
+ * generated using makeId().
+ * @param {string} idFragment The partial id.
+ * @return {Element} The element with the unique id, or null if it cannot be
+ *     found.
+ */
+goog.ui.Component.prototype.getElementByFragment = function(idFragment) {
+  if (!this.inDocument_) {
+    throw Error(goog.ui.Component.Error.NOT_IN_DOCUMENT);
+  }
+  return this.dom_.getElement(this.makeId(idFragment));
+};
+
+
+/**
+ * Adds the specified component as the last child of this component.  See
+ * {@link goog.ui.Component#addChildAt} for detailed semantics.
+ *
+ * @see goog.ui.Component#addChildAt
+ * @param {goog.ui.Component} child The new child component.
+ * @param {boolean=} opt_render If true, the child component will be rendered
+ *    into the parent.
+ */
+goog.ui.Component.prototype.addChild = function(child, opt_render) {
+  // TODO(gboyer): addChildAt(child, this.getChildCount(), false) will
+  // reposition any already-rendered child to the end.  Instead, perhaps
+  // addChild(child, false) should never reposition the child; instead, clients
+  // that need the repositioning will use addChildAt explicitly.  Right now,
+  // clients can get around this by calling addChild before calling decorate.
+  this.addChildAt(child, this.getChildCount(), opt_render);
+};
+
+
+/**
+ * Adds the specified component as a child of this component at the given
+ * 0-based index.
+ *
+ * Both {@code addChild} and {@code addChildAt} assume the following contract
+ * between parent and child components:
+ *  <ul>
+ *    <li>the child component's element must be a descendant of the parent
+ *        component's element, and
+ *    <li>the DOM state of the child component must be consistent with the DOM
+ *        state of the parent component (see {@code isInDocument}) in the
+ *        steady state -- the exception is to addChildAt(child, i, false) and
+ *        then immediately decorate/render the child.
+ *  </ul>
+ *
+ * In particular, {@code parent.addChild(child)} will throw an error if the
+ * child component is already in the document, but the parent isn't.
+ *
+ * Clients of this API may call {@code addChild} and {@code addChildAt} with
+ * {@code opt_render} set to true.  If {@code opt_render} is true, calling these
+ * methods will automatically render the child component's element into the
+ * parent component's element. If the parent does not yet have an element, then
+ * {@code createDom} will automatically be invoked on the parent before
+ * rendering the child.
+ *
+ * Invoking {@code parent.addChild(child, true)} will throw an error if the
+ * child component is already in the document, regardless of the parent's DOM
+ * state.
+ *
+ * If {@code opt_render} is true and the parent component is not already
+ * in the document, {@code enterDocument} will not be called on this component
+ * at this point.
+ *
+ * Finally, this method also throws an error if the new child already has a
+ * different parent, or the given index is out of bounds.
+ *
+ * @see goog.ui.Component#addChild
+ * @param {goog.ui.Component} child The new child component.
+ * @param {number} index 0-based index at which the new child component is to be
+ *    added; must be between 0 and the current child count (inclusive).
+ * @param {boolean=} opt_render If true, the child component will be rendered
+ *    into the parent.
+ * @return {void} Nada.
+ */
+goog.ui.Component.prototype.addChildAt = function(child, index, opt_render) {
+  goog.asserts.assert(!!child, 'Provided element must not be null.');
+
+  if (child.inDocument_ && (opt_render || !this.inDocument_)) {
+    // Adding a child that's already in the document is an error, except if the
+    // parent is also in the document and opt_render is false (e.g. decorate()).
+    throw Error(goog.ui.Component.Error.ALREADY_RENDERED);
+  }
+
+  if (index < 0 || index > this.getChildCount()) {
+    // Allowing sparse child arrays would lead to strange behavior, so we don't.
+    throw Error(goog.ui.Component.Error.CHILD_INDEX_OUT_OF_BOUNDS);
+  }
+
+  // Create the index and the child array on first use.
+  if (!this.childIndex_ || !this.children_) {
+    this.childIndex_ = {};
+    this.children_ = [];
+  }
+
+  // Moving child within component, remove old reference.
+  if (child.getParent() == this) {
+    goog.object.set(this.childIndex_, child.getId(), child);
+    goog.array.remove(this.children_, child);
+
+  // Add the child to this component.  goog.object.add() throws an error if
+  // a child with the same ID already exists.
+  } else {
+    goog.object.add(this.childIndex_, child.getId(), child);
+  }
+
+  // Set the parent of the child to this component.  This throws an error if
+  // the child is already contained by another component.
+  child.setParent(this);
+  goog.array.insertAt(this.children_, child, index);
+
+  if (child.inDocument_ && this.inDocument_ && child.getParent() == this) {
+    // Changing the position of an existing child, move the DOM node.
+    var contentElement = this.getContentElement();
+    contentElement.insertBefore(child.getElement(),
+        (contentElement.childNodes[index] || null));
+
+  } else if (opt_render) {
+    // If this (parent) component doesn't have a DOM yet, call createDom now
+    // to make sure we render the child component's element into the correct
+    // parent element (otherwise render_ with a null first argument would
+    // render the child into the document body, which is almost certainly not
+    // what we want).
+    if (!this.element_) {
+      this.createDom();
+    }
+    // Render the child into the parent at the appropriate location.  Note that
+    // getChildAt(index + 1) returns undefined if inserting at the end.
+    // TODO(attila): We should have a renderer with a renderChildAt API.
+    var sibling = this.getChildAt(index + 1);
+    // render_() calls enterDocument() if the parent is already in the document.
+    child.render_(this.getContentElement(), sibling ? sibling.element_ : null);
+  } else if (this.inDocument_ && !child.inDocument_ && child.element_ &&
+      child.element_.parentNode &&
+      // Under some circumstances, IE8 implicitly creates a Document Fragment
+      // for detached nodes, so ensure the parent is an Element as it should be.
+      child.element_.parentNode.nodeType == goog.dom.NodeType.ELEMENT) {
+    // We don't touch the DOM, but if the parent is in the document, and the
+    // child element is in the document but not marked as such, then we call
+    // enterDocument on the child.
+    // TODO(gboyer): It would be nice to move this condition entirely, but
+    // there's a large risk of breaking existing applications that manually
+    // append the child to the DOM and then call addChild.
+    child.enterDocument();
+  }
+};
+
+
+/**
+ * Returns the DOM element into which child components are to be rendered,
+ * or null if the component itself hasn't been rendered yet.  This default
+ * implementation returns the component's root element.  Subclasses with
+ * complex DOM structures must override this method.
+ * @return {Element} Element to contain child elements (null if none).
+ */
+goog.ui.Component.prototype.getContentElement = function() {
+  return this.element_;
+};
+
+
+/**
+ * Returns true if the component is rendered right-to-left, false otherwise.
+ * The first time this function is invoked, the right-to-left rendering property
+ * is set if it has not been already.
+ * @return {boolean} Whether the control is rendered right-to-left.
+ */
+goog.ui.Component.prototype.isRightToLeft = function() {
+  if (this.rightToLeft_ == null) {
+    this.rightToLeft_ = goog.style.isRightToLeft(this.inDocument_ ?
+        this.element_ : this.dom_.getDocument().body);
+  }
+  return /** @type {boolean} */(this.rightToLeft_);
+};
+
+
+/**
+ * Set is right-to-left. This function should be used if the component needs
+ * to know the rendering direction during dom creation (i.e. before
+ * {@link #enterDocument} is called and is right-to-left is set).
+ * @param {boolean} rightToLeft Whether the component is rendered
+ *     right-to-left.
+ */
+goog.ui.Component.prototype.setRightToLeft = function(rightToLeft) {
+  if (this.inDocument_) {
+    throw Error(goog.ui.Component.Error.ALREADY_RENDERED);
+  }
+  this.rightToLeft_ = rightToLeft;
+};
+
+
+/**
+ * Returns true if the component has children.
+ * @return {boolean} True if the component has children.
+ */
+goog.ui.Component.prototype.hasChildren = function() {
+  return !!this.children_ && this.children_.length != 0;
+};
+
+
+/**
+ * Returns the number of children of this component.
+ * @return {number} The number of children.
+ */
+goog.ui.Component.prototype.getChildCount = function() {
+  return this.children_ ? this.children_.length : 0;
+};
+
+
+/**
+ * Returns an array containing the IDs of the children of this component, or an
+ * empty array if the component has no children.
+ * @return {Array.<string>} Child component IDs.
+ */
+goog.ui.Component.prototype.getChildIds = function() {
+  var ids = [];
+
+  // We don't use goog.object.getKeys(this.childIndex_) because we want to
+  // return the IDs in the correct order as determined by this.children_.
+  this.forEachChild(function(child) {
+    // addChild()/addChildAt() guarantee that the child array isn't sparse.
+    ids.push(child.getId());
+  });
+
+  return ids;
+};
+
+
+/**
+ * Returns the child with the given ID, or null if no such child exists.
+ * @param {string} id Child component ID.
+ * @return {goog.ui.Component?} The child with the given ID; null if none.
+ */
+goog.ui.Component.prototype.getChild = function(id) {
+  // Use childIndex_ for O(1) access by ID.
+  return (this.childIndex_ && id) ? /** @type {goog.ui.Component} */ (
+      goog.object.get(this.childIndex_, id)) || null : null;
+};
+
+
+/**
+ * Returns the child at the given index, or null if the index is out of bounds.
+ * @param {number} index 0-based index.
+ * @return {goog.ui.Component?} The child at the given index; null if none.
+ */
+goog.ui.Component.prototype.getChildAt = function(index) {
+  // Use children_ for access by index.
+  return this.children_ ? this.children_[index] || null : null;
+};
+
+
+/**
+ * Calls the given function on each of this component's children in order.  If
+ * {@code opt_obj} is provided, it will be used as the 'this' object in the
+ * function when called.  The function should take two arguments:  the child
+ * component and its 0-based index.  The return value is ignored.
+ * @param {function(this:T,?,number):?} f The function to call for every
+ * child component; should take 2 arguments (the child and its index).
+ * @param {T=} opt_obj Used as the 'this' object in f when called.
+ * @template T
+ */
+goog.ui.Component.prototype.forEachChild = function(f, opt_obj) {
+  if (this.children_) {
+    goog.array.forEach(this.children_, f, opt_obj);
+  }
+};
+
+
+/**
+ * Returns the 0-based index of the given child component, or -1 if no such
+ * child is found.
+ * @param {goog.ui.Component?} child The child component.
+ * @return {number} 0-based index of the child component; -1 if not found.
+ */
+goog.ui.Component.prototype.indexOfChild = function(child) {
+  return (this.children_ && child) ? goog.array.indexOf(this.children_, child) :
+      -1;
+};
+
+
+/**
+ * Removes the given child from this component, and returns it.  Throws an error
+ * if the argument is invalid or if the specified child isn't found in the
+ * parent component.  The argument can either be a string (interpreted as the
+ * ID of the child component to remove) or the child component itself.
+ *
+ * If {@code opt_unrender} is true, calls {@link goog.ui.component#exitDocument}
+ * on the removed child, and subsequently detaches the child's DOM from the
+ * document.  Otherwise it is the caller's responsibility to clean up the child
+ * component's DOM.
+ *
+ * @see goog.ui.Component#removeChildAt
+ * @param {string|goog.ui.Component|null} child The ID of the child to remove,
+ *    or the child component itself.
+ * @param {boolean=} opt_unrender If true, calls {@code exitDocument} on the
+ *    removed child component, and detaches its DOM from the document.
+ * @return {goog.ui.Component} The removed component, if any.
+ */
+goog.ui.Component.prototype.removeChild = function(child, opt_unrender) {
+  if (child) {
+    // Normalize child to be the object and id to be the ID string.  This also
+    // ensures that the child is really ours.
+    var id = goog.isString(child) ? child : child.getId();
+    child = this.getChild(id);
+
+    if (id && child) {
+      goog.object.remove(this.childIndex_, id);
+      goog.array.remove(this.children_, child);
+
+      if (opt_unrender) {
+        // Remove the child component's DOM from the document.  We have to call
+        // exitDocument first (see documentation).
+        child.exitDocument();
+        if (child.element_) {
+          goog.dom.removeNode(child.element_);
+        }
+      }
+
+      // Child's parent must be set to null after exitDocument is called
+      // so that the child can unlisten to its parent if required.
+      child.setParent(null);
+    }
+  }
+
+  if (!child) {
+    throw Error(goog.ui.Component.Error.NOT_OUR_CHILD);
+  }
+
+  return /** @type {goog.ui.Component} */(child);
+};
+
+
+/**
+ * Removes the child at the given index from this component, and returns it.
+ * Throws an error if the argument is out of bounds, or if the specified child
+ * isn't found in the parent.  See {@link goog.ui.Component#removeChild} for
+ * detailed semantics.
+ *
+ * @see goog.ui.Component#removeChild
+ * @param {number} index 0-based index of the child to remove.
+ * @param {boolean=} opt_unrender If true, calls {@code exitDocument} on the
+ *    removed child component, and detaches its DOM from the document.
+ * @return {goog.ui.Component} The removed component, if any.
+ */
+goog.ui.Component.prototype.removeChildAt = function(index, opt_unrender) {
+  // removeChild(null) will throw error.
+  return this.removeChild(this.getChildAt(index), opt_unrender);
+};
+
+
+/**
+ * Removes every child component attached to this one and returns them.
+ *
+ * @see goog.ui.Component#removeChild
+ * @param {boolean=} opt_unrender If true, calls {@link #exitDocument} on the
+ *    removed child components, and detaches their DOM from the document.
+ * @return {!Array.<goog.ui.Component>} The removed components if any.
+ */
+goog.ui.Component.prototype.removeChildren = function(opt_unrender) {
+  var removedChildren = [];
+  while (this.hasChildren()) {
+    removedChildren.push(this.removeChildAt(0, opt_unrender));
+  }
+  return removedChildren;
+};
+// Copyright 2013 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview The renderer interface for {@link goog.ui.DatePicker}.
+ *
+ * @see ../demos/datepicker.html
+ */
+
+goog.provide('goog.ui.DatePickerRenderer');
+
+
+
+/**
+ * The renderer for {@link goog.ui.DatePicker}. Renders the date picker's
+ * navigation header and footer.
+ * @interface
+ */
+goog.ui.DatePickerRenderer = function() {};
+
+
+/**
+ * Render the navigation row.
+ *
+ * @param {!Element} row The parent element to render the component into.
+ * @param {boolean} simpleNavigation Whether the picker should render a simple
+ *     navigation menu that only contains controls for navigating to the next
+ *     and previous month. The default navigation menu contains controls for
+ *     navigating to the next/previous month, next/previous year, and menus for
+ *     jumping to specific months and years.
+ * @param {boolean} showWeekNum Whether week numbers should be shown.
+ * @param {string} fullDateFormat The full date format.
+ *     {@see goog.i18n.DateTimeSymbols}.
+ */
+goog.ui.DatePickerRenderer.prototype.renderNavigationRow = goog.abstractMethod;
+
+
+/**
+ * Render the footer row.
+ *
+ * @param {!Element} row The parent element to render the component into.
+ * @param {boolean} showWeekNum Whether week numbers should be shown.
+ */
+goog.ui.DatePickerRenderer.prototype.renderFooterRow = goog.abstractMethod;
+// Copyright 2013 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview The default renderer for {@link goog.ui.DatePicker}.
+ *
+ * @see ../demos/datepicker.html
+ */
+
+goog.provide('goog.ui.DefaultDatePickerRenderer');
+
+goog.require('goog.dom');
+goog.require('goog.dom.TagName');
+/** @suppress {extraRequire} Interface. */
+goog.require('goog.ui.DatePickerRenderer');
+
+
+
+/**
+ * Default renderer for {@link goog.ui.DatePicker}. Renders the date picker's
+ * navigation header and footer.
+ *
+ * @param {string} baseCssClass Name of base CSS class of the date picker.
+ * @param {goog.dom.DomHelper=} opt_domHelper DOM helper.
+ * @constructor
+ * @implements {goog.ui.DatePickerRenderer}
+ */
+goog.ui.DefaultDatePickerRenderer = function(baseCssClass, opt_domHelper) {
+  /**
+   * Name of base CSS class of datepicker
+   * @type {string}
+   * @private
+   */
+  this.baseCssClass_ = baseCssClass;
+
+  /**
+   * @type {!goog.dom.DomHelper}
+   * @private
+   */
+  this.dom_ = opt_domHelper || goog.dom.getDomHelper();
+};
+
+
+/**
+ * Returns the dom helper that is being used on this component.
+ * @return {!goog.dom.DomHelper} The dom helper used on this component.
+ */
+goog.ui.DefaultDatePickerRenderer.prototype.getDomHelper = function() {
+  return this.dom_;
+};
+
+
+/**
+ * Returns base CSS class. This getter is used to get base CSS class part.
+ * All CSS class names in component are created as:
+ *   goog.getCssName(this.getBaseCssClass(), 'CLASS_NAME')
+ * @return {string} Base CSS class.
+ */
+goog.ui.DefaultDatePickerRenderer.prototype.getBaseCssClass = function() {
+  return this.baseCssClass_;
+};
+
+
+/**
+ * Render the navigation row (navigating months and maybe years).
+ *
+ * @param {!Element} row The parent element to render the component into.
+ * @param {boolean} simpleNavigation Whether the picker should render a simple
+ *     navigation menu that only contains controls for navigating to the next
+ *     and previous month. The default navigation menu contains controls for
+ *     navigating to the next/previous month, next/previous year, and menus for
+ *     jumping to specific months and years.
+ * @param {boolean} showWeekNum Whether week numbers should be shown.
+ * @param {string} fullDateFormat The full date format.
+ *     {@see goog.i18n.DateTimeSymbols}.
+ * @override
+ */
+goog.ui.DefaultDatePickerRenderer.prototype.renderNavigationRow =
+    function(row, simpleNavigation, showWeekNum, fullDateFormat) {
+  // Populate the navigation row according to the configured navigation mode.
+  var cell, monthCell, yearCell;
+
+  if (simpleNavigation) {
+    cell = this.getDomHelper().createElement(goog.dom.TagName.TD);
+    cell.colSpan = showWeekNum ? 1 : 2;
+    this.createButton_(cell, '\u00AB',
+        goog.getCssName(this.getBaseCssClass(), 'previousMonth'));  // <<
+    row.appendChild(cell);
+
+    cell = this.getDomHelper().createElement(goog.dom.TagName.TD);
+    cell.colSpan = showWeekNum ? 6 : 5;
+    cell.className = goog.getCssName(this.getBaseCssClass(), 'monthyear');
+    row.appendChild(cell);
+
+    cell = this.getDomHelper().createElement(goog.dom.TagName.TD);
+    this.createButton_(cell, '\u00BB',
+        goog.getCssName(this.getBaseCssClass(), 'nextMonth'));  // >>
+    row.appendChild(cell);
+
+  } else {
+    monthCell = this.getDomHelper().createElement(goog.dom.TagName.TD);
+    monthCell.colSpan = 5;
+    this.createButton_(monthCell, '\u00AB',
+        goog.getCssName(this.getBaseCssClass(), 'previousMonth'));  // <<
+    this.createButton_(monthCell, '',
+        goog.getCssName(this.getBaseCssClass(), 'month'));
+    this.createButton_(monthCell, '\u00BB',
+        goog.getCssName(this.getBaseCssClass(), 'nextMonth'));  // >>
+
+    yearCell = this.getDomHelper().createElement(goog.dom.TagName.TD);
+    yearCell.colSpan = 3;
+    this.createButton_(yearCell, '\u00AB',
+        goog.getCssName(this.getBaseCssClass(), 'previousYear'));  // <<
+    this.createButton_(yearCell, '',
+        goog.getCssName(this.getBaseCssClass(), 'year'));
+    this.createButton_(yearCell, '\u00BB',
+        goog.getCssName(this.getBaseCssClass(), 'nextYear'));  // <<
+
+    // If the date format has year ('y') appearing first before month ('m'),
+    // show the year on the left hand side of the datepicker popup.  Otherwise,
+    // show the month on the left side.  This check assumes the data to be
+    // valid, and that all date formats contain month and year.
+    if (fullDateFormat.indexOf('y') < fullDateFormat.indexOf('m')) {
+      row.appendChild(yearCell);
+      row.appendChild(monthCell);
+    } else {
+      row.appendChild(monthCell);
+      row.appendChild(yearCell);
+    }
+  }
+};
+
+
+/**
+ * Render the footer row (with select buttons).
+ *
+ * @param {!Element} row The parent element to render the component into.
+ * @param {boolean} showWeekNum Whether week numbers should be shown.
+ * @override
+ */
+goog.ui.DefaultDatePickerRenderer.prototype.renderFooterRow =
+    function(row, showWeekNum) {
+  // Populate the footer row with buttons for Today and None.
+  var cell = this.getDomHelper().createElement(goog.dom.TagName.TD);
+  cell.colSpan = showWeekNum ? 2 : 3;
+  cell.className = goog.getCssName(this.getBaseCssClass(), 'today-cont');
+
+  /** @desc Label for button that selects the current date. */
+  var MSG_DATEPICKER_TODAY_BUTTON_LABEL = goog.getMsg('Today');
+  this.createButton_(cell, MSG_DATEPICKER_TODAY_BUTTON_LABEL,
+      goog.getCssName(this.getBaseCssClass(), 'today-btn'));
+  row.appendChild(cell);
+
+  cell = this.getDomHelper().createElement(goog.dom.TagName.TD);
+  cell.colSpan = showWeekNum ? 4 : 3;
+  row.appendChild(cell);
+
+  cell = this.getDomHelper().createElement(goog.dom.TagName.TD);
+  cell.colSpan = 2;
+  cell.className = goog.getCssName(this.getBaseCssClass(), 'none-cont');
+
+  /** @desc Label for button that clears the selection. */
+  var MSG_DATEPICKER_NONE = goog.getMsg('None');
+  this.createButton_(cell, MSG_DATEPICKER_NONE,
+      goog.getCssName(this.getBaseCssClass(), 'none-btn'));
+  row.appendChild(cell);
+};
+
+
+/**
+ * Support function for button creation.
+ *
+ * @param {Element} parentNode Container the button should be added to.
+ * @param {string} label Button label.
+ * @param {string=} opt_className Class name for button, which will be used
+ *    in addition to "goog-date-picker-btn".
+ * @private
+ * @return {Element} The created button element.
+ */
+goog.ui.DefaultDatePickerRenderer.prototype.createButton_ =
+    function(parentNode, label, opt_className) {
+  var classes = [goog.getCssName(this.getBaseCssClass(), 'btn')];
+  if (opt_className) {
+    classes.push(opt_className);
+  }
+  var el = this.getDomHelper().createElement(goog.dom.TagName.BUTTON);
+  el.className = classes.join(' ');
+  el.appendChild(this.getDomHelper().createTextNode(label));
+  parentNode.appendChild(el);
+  return el;
+};
+// Copyright 2013 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+/**
+ * @fileoverview The file contains generated enumerations for ARIA states
+ * and properties as defined by W3C ARIA standard:
+ * http://www.w3.org/TR/wai-aria/.
+ *
+ * This is auto-generated code. Do not manually edit! For more details
+ * about how to edit it via the generator check go/closure-ariagen.
+ */
+
+goog.provide('goog.a11y.aria.AutoCompleteValues');
+goog.provide('goog.a11y.aria.CheckedValues');
+goog.provide('goog.a11y.aria.DropEffectValues');
+goog.provide('goog.a11y.aria.ExpandedValues');
+goog.provide('goog.a11y.aria.GrabbedValues');
+goog.provide('goog.a11y.aria.InvalidValues');
+goog.provide('goog.a11y.aria.LivePriority');
+goog.provide('goog.a11y.aria.OrientationValues');
+goog.provide('goog.a11y.aria.PressedValues');
+goog.provide('goog.a11y.aria.RelevantValues');
+goog.provide('goog.a11y.aria.SelectedValues');
+goog.provide('goog.a11y.aria.SortValues');
+goog.provide('goog.a11y.aria.State');
+
+
+/**
+ * ARIA states and properties.
+ * @enum {string}
+ */
+goog.a11y.aria.State = {
+  // ARIA property for setting the currently active descendant of an element,
+  // for example the selected item in a list box. Value: ID of an element.
+  ACTIVEDESCENDANT: 'activedescendant',
+
+  // ARIA property that, if true, indicates that all of a changed region should
+  // be presented, instead of only parts. Value: one of {true, false}.
+  ATOMIC: 'atomic',
+
+  // ARIA property to specify that input completion is provided. Value:
+  // one of {'inline', 'list', 'both', 'none'}.
+  AUTOCOMPLETE: 'autocomplete',
+
+  // ARIA state to indicate that an element and its subtree are being updated.
+  // Value: one of {true, false}.
+  BUSY: 'busy',
+
+  // ARIA state for a checked item. Value: one of {'true', 'false', 'mixed',
+  // undefined}.
+  CHECKED: 'checked',
+
+  // ARIA property that identifies the element or elements whose contents or
+  // presence are controlled by this element.
+  // Value: space-separated IDs of other elements.
+  CONTROLS: 'controls',
+
+  // ARIA property that identifies the element or elements that describe
+  // this element. Value: space-separated IDs of other elements.
+  DESCRIBEDBY: 'describedby',
+
+  // ARIA state for a disabled item. Value: one of {true, false}.
+  DISABLED: 'disabled',
+
+  // ARIA property that indicates what functions can be performed when a
+  // dragged object is released on the drop target.  Value: one of
+  // {'copy', 'move', 'link', 'execute', 'popup', 'none'}.
+  DROPEFFECT: 'dropeffect',
+
+  // ARIA state for setting whether the element like a tree node is expanded.
+  // Value: one of {true, false, undefined}.
+  EXPANDED: 'expanded',
+
+  // ARIA property that identifies the next element (or elements) in the
+  // recommended reading order of content. Value: space-separated ids of
+  // elements to flow to.
+  FLOWTO: 'flowto',
+
+  // ARIA state that indicates an element's "grabbed" state in drag-and-drop.
+  // Value: one of {true, false, undefined}.
+  GRABBED: 'grabbed',
+
+  // ARIA property indicating whether the element has a popup.
+  // Value: one of {true, false}.
+  HASPOPUP: 'haspopup',
+
+  // ARIA state indicating that the element is not visible or perceivable
+  // to any user. Value: one of {true, false}.
+  HIDDEN: 'hidden',
+
+  // ARIA state indicating that the entered value does not conform. Value:
+  // one of {false, true, 'grammar', 'spelling'}
+  INVALID: 'invalid',
+
+  // ARIA property that provides a label to override any other text, value, or
+  // contents used to describe this element. Value: string.
+  LABEL: 'label',
+
+  // ARIA property for setting the element which labels another element.
+  // Value: space-separated IDs of elements.
+  LABELLEDBY: 'labelledby',
+
+  // ARIA property for setting the level of an element in the hierarchy.
+  // Value: integer.
+  LEVEL: 'level',
+
+  // ARIA property indicating that an element will be updated, and
+  // describes the types of updates the user agents, assistive technologies,
+  // and user can expect from the live region. Value: one of {'off', 'polite',
+  // 'assertive'}.
+  LIVE: 'live',
+
+  // ARIA property indicating whether a text box can accept multiline input.
+  // Value: one of {true, false}.
+  MULTILINE: 'multiline',
+
+  // ARIA property indicating if the user may select more than one item.
+  // Value: one of {true, false}.
+  MULTISELECTABLE: 'multiselectable',
+
+  // ARIA property indicating if the element is horizontal or vertical.
+  // Value: one of {'vertical', 'horizontal'}.
+  ORIENTATION: 'orientation',
+
+  // ARIA property creating a visual, functional, or contextual parent/child
+  // relationship when the DOM hierarchy can't be used to represent it.
+  // Value: Space-separated IDs of elements.
+  OWNS: 'owns',
+
+  // ARIA property that defines an element's number of position in a list.
+  // Value: integer.
+  POSINSET: 'posinset',
+
+  // ARIA state for a pressed item.
+  // Value: one of {true, false, undefined, 'mixed'}.
+  PRESSED: 'pressed',
+
+  // ARIA property indicating that an element is not editable.
+  // Value: one of {true, false}.
+  READONLY: 'readonly',
+
+  // ARIA property indicating that change notifications within this subtree
+  // of a live region should be announced. Value: one of {'additions',
+  // 'removals', 'text', 'all', 'additions text'}.
+  RELEVANT: 'relevant',
+
+  // ARIA property indicating that user input is required on this element
+  // before a form may be submitted. Value: one of {true, false}.
+  REQUIRED: 'required',
+
+  // ARIA state for setting the currently selected item in the list.
+  // Value: one of {true, false, undefined}.
+  SELECTED: 'selected',
+
+  // ARIA property defining the number of items in a list. Value: integer.
+  SETSIZE: 'setsize',
+
+  // ARIA property indicating if items are sorted. Value: one of {'ascending',
+  // 'descending', 'none', 'other'}.
+  SORT: 'sort',
+
+  // ARIA property for slider maximum value. Value: number.
+  VALUEMAX: 'valuemax',
+
+  // ARIA property for slider minimum value. Value: number.
+  VALUEMIN: 'valuemin',
+
+  // ARIA property for slider active value. Value: number.
+  VALUENOW: 'valuenow',
+
+  // ARIA property for slider active value represented as text.
+  // Value: string.
+  VALUETEXT: 'valuetext'
+};
+
+
+/**
+ * ARIA state values for AutoCompleteValues.
+ * @enum {string}
+ */
+goog.a11y.aria.AutoCompleteValues = {
+  // The system provides text after the caret as a suggestion
+  // for how to complete the field.
+  INLINE: 'inline',
+  // A list of choices appears from which the user can choose,
+  // but the edit box retains focus.
+  LIST: 'list',
+  // A list of choices appears and the currently selected suggestion
+  // also appears inline.
+  BOTH: 'both',
+  // No input completion suggestions are provided.
+  NONE: 'none'
+};
+
+
+/**
+ * ARIA state values for DropEffectValues.
+ * @enum {string}
+ */
+goog.a11y.aria.DropEffectValues = {
+  // A duplicate of the source object will be dropped into the target.
+  COPY: 'copy',
+  // The source object will be removed from its current location
+  // and dropped into the target.
+  MOVE: 'move',
+  // A reference or shortcut to the dragged object
+  // will be created in the target object.
+  LINK: 'link',
+  // A function supported by the drop target is
+  // executed, using the drag source as an input.
+  EXECUTE: 'execute',
+  // There is a popup menu or dialog that allows the user to choose
+  // one of the drag operations (copy, move, link, execute) and any other
+  // drag functionality, such as cancel.
+  POPUP: 'popup',
+  // No operation can be performed; effectively
+  // cancels the drag operation if an attempt is made to drop on this object.
+  NONE: 'none'
+};
+
+
+/**
+ * ARIA state values for LivePriority.
+ * @enum {string}
+ */
+goog.a11y.aria.LivePriority = {
+  // Updates to the region will not be presented to the user
+  // unless the assitive technology is currently focused on that region.
+  OFF: 'off',
+  // (Background change) Assistive technologies SHOULD announce
+  // updates at the next graceful opportunity, such as at the end of
+  // speaking the current sentence or when the user pauses typing.
+  POLITE: 'polite',
+  // This information has the highest priority and assistive
+  // technologies SHOULD notify the user immediately.
+  // Because an interruption may disorient users or cause them to not complete
+  // their current task, authors SHOULD NOT use the assertive value unless the
+  // interruption is imperative.
+  ASSERTIVE: 'assertive'
+};
+
+
+/**
+ * ARIA state values for OrientationValues.
+ * @enum {string}
+ */
+goog.a11y.aria.OrientationValues = {
+  // The element is oriented vertically.
+  VERTICAL: 'vertical',
+  // The element is oriented horizontally.
+  HORIZONTAL: 'horizontal'
+};
+
+
+/**
+ * ARIA state values for RelevantValues.
+ * @enum {string}
+ */
+goog.a11y.aria.RelevantValues = {
+  // Element nodes are added to the DOM within the live region.
+  ADDITIONS: 'additions',
+  // Text or element nodes within the live region are removed from the DOM.
+  REMOVALS: 'removals',
+  // Text is added to any DOM descendant nodes of the live region.
+  TEXT: 'text',
+  // Equivalent to the combination of all values, "additions removals text".
+  ALL: 'all'
+};
+
+
+/**
+ * ARIA state values for SortValues.
+ * @enum {string}
+ */
+goog.a11y.aria.SortValues = {
+  // Items are sorted in ascending order by this column.
+  ASCENDING: 'ascending',
+  // Items are sorted in descending order by this column.
+  DESCENDING: 'descending',
+  // There is no defined sort applied to the column.
+  NONE: 'none',
+  // A sort algorithm other than ascending or descending has been applied.
+  OTHER: 'other'
+};
+
+
+/**
+ * ARIA state values for CheckedValues.
+ * @enum {string}
+ */
+goog.a11y.aria.CheckedValues = {
+  // The selectable element is checked.
+  TRUE: 'true',
+  // The selectable element is not checked.
+  FALSE: 'false',
+  // Indicates a mixed mode value for a tri-state
+  // checkbox or menuitemcheckbox.
+  MIXED: 'mixed',
+  // The element does not support being checked.
+  UNDEFINED: 'undefined'
+};
+
+
+/**
+ * ARIA state values for ExpandedValues.
+ * @enum {string}
+ */
+goog.a11y.aria.ExpandedValues = {
+  // The element, or another grouping element it controls, is expanded.
+  TRUE: 'true',
+  // The element, or another grouping element it controls, is collapsed.
+  FALSE: 'false',
+  // The element, or another grouping element
+  // it controls, is neither expandable nor collapsible; all its
+  // child elements are shown or there are no child elements.
+  UNDEFINED: 'undefined'
+};
+
+
+/**
+ * ARIA state values for GrabbedValues.
+ * @enum {string}
+ */
+goog.a11y.aria.GrabbedValues = {
+  // Indicates that the element has been "grabbed" for dragging.
+  TRUE: 'true',
+  // Indicates that the element supports being dragged.
+  FALSE: 'false',
+  // Indicates that the element does not support being dragged.
+  UNDEFINED: 'undefined'
+};
+
+
+/**
+ * ARIA state values for InvalidValues.
+ * @enum {string}
+ */
+goog.a11y.aria.InvalidValues = {
+  // There are no detected errors in the value.
+  FALSE: 'false',
+  // The value entered by the user has failed validation.
+  TRUE: 'true',
+  // A grammatical error was detected.
+  GRAMMAR: 'grammar',
+  // A spelling error was detected.
+  SPELLING: 'spelling'
+};
+
+
+/**
+ * ARIA state values for PressedValues.
+ * @enum {string}
+ */
+goog.a11y.aria.PressedValues = {
+  // The element is pressed.
+  TRUE: 'true',
+  // The element supports being pressed but is not currently pressed.
+  FALSE: 'false',
+  // Indicates a mixed mode value for a tri-state toggle button.
+  MIXED: 'mixed',
+  // The element does not support being pressed.
+  UNDEFINED: 'undefined'
+};
+
+
+/**
+ * ARIA state values for SelectedValues.
+ * @enum {string}
+ */
+goog.a11y.aria.SelectedValues = {
+  // The selectable element is selected.
+  TRUE: 'true',
+  // The selectable element is not selected.
+  FALSE: 'false',
+  // The element is not selectable.
+  UNDEFINED: 'undefined'
+};
+// Copyright 2013 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+
+/**
+ * @fileoverview The file contains data tables generated from the ARIA
+ * standard schema http://www.w3.org/TR/wai-aria/.
+ *
+ * This is auto-generated code. Do not manually edit!
+ */
+
+goog.provide('goog.a11y.aria.datatables');
+
+goog.require('goog.a11y.aria.State');
+goog.require('goog.object');
+
+
+/**
+ * A map that contains mapping between an ARIA state and the default value
+ * for it. Note that not all ARIA states have default values.
+ *
+ * @type {Object.<!(goog.a11y.aria.State|string), (string|boolean|number)>}
+ */
+goog.a11y.aria.DefaultStateValueMap_;
+
+
+/**
+ * A method that creates a map that contains mapping between an ARIA state and
+ * the default value for it. Note that not all ARIA states have default values.
+ *
+ * @return {Object.<!(goog.a11y.aria.State|string), (string|boolean|number)>}
+ *      The names for each of the notification methods.
+ */
+goog.a11y.aria.datatables.getDefaultValuesMap = function() {
+  if (!goog.a11y.aria.DefaultStateValueMap_) {
+    goog.a11y.aria.DefaultStateValueMap_ = goog.object.create(
+        goog.a11y.aria.State.ATOMIC, false,
+        goog.a11y.aria.State.AUTOCOMPLETE, 'none',
+        goog.a11y.aria.State.DROPEFFECT, 'none',
+        goog.a11y.aria.State.HASPOPUP, false,
+        goog.a11y.aria.State.LIVE, 'off',
+        goog.a11y.aria.State.MULTILINE, false,
+        goog.a11y.aria.State.MULTISELECTABLE, false,
+        goog.a11y.aria.State.ORIENTATION, 'vertical',
+        goog.a11y.aria.State.READONLY, false,
+        goog.a11y.aria.State.RELEVANT, 'additions text',
+        goog.a11y.aria.State.REQUIRED, false,
+        goog.a11y.aria.State.SORT, 'none',
+        goog.a11y.aria.State.BUSY, false,
+        goog.a11y.aria.State.DISABLED, false,
+        goog.a11y.aria.State.HIDDEN, false,
+        goog.a11y.aria.State.INVALID, 'false');
+  }
+
+  return goog.a11y.aria.DefaultStateValueMap_;
+};
+// Copyright 2013 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+/**
+ * @fileoverview The file contains generated enumerations for ARIA roles
+ * as defined by W3C ARIA standard: http://www.w3.org/TR/wai-aria/.
+ *
+ * This is auto-generated code. Do not manually edit! For more details
+ * about how to edit it via the generator check go/closure-ariagen.
+ */
+
+goog.provide('goog.a11y.aria.Role');
+
+
+/**
+ * ARIA role values.
+ * @enum {string}
+ */
+goog.a11y.aria.Role = {
+  // ARIA role for an alert element that doesn't need to be explicitly closed.
+  ALERT: 'alert',
+
+  // ARIA role for an alert dialog element that takes focus and must be closed.
+  ALERTDIALOG: 'alertdialog',
+
+  // ARIA role for an application that implements its own keyboard navigation.
+  APPLICATION: 'application',
+
+  // ARIA role for an article.
+  ARTICLE: 'article',
+
+  // ARIA role for a banner containing mostly site content, not page content.
+  BANNER: 'banner',
+
+  // ARIA role for a button element.
+  BUTTON: 'button',
+
+  // ARIA role for a checkbox button element; use with the CHECKED state.
+  CHECKBOX: 'checkbox',
+
+  // ARIA role for a column header of a table or grid.
+  COLUMNHEADER: 'columnheader',
+
+  // ARIA role for a combo box element.
+  COMBOBOX: 'combobox',
+
+  // ARIA role for a supporting section of the document.
+  COMPLEMENTARY: 'complementary',
+
+  // ARIA role for a large perceivable region that contains information
+  // about the parent document.
+  CONTENTINFO: 'contentinfo',
+
+  // ARIA role for a definition of a term or concept.
+  DEFINITION: 'definition',
+
+  // ARIA role for a dialog, some descendant must take initial focus.
+  DIALOG: 'dialog',
+
+  // ARIA role for a directory, like a table of contents.
+  DIRECTORY: 'directory',
+
+  // ARIA role for a part of a page that's a document, not a web application.
+  DOCUMENT: 'document',
+
+  // ARIA role for a landmark region logically considered one form.
+  FORM: 'form',
+
+  // ARIA role for an interactive control of tabular data.
+  GRID: 'grid',
+
+  // ARIA role for a cell in a grid.
+  GRIDCELL: 'gridcell',
+
+  // ARIA role for a group of related elements like tree item siblings.
+  GROUP: 'group',
+
+  // ARIA role for a heading element.
+  HEADING: 'heading',
+
+  // ARIA role for a container of elements that together comprise one image.
+  IMG: 'img',
+
+  // ARIA role for a link.
+  LINK: 'link',
+
+  // ARIA role for a list of non-interactive list items.
+  LIST: 'list',
+
+  // ARIA role for a listbox.
+  LISTBOX: 'listbox',
+
+  // ARIA role for a list item.
+  LISTITEM: 'listitem',
+
+  // ARIA role for a live region where new information is added.
+  LOG: 'log',
+
+  // ARIA landmark role for the main content in a document. Use only once.
+  MAIN: 'main',
+
+  // ARIA role for a live region of non-essential information that changes.
+  MARQUEE: 'marquee',
+
+  // ARIA role for a mathematical expression.
+  MATH: 'math',
+
+  // ARIA role for a popup menu.
+  MENU: 'menu',
+
+  // ARIA role for a menubar element containing menu elements.
+  MENUBAR: 'menubar',
+
+  // ARIA role for menu item elements.
+  MENU_ITEM: 'menuitem',
+
+  // ARIA role for a checkbox box element inside a menu.
+  MENU_ITEM_CHECKBOX: 'menuitemcheckbox',
+
+  // ARIA role for a radio button element inside a menu.
+  MENU_ITEM_RADIO: 'menuitemradio',
+
+  // ARIA landmark role for a collection of navigation links.
+  NAVIGATION: 'navigation',
+
+  // ARIA role for a section ancillary to the main content.
+  NOTE: 'note',
+
+  // ARIA role for option items that are  children of combobox, listbox, menu,
+  // radiogroup, or tree elements.
+  OPTION: 'option',
+
+  // ARIA role for ignorable cosmetic elements with no semantic significance.
+  PRESENTATION: 'presentation',
+
+  // ARIA role for a progress bar element.
+  PROGRESSBAR: 'progressbar',
+
+  // ARIA role for a radio button element.
+  RADIO: 'radio',
+
+  // ARIA role for a group of connected radio button elements.
+  RADIOGROUP: 'radiogroup',
+
+  // ARIA role for an important region of the page.
+  REGION: 'region',
+
+  // ARIA role for a row of cells in a grid.
+  ROW: 'row',
+
+  // ARIA role for a group of one or more rows in a grid.
+  ROWGROUP: 'rowgroup',
+
+  // ARIA role for a row header of a table or grid.
+  ROWHEADER: 'rowheader',
+
+  // ARIA role for a scrollbar element.
+  SCROLLBAR: 'scrollbar',
+
+  // ARIA landmark role for a part of the page providing search functionality.
+  SEARCH: 'search',
+
+  // ARIA role for a menu separator.
+  SEPARATOR: 'separator',
+
+  // ARIA role for a slider.
+  SLIDER: 'slider',
+
+  // ARIA role for a spin button.
+  SPINBUTTON: 'spinbutton',
+
+  // ARIA role for a live region with advisory info less severe than an alert.
+  STATUS: 'status',
+
+  // ARIA role for a tab button.
+  TAB: 'tab',
+
+  // ARIA role for a tab bar (i.e. a list of tab buttons).
+  TAB_LIST: 'tablist',
+
+  // ARIA role for a tab page (i.e. the element holding tab contents).
+  TAB_PANEL: 'tabpanel',
+
+  // ARIA role for a textbox element.
+  TEXTBOX: 'textbox',
+
+  // ARIA role for an element displaying elapsed time or time remaining.
+  TIMER: 'timer',
+
+  // ARIA role for a toolbar element.
+  TOOLBAR: 'toolbar',
+
+  // ARIA role for a tooltip element.
+  TOOLTIP: 'tooltip',
+
+  // ARIA role for a tree.
+  TREE: 'tree',
+
+  // ARIA role for a grid whose rows can be expanded and collapsed like a tree.
+  TREEGRID: 'treegrid',
+
+  // ARIA role for a tree item that sometimes may be expanded or collapsed.
+  TREEITEM: 'treeitem'
+};
+// Copyright 2007 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+/**
+ * @fileoverview Utilities for adding, removing and setting ARIA roles and
+ * states as defined by W3C ARIA standard: http://www.w3.org/TR/wai-aria/
+ * All modern browsers have some form of ARIA support, so no browser checks are
+ * performed when adding ARIA to components.
+ *
+ */
+
+goog.provide('goog.a11y.aria');
+
+goog.require('goog.a11y.aria.Role');
+goog.require('goog.a11y.aria.State');
+goog.require('goog.a11y.aria.datatables');
+goog.require('goog.array');
+goog.require('goog.asserts');
+goog.require('goog.dom');
+goog.require('goog.dom.TagName');
+goog.require('goog.object');
+
+
+/**
+ * ARIA states/properties prefix.
+ * @private
+ */
+goog.a11y.aria.ARIA_PREFIX_ = 'aria-';
+
+
+/**
+ * ARIA role attribute.
+ * @private
+ */
+goog.a11y.aria.ROLE_ATTRIBUTE_ = 'role';
+
+
+/**
+ * A list of tag names for which we don't need to set ARIA role and states
+ * because they have well supported semantics for screen readers or because
+ * they don't contain content to be made accessible.
+ * @private
+ */
+goog.a11y.aria.TAGS_WITH_ASSUMED_ROLES_ = [
+  goog.dom.TagName.A,
+  goog.dom.TagName.AREA,
+  goog.dom.TagName.BUTTON,
+  goog.dom.TagName.HEAD,
+  goog.dom.TagName.INPUT,
+  goog.dom.TagName.LINK,
+  goog.dom.TagName.MENU,
+  goog.dom.TagName.META,
+  goog.dom.TagName.OPTGROUP,
+  goog.dom.TagName.OPTION,
+  goog.dom.TagName.PROGRESS,
+  goog.dom.TagName.STYLE,
+  goog.dom.TagName.SELECT,
+  goog.dom.TagName.SOURCE,
+  goog.dom.TagName.TEXTAREA,
+  goog.dom.TagName.TITLE,
+  goog.dom.TagName.TRACK
+];
+
+
+/**
+ * Sets the role of an element. If the roleName is
+ * empty string or null, the role for the element is removed.
+ * We encourage clients to call the goog.a11y.aria.removeRole
+ * method instead of setting null and empty string values.
+ * Special handling for this case is added to ensure
+ * backword compatibility with existing code.
+ *
+ * @param {!Element} element DOM node to set role of.
+ * @param {!goog.a11y.aria.Role|string} roleName role name(s).
+ */
+goog.a11y.aria.setRole = function(element, roleName) {
+  if (!roleName) {
+    // Setting the ARIA role to empty string is not allowed
+    // by the ARIA standard.
+    goog.a11y.aria.removeRole(element);
+  } else {
+    if (goog.asserts.ENABLE_ASSERTS) {
+      goog.asserts.assert(goog.object.containsValue(
+          goog.a11y.aria.Role, roleName), 'No such ARIA role ' + roleName);
+    }
+    element.setAttribute(goog.a11y.aria.ROLE_ATTRIBUTE_, roleName);
+  }
+};
+
+
+/**
+ * Gets role of an element.
+ * @param {!Element} element DOM element to get role of.
+ * @return {?goog.a11y.aria.Role} ARIA Role name.
+ */
+goog.a11y.aria.getRole = function(element) {
+  var role = element.getAttribute(goog.a11y.aria.ROLE_ATTRIBUTE_);
+  return /** @type {goog.a11y.aria.Role} */ (role) || null;
+};
+
+
+/**
+ * Removes role of an element.
+ * @param {!Element} element DOM element to remove the role from.
+ */
+goog.a11y.aria.removeRole = function(element) {
+  element.removeAttribute(goog.a11y.aria.ROLE_ATTRIBUTE_);
+};
+
+
+/**
+ * Sets the state or property of an element.
+ * @param {!Element} element DOM node where we set state.
+ * @param {!(goog.a11y.aria.State|string)} stateName State attribute being set.
+ *     Automatically adds prefix 'aria-' to the state name if the attribute is
+ *     not an extra attribute.
+ * @param {string|boolean|number|!goog.array.ArrayLike.<string>} value Value
+ * for the state attribute.
+ */
+goog.a11y.aria.setState = function(element, stateName, value) {
+  if (goog.isArrayLike(value)) {
+    var array = /** @type {!goog.array.ArrayLike.<string>} */ (value);
+    value = array.join(' ');
+  }
+  var attrStateName = goog.a11y.aria.getAriaAttributeName_(stateName);
+  if (value === '' || value == undefined) {
+    var defaultValueMap = goog.a11y.aria.datatables.getDefaultValuesMap();
+    // Work around for browsers that don't properly support ARIA.
+    // According to the ARIA W3C standard, user agents should allow
+    // setting empty value which results in setting the default value
+    // for the ARIA state if such exists. The exact text from the ARIA W3C
+    // standard (http://www.w3.org/TR/wai-aria/states_and_properties):
+    // "When a value is indicated as the default, the user agent
+    // MUST follow the behavior prescribed by this value when the state or
+    // property is empty or undefined."
+    // The defaultValueMap contains the default values for the ARIA states
+    // and has as a key the goog.a11y.aria.State constant for the state.
+    if (stateName in defaultValueMap) {
+      element.setAttribute(attrStateName, defaultValueMap[stateName]);
+    } else {
+      element.removeAttribute(attrStateName);
+    }
+  } else {
+    element.setAttribute(attrStateName, value);
+  }
+};
+
+
+/**
+ * Remove the state or property for the element.
+ * @param {!Element} element DOM node where we set state.
+ * @param {!goog.a11y.aria.State} stateName State name.
+ */
+goog.a11y.aria.removeState = function(element, stateName) {
+  element.removeAttribute(goog.a11y.aria.getAriaAttributeName_(stateName));
+};
+
+
+/**
+ * Gets value of specified state or property.
+ * @param {!Element} element DOM node to get state from.
+ * @param {!goog.a11y.aria.State|string} stateName State name.
+ * @return {string} Value of the state attribute.
+ */
+goog.a11y.aria.getState = function(element, stateName) {
+  // TODO(user): return properly typed value result --
+  // boolean, number, string, null. We should be able to chain
+  // getState(...) and setState(...) methods.
+
+  var attr =
+      /** @type {string|number|boolean} */ (element.getAttribute(
+      goog.a11y.aria.getAriaAttributeName_(stateName)));
+  var isNullOrUndefined = attr == null || attr == undefined;
+  return isNullOrUndefined ? '' : String(attr);
+};
+
+
+/**
+ * Returns the activedescendant element for the input element by
+ * using the activedescendant ARIA property of the given element.
+ * @param {!Element} element DOM node to get activedescendant
+ *     element for.
+ * @return {?Element} DOM node of the activedescendant, if found.
+ */
+goog.a11y.aria.getActiveDescendant = function(element) {
+  var id = goog.a11y.aria.getState(
+      element, goog.a11y.aria.State.ACTIVEDESCENDANT);
+  return goog.dom.getOwnerDocument(element).getElementById(id);
+};
+
+
+/**
+ * Sets the activedescendant ARIA property value for an element.
+ * If the activeElement is not null, it should have an id set.
+ * @param {!Element} element DOM node to set activedescendant ARIA property to.
+ * @param {?Element} activeElement DOM node being set as activedescendant.
+ */
+goog.a11y.aria.setActiveDescendant = function(element, activeElement) {
+  var id = '';
+  if (activeElement) {
+    id = activeElement.id;
+    goog.asserts.assert(id, 'The active element should have an id.');
+  }
+
+  goog.a11y.aria.setState(element, goog.a11y.aria.State.ACTIVEDESCENDANT, id);
+};
+
+
+/**
+ * Gets the label of the given element.
+ * @param {!Element} element DOM node to get label from.
+ * @return {string} label The label.
+ */
+goog.a11y.aria.getLabel = function(element) {
+  return goog.a11y.aria.getState(element, goog.a11y.aria.State.LABEL);
+};
+
+
+/**
+ * Sets the label of the given element.
+ * @param {!Element} element DOM node to set label to.
+ * @param {string} label The label to set.
+ */
+goog.a11y.aria.setLabel = function(element, label) {
+  goog.a11y.aria.setState(element, goog.a11y.aria.State.LABEL, label);
+};
+
+
+/**
+ * Asserts that the element has a role set if it's not an HTML element whose
+ * semantics is well supported by most screen readers.
+ * Only to be used internally by the ARIA library in goog.a11y.aria.*.
+ * @param {!Element} element The element to assert an ARIA role set.
+ * @param {!goog.array.ArrayLike.<string>} allowedRoles The child roles of
+ * the roles.
+ */
+goog.a11y.aria.assertRoleIsSetInternalUtil = function(element, allowedRoles) {
+  if (goog.array.contains(goog.a11y.aria.TAGS_WITH_ASSUMED_ROLES_,
+      element.tagName)) {
+    return;
+  }
+  var elementRole = /** @type {string}*/ (goog.a11y.aria.getRole(element));
+  goog.asserts.assert(elementRole != null,
+      'The element ARIA role cannot be null.');
+
+  goog.asserts.assert(goog.array.contains(allowedRoles, elementRole),
+      'Non existing or incorrect role set for element.' +
+      'The role set is "' + elementRole +
+      '". The role should be any of "' + allowedRoles +
+      '". Check the ARIA specification for more details ' +
+      'http://www.w3.org/TR/wai-aria/roles.');
+};
+
+
+/**
+ * Gets the boolean value of an ARIA state/property.
+ * @param {!Element} element The element to get the ARIA state for.
+ * @param {!goog.a11y.aria.State|string} stateName the ARIA state name.
+ * @return {?boolean} Boolean value for the ARIA state value or null if
+ *     the state value is not 'true', not 'false', or not set.
+ */
+goog.a11y.aria.getStateBoolean = function(element, stateName) {
+  var attr =
+      /** @type {string|boolean} */ (element.getAttribute(
+          goog.a11y.aria.getAriaAttributeName_(stateName)));
+  goog.asserts.assert(
+      goog.isBoolean(attr) || attr == null || attr == 'true' ||
+          attr == 'false');
+  if (attr == null) {
+    return attr;
+  }
+  return goog.isBoolean(attr) ? attr : attr == 'true';
+};
+
+
+/**
+ * Gets the number value of an ARIA state/property.
+ * @param {!Element} element The element to get the ARIA state for.
+ * @param {!goog.a11y.aria.State|string} stateName the ARIA state name.
+ * @return {?number} Number value for the ARIA state value or null if
+ *     the state value is not a number or not set.
+ */
+goog.a11y.aria.getStateNumber = function(element, stateName) {
+  var attr =
+      /** @type {string|number} */ (element.getAttribute(
+          goog.a11y.aria.getAriaAttributeName_(stateName)));
+  goog.asserts.assert((attr == null || !isNaN(Number(attr))) &&
+      !goog.isBoolean(attr));
+  return attr == null ? null : Number(attr);
+};
+
+
+/**
+ * Gets the string value of an ARIA state/property.
+ * @param {!Element} element The element to get the ARIA state for.
+ * @param {!goog.a11y.aria.State|string} stateName the ARIA state name.
+ * @return {?string} String value for the ARIA state value or null if
+ *     the state value is empty string or not set.
+ */
+goog.a11y.aria.getStateString = function(element, stateName) {
+  var attr = element.getAttribute(
+      goog.a11y.aria.getAriaAttributeName_(stateName));
+  goog.asserts.assert((attr == null || goog.isString(attr)) &&
+      isNaN(Number(attr)) && attr != 'true' && attr != 'false');
+  return attr == null ? null : attr;
+};
+
+
+/**
+ * Gets array of strings value of the specified state or
+ * property for the element.
+ * Only to be used internally by the ARIA library in goog.a11y.aria.*.
+ * @param {!Element} element DOM node to get state from.
+ * @param {!goog.a11y.aria.State} stateName State name.
+ * @return {!goog.array.ArrayLike.<string>} string Array
+ *     value of the state attribute.
+ */
+goog.a11y.aria.getStringArrayStateInternalUtil = function(element, stateName) {
+  var attrValue = element.getAttribute(
+      goog.a11y.aria.getAriaAttributeName_(stateName));
+  return goog.a11y.aria.splitStringOnWhitespace_(attrValue);
+};
+
+
+/**
+ * Splits the input stringValue on whitespace.
+ * @param {string} stringValue The value of the string to split.
+ * @return {!goog.array.ArrayLike.<string>} string Array
+ *     value as result of the split.
+ * @private
+ */
+goog.a11y.aria.splitStringOnWhitespace_ = function(stringValue) {
+  return stringValue ? stringValue.split(/\s+/) : [];
+};
+
+
+/**
+ * Adds the 'aria-' prefix to ariaName.
+ * @param {string} ariaName ARIA state/property name.
+ * @private
+ * @return {string} The ARIA attribute name with added 'aria-' prefix.
+ * @throws {Error} If no such attribute exists.
+ */
+goog.a11y.aria.getAriaAttributeName_ = function(ariaName) {
+  if (goog.asserts.ENABLE_ASSERTS) {
+    goog.asserts.assert(ariaName, 'ARIA attribute cannot be empty.');
+    goog.asserts.assert(goog.object.containsValue(
+        goog.a11y.aria.State, ariaName),
+        'No such ARIA attribute ' + ariaName);
+  }
+  return goog.a11y.aria.ARIA_PREFIX_ + ariaName;
+};
+// Copyright 2008 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Functions to provide timezone information for use with
+ * date/time format.
+ */
+
+goog.provide('goog.i18n.TimeZone');
+
+goog.require('goog.array');
+goog.require('goog.date.DateLike');
+goog.require('goog.string');
+
+
+
+/**
+ * TimeZone class implemented a time zone resolution and name information
+ * source for client applications. The time zone object is initiated from
+ * a time zone information object. Application can initiate a time zone
+ * statically, or it may choose to initiate from a data obtained from server.
+ * Each time zone information array is small, but the whole set of data
+ * is too much for client application to download. If end user is allowed to
+ * change time zone setting, dynamic retrieval should be the method to use.
+ * In case only time zone offset is known, there is a decent fallback
+ * that only use the time zone offset to create a TimeZone object.
+ * A whole set of time zone information array was available under
+ * http://go/js_locale_data. It is generated based on CLDR and
+ * Olson time zone data base (through pytz), and will be updated timely.
+ *
+ * @constructor
+ * @final
+ */
+goog.i18n.TimeZone = function() {
+  /**
+   * The standard time zone id.
+   * @type {string}
+   * @private
+   */
+  this.timeZoneId_;
+
+
+  /**
+   * The standard, non-daylight time zone offset, in minutes WEST of UTC.
+   * @type {number}
+   * @private
+   */
+  this.standardOffset_;
+
+
+  /**
+   * An array of strings that can have 2 or 4 elements.  The first two elements
+   * are the long and short names for standard time in this time zone, and the
+   * last two elements (if present) are the long and short names for daylight
+   * time in this time zone.
+   * @type {Array.<string>}
+   * @private
+   */
+  this.tzNames_;
+
+
+  /**
+   * This array specifies the Daylight Saving Time transitions for this time
+   * zone.  This is a flat array of numbers which are interpreted in pairs:
+   * [time1, adjustment1, time2, adjustment2, ...] where each time is a DST
+   * transition point given as a number of hours since 00:00 UTC, January 1,
+   * 1970, and each adjustment is the adjustment to apply for times after the
+   * DST transition, given as minutes EAST of UTC.
+   * @type {Array.<number>}
+   * @private
+   */
+  this.transitions_;
+};
+
+
+/**
+ * The number of milliseconds in an hour.
+ * @type {number}
+ * @private
+ */
+goog.i18n.TimeZone.MILLISECONDS_PER_HOUR_ = 3600 * 1000;
+
+
+/**
+ * Indices into the array of time zone names.
+ * @enum {number}
+ */
+goog.i18n.TimeZone.NameType = {
+  STD_SHORT_NAME: 0,
+  STD_LONG_NAME: 1,
+  DLT_SHORT_NAME: 2,
+  DLT_LONG_NAME: 3
+};
+
+
+/**
+ * This factory method creates a time zone instance.  It takes either an object
+ * containing complete time zone information, or a single number representing a
+ * constant time zone offset.  If the latter form is used, DST functionality is
+ * not available.
+ *
+ * @param {number|Object} timeZoneData If this parameter is a number, it should
+ *     indicate minutes WEST of UTC to be used as a constant time zone offset.
+ *     Otherwise, it should be an object with these four fields:
+ *     <ul>
+ *     <li>id: A string ID for the time zone.
+ *     <li>std_offset: The standard time zone offset in minutes EAST of UTC.
+ *     <li>names: An array of four names (standard short name, standard long
+ *           name, daylight short name, daylight long, name)
+ *     <li>transitions: An array of numbers which are interpreted in pairs:
+ *           [time1, adjustment1, time2, adjustment2, ...] where each time is
+ *           a DST transition point given as a number of hours since 00:00 UTC,
+ *           January 1, 1970, and each adjustment is the adjustment to apply
+ *           for times after the DST transition, given as minutes EAST of UTC.
+ *     </ul>
+ * @return {!goog.i18n.TimeZone} A goog.i18n.TimeZone object for the given
+ *     time zone data.
+ */
+goog.i18n.TimeZone.createTimeZone = function(timeZoneData) {
+  if (typeof timeZoneData == 'number') {
+    return goog.i18n.TimeZone.createSimpleTimeZone_(timeZoneData);
+  }
+  var tz = new goog.i18n.TimeZone();
+  tz.timeZoneId_ = timeZoneData['id'];
+  tz.standardOffset_ = -timeZoneData['std_offset'];
+  tz.tzNames_ = timeZoneData['names'];
+  tz.transitions_ = timeZoneData['transitions'];
+  return tz;
+};
+
+
+/**
+ * This factory method creates a time zone object with a constant offset.
+ * @param {number} timeZoneOffsetInMinutes Offset in minutes WEST of UTC.
+ * @return {!goog.i18n.TimeZone} A time zone object with the given constant
+ *     offset.  Note that the time zone ID of this object will use the POSIX
+ *     convention, which has a reversed sign ("Etc/GMT+8" means UTC-8 or PST).
+ * @private
+ */
+goog.i18n.TimeZone.createSimpleTimeZone_ = function(timeZoneOffsetInMinutes) {
+  var tz = new goog.i18n.TimeZone();
+  tz.standardOffset_ = timeZoneOffsetInMinutes;
+  tz.timeZoneId_ =
+      goog.i18n.TimeZone.composePosixTimeZoneID_(timeZoneOffsetInMinutes);
+  var str = goog.i18n.TimeZone.composeUTCString_(timeZoneOffsetInMinutes);
+  tz.tzNames_ = [str, str];
+  tz.transitions_ = [];
+  return tz;
+};
+
+
+/**
+ * Generate a GMT-relative string for a constant time zone offset.
+ * @param {number} offset The time zone offset in minutes WEST of UTC.
+ * @return {string} The GMT string for this offset, which will indicate
+ *     hours EAST of UTC.
+ * @private
+ */
+goog.i18n.TimeZone.composeGMTString_ = function(offset) {
+  var parts = ['GMT'];
+  parts.push(offset <= 0 ? '+' : '-');
+  offset = Math.abs(offset);
+  parts.push(goog.string.padNumber(Math.floor(offset / 60) % 100, 2),
+             ':', goog.string.padNumber(offset % 60, 2));
+  return parts.join('');
+};
+
+
+/**
+ * Generate a POSIX time zone ID for a constant time zone offset.
+ * @param {number} offset The time zone offset in minutes WEST of UTC.
+ * @return {string} The POSIX time zone ID for this offset, which will indicate
+ *     hours WEST of UTC.
+ * @private
+ */
+goog.i18n.TimeZone.composePosixTimeZoneID_ = function(offset) {
+  if (offset == 0) {
+    return 'Etc/GMT';
+  }
+  var parts = ['Etc/GMT', offset < 0 ? '-' : '+'];
+  offset = Math.abs(offset);
+  parts.push(Math.floor(offset / 60) % 100);
+  offset = offset % 60;
+  if (offset != 0) {
+    parts.push(':', goog.string.padNumber(offset, 2));
+  }
+  return parts.join('');
+};
+
+
+/**
+ * Generate a UTC-relative string for a constant time zone offset.
+ * @param {number} offset The time zone offset in minutes WEST of UTC.
+ * @return {string} The UTC string for this offset, which will indicate
+ *     hours EAST of UTC.
+ * @private
+ */
+goog.i18n.TimeZone.composeUTCString_ = function(offset) {
+  if (offset == 0) {
+    return 'UTC';
+  }
+  var parts = ['UTC', offset < 0 ? '+' : '-'];
+  offset = Math.abs(offset);
+  parts.push(Math.floor(offset / 60) % 100);
+  offset = offset % 60;
+  if (offset != 0) {
+    parts.push(':', offset);
+  }
+  return parts.join('');
+};
+
+
+/**
+ * Convert the contents of time zone object to a timeZoneData object, suitable
+ * for passing to goog.i18n.TimeZone.createTimeZone.
+ * @return {!Object} A timeZoneData object (see the documentation for
+ *     goog.i18n.TimeZone.createTimeZone).
+ */
+goog.i18n.TimeZone.prototype.getTimeZoneData = function() {
+  return {
+    'id': this.timeZoneId_,
+    'std_offset': -this.standardOffset_,  // note createTimeZone flips the sign
+    'names': goog.array.clone(this.tzNames_),  // avoid aliasing the array
+    'transitions': goog.array.clone(this.transitions_)  // avoid aliasing
+  };
+};
+
+
+/**
+ * Return the DST adjustment to the time zone offset for a given time.
+ * While Daylight Saving Time is in effect, this number is positive.
+ * Otherwise, it is zero.
+ * @param {goog.date.DateLike} date The time to check.
+ * @return {number} The DST adjustment in minutes EAST of UTC.
+ */
+goog.i18n.TimeZone.prototype.getDaylightAdjustment = function(date) {
+  var timeInMs = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(),
+                          date.getUTCDate(), date.getUTCHours(),
+                          date.getUTCMinutes());
+  var timeInHours = timeInMs / goog.i18n.TimeZone.MILLISECONDS_PER_HOUR_;
+  var index = 0;
+  while (index < this.transitions_.length &&
+         timeInHours >= this.transitions_[index]) {
+    index += 2;
+  }
+  return (index == 0) ? 0 : this.transitions_[index - 1];
+};
+
+
+/**
+ * Return the GMT representation of this time zone object.
+ * @param {goog.date.DateLike} date The date for which time to retrieve
+ *     GMT string.
+ * @return {string} GMT representation string.
+ */
+goog.i18n.TimeZone.prototype.getGMTString = function(date) {
+  return goog.i18n.TimeZone.composeGMTString_(this.getOffset(date));
+};
+
+
+/**
+ * Get the long time zone name for a given date/time.
+ * @param {goog.date.DateLike} date The time for which to retrieve
+ *     the long time zone name.
+ * @return {string} The long time zone name.
+ */
+goog.i18n.TimeZone.prototype.getLongName = function(date) {
+  return this.tzNames_[this.isDaylightTime(date) ?
+      goog.i18n.TimeZone.NameType.DLT_LONG_NAME :
+      goog.i18n.TimeZone.NameType.STD_LONG_NAME];
+};
+
+
+/**
+ * Get the time zone offset in minutes WEST of UTC for a given date/time.
+ * @param {goog.date.DateLike} date The time for which to retrieve
+ *     the time zone offset.
+ * @return {number} The time zone offset in minutes WEST of UTC.
+ */
+goog.i18n.TimeZone.prototype.getOffset = function(date) {
+  return this.standardOffset_ - this.getDaylightAdjustment(date);
+};
+
+
+/**
+ * Get the RFC representation of the time zone for a given date/time.
+ * @param {goog.date.DateLike} date The time for which to retrieve the
+ *     RFC time zone string.
+ * @return {string} The RFC time zone string.
+ */
+goog.i18n.TimeZone.prototype.getRFCTimeZoneString = function(date) {
+  var offset = -this.getOffset(date);
+  var parts = [offset < 0 ? '-' : '+'];
+  offset = Math.abs(offset);
+  parts.push(goog.string.padNumber(Math.floor(offset / 60) % 100, 2),
+             goog.string.padNumber(offset % 60, 2));
+  return parts.join('');
+};
+
+
+/**
+ * Get the short time zone name for given date/time.
+ * @param {goog.date.DateLike} date The time for which to retrieve
+ *     the short time zone name.
+ * @return {string} The short time zone name.
+ */
+goog.i18n.TimeZone.prototype.getShortName = function(date) {
+  return this.tzNames_[this.isDaylightTime(date) ?
+      goog.i18n.TimeZone.NameType.DLT_SHORT_NAME :
+      goog.i18n.TimeZone.NameType.STD_SHORT_NAME];
+};
+
+
+/**
+ * Return the time zone ID for this time zone.
+ * @return {string} The time zone ID.
+ */
+goog.i18n.TimeZone.prototype.getTimeZoneId = function() {
+  return this.timeZoneId_;
+};
+
+
+/**
+ * Check if Daylight Saving Time is in effect at a given time in this time zone.
+ * @param {goog.date.DateLike} date The time to check.
+ * @return {boolean} True if Daylight Saving Time is in effect.
+ */
+goog.i18n.TimeZone.prototype.isDaylightTime = function(date) {
+  return this.getDaylightAdjustment(date) > 0;
+};
+// Copyright 2006 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Functions for dealing with date/time formatting.
+ */
+
+
+/**
+ * Namespace for i18n date/time formatting functions
+ */
+goog.provide('goog.i18n.DateTimeFormat');
+goog.provide('goog.i18n.DateTimeFormat.Format');
+
+goog.require('goog.asserts');
+goog.require('goog.date');
+goog.require('goog.i18n.DateTimeSymbols');
+goog.require('goog.i18n.TimeZone');
+goog.require('goog.string');
+
+
+/**
+ * Datetime formatting functions following the pattern specification as defined
+ * in JDK, ICU and CLDR, with minor modification for typical usage in JS.
+ * Pattern specification: (Refer to JDK/ICU/CLDR)
+ * <pre>
+ * Symbol Meaning Presentation        Example
+ * ------   -------                 ------------        -------
+ * G        era designator          (Text)              AD
+ * y#       year                    (Number)            1996
+ * Y*       year (week of year)     (Number)            1997
+ * u*       extended year           (Number)            4601
+ * M        month in year           (Text & Number)     July & 07
+ * d        day in month            (Number)            10
+ * h        hour in am/pm (1~12)    (Number)            12
+ * H        hour in day (0~23)      (Number)            0
+ * m        minute in hour          (Number)            30
+ * s        second in minute        (Number)            55
+ * S        fractional second       (Number)            978
+ * E        day of week             (Text)              Tuesday
+ * e*       day of week (local 1~7) (Number)            2
+ * D*       day in year             (Number)            189
+ * F*       day of week in month    (Number)            2 (2nd Wed in July)
+ * w        week in year            (Number)            27
+ * W*       week in month           (Number)            2
+ * a        am/pm marker            (Text)              PM
+ * k        hour in day (1~24)      (Number)            24
+ * K        hour in am/pm (0~11)    (Number)            0
+ * z        time zone               (Text)              Pacific Standard Time
+ * Z        time zone (RFC 822)     (Number)            -0800
+ * v        time zone (generic)     (Text)              Pacific Time
+ * g*       Julian day              (Number)            2451334
+ * A*       milliseconds in day     (Number)            69540000
+ * '        escape for text         (Delimiter)         'Date='
+ * ''       single quote            (Literal)           'o''clock'
+ *
+ * Item marked with '*' are not supported yet.
+ * Item marked with '#' works different than java
+ *
+ * The count of pattern letters determine the format.
+ * (Text): 4 or more, use full form, <4, use short or abbreviated form if it
+ * exists. (e.g., "EEEE" produces "Monday", "EEE" produces "Mon")
+ *
+ * (Number): the minimum number of digits. Shorter numbers are zero-padded to
+ * this amount (e.g. if "m" produces "6", "mm" produces "06"). Year is handled
+ * specially; that is, if the count of 'y' is 2, the Year will be truncated to
+ * 2 digits. (e.g., if "yyyy" produces "1997", "yy" produces "97".) Unlike other
+ * fields, fractional seconds are padded on the right with zero.
+ *
+ * (Text & Number): 3 or over, use text, otherwise use number. (e.g., "M"
+ * produces "1", "MM" produces "01", "MMM" produces "Jan", and "MMMM" produces
+ * "January".)
+ *
+ * Any characters in the pattern that are not in the ranges of ['a'..'z'] and
+ * ['A'..'Z'] will be treated as quoted text. For instance, characters like ':',
+ * '.', ' ', '#' and '@' will appear in the resulting time text even they are
+ * not embraced within single quotes.
+ * </pre>
+ */
+
+
+
+/**
+ * Construct a DateTimeFormat object based on current locale.
+ * @constructor
+ * @param {string|number} pattern pattern specification or pattern type.
+ * @param {!Object=} opt_dateTimeSymbols Optional symbols to use use for this
+ *     instance rather than the global symbols.
+ * @final
+ */
+goog.i18n.DateTimeFormat = function(pattern, opt_dateTimeSymbols) {
+  goog.asserts.assert(goog.isDef(pattern), 'Pattern must be defined');
+  goog.asserts.assert(
+      goog.isDef(opt_dateTimeSymbols) || goog.isDef(goog.i18n.DateTimeSymbols),
+      'goog.i18n.DateTimeSymbols or explicit symbols must be defined');
+
+  this.patternParts_ = [];
+
+  /**
+   * Data structure that with all the locale info needed for date formatting.
+   * (day/month names, most common patterns, rules for week-end, etc.)
+   * @type {!Object}
+   * @private
+   */
+  this.dateTimeSymbols_ = opt_dateTimeSymbols || goog.i18n.DateTimeSymbols;
+  if (typeof pattern == 'number') {
+    this.applyStandardPattern_(pattern);
+  } else {
+    this.applyPattern_(pattern);
+  }
+};
+
+
+/**
+ * Enum to identify predefined Date/Time format pattern.
+ * @enum {number}
+ */
+goog.i18n.DateTimeFormat.Format = {
+  FULL_DATE: 0,
+  LONG_DATE: 1,
+  MEDIUM_DATE: 2,
+  SHORT_DATE: 3,
+  FULL_TIME: 4,
+  LONG_TIME: 5,
+  MEDIUM_TIME: 6,
+  SHORT_TIME: 7,
+  FULL_DATETIME: 8,
+  LONG_DATETIME: 9,
+  MEDIUM_DATETIME: 10,
+  SHORT_DATETIME: 11
+};
+
+
+/**
+ * regular expression pattern for parsing pattern string
+ * @type {Array.<RegExp>}
+ * @private
+ */
+goog.i18n.DateTimeFormat.TOKENS_ = [
+  //quote string
+  /^\'(?:[^\']|\'\')*\'/,
+  // pattern chars
+  /^(?:G+|y+|M+|k+|S+|E+|a+|h+|K+|H+|c+|L+|Q+|d+|m+|s+|v+|w+|z+|Z+)/,
+  // and all the other chars
+  /^[^\'GyMkSEahKHcLQdmsvwzZ]+/  // and all the other chars
+];
+
+
+/**
+ * These are token types, corresponding to above token definitions.
+ * @enum {number}
+ * @private
+ */
+goog.i18n.DateTimeFormat.PartTypes_ = {
+  QUOTED_STRING: 0,
+  FIELD: 1,
+  LITERAL: 2
+};
+
+
+/**
+ * Apply specified pattern to this formatter object.
+ * @param {string} pattern String specifying how the date should be formatted.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.applyPattern_ = function(pattern) {
+  // lex the pattern, once for all uses
+  while (pattern) {
+    for (var i = 0; i < goog.i18n.DateTimeFormat.TOKENS_.length; ++i) {
+      var m = pattern.match(goog.i18n.DateTimeFormat.TOKENS_[i]);
+      if (m) {
+        var part = m[0];
+        pattern = pattern.substring(part.length);
+        if (i == goog.i18n.DateTimeFormat.PartTypes_.QUOTED_STRING) {
+          if (part == "''") {
+            part = "'";  // '' -> '
+          } else {
+            part = part.substring(1, part.length - 1); // strip quotes
+            part = part.replace(/\'\'/, "'");
+          }
+        }
+        this.patternParts_.push({ text: part, type: i });
+        break;
+      }
+    }
+  }
+};
+
+
+/**
+ * Format the given date object according to preset pattern and current lcoale.
+ * @param {goog.date.DateLike} date The Date object that is being formatted.
+ * @param {goog.i18n.TimeZone=} opt_timeZone optional, if specified, time
+ *    related fields will be formatted based on its setting. When this field
+ *    is not specified, "undefined" will be pass around and those function
+ *    that really need time zone service will create a default one.
+ * @return {string} Formatted string for the given date.
+ */
+goog.i18n.DateTimeFormat.prototype.format = function(date, opt_timeZone) {
+  // We don't want to write code to calculate each date field because we
+  // want to maximize performance and minimize code size.
+  // JavaScript only provide API to render local time.
+  // Suppose target date is: 16:00 GMT-0400
+  // OS local time is:       12:00 GMT-0800
+  // We want to create a Local Date Object : 16:00 GMT-0800, and fix the
+  // time zone display ourselves.
+  // Thing get a little bit tricky when daylight time transition happens. For
+  // example, suppose OS timeZone is America/Los_Angeles, it is impossible to
+  // represent "2006/4/2 02:30" even for those timeZone that has no transition
+  // at this time. Because 2:00 to 3:00 on that day does not exising in
+  // America/Los_Angeles time zone. To avoid calculating date field through
+  // our own code, we uses 3 Date object instead, one for "Year, month, day",
+  // one for time within that day, and one for timeZone object since it need
+  // the real time to figure out actual time zone offset.
+  var diff = opt_timeZone ?
+      (date.getTimezoneOffset() - opt_timeZone.getOffset(date)) * 60000 : 0;
+  var dateForDate = diff ? new Date(date.getTime() + diff) : date;
+  var dateForTime = dateForDate;
+  // in daylight time switch on/off hour, diff adjustment could alter time
+  // because of timeZone offset change, move 1 day forward or backward.
+  if (opt_timeZone &&
+      dateForDate.getTimezoneOffset() != date.getTimezoneOffset()) {
+    diff += diff > 0 ? -24 * 60 * 60000 : 24 * 60 * 60000;
+    dateForTime = new Date(date.getTime() + diff);
+  }
+
+  var out = [];
+  for (var i = 0; i < this.patternParts_.length; ++i) {
+    var text = this.patternParts_[i].text;
+    if (goog.i18n.DateTimeFormat.PartTypes_.FIELD ==
+        this.patternParts_[i].type) {
+      out.push(this.formatField_(text, date, dateForDate, dateForTime,
+                                 opt_timeZone));
+    } else {
+      out.push(text);
+    }
+  }
+  return out.join('');
+};
+
+
+/**
+ * Apply a predefined pattern as identified by formatType, which is stored in
+ * locale specific repository.
+ * @param {number} formatType A number that identified the predefined pattern.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.applyStandardPattern_ =
+    function(formatType) {
+  var pattern;
+  if (formatType < 4) {
+    pattern = this.dateTimeSymbols_.DATEFORMATS[formatType];
+  } else if (formatType < 8) {
+    pattern = this.dateTimeSymbols_.TIMEFORMATS[formatType - 4];
+  } else if (formatType < 12) {
+    pattern = this.dateTimeSymbols_.DATETIMEFORMATS[formatType - 8];
+    pattern = pattern.replace('{1}',
+        this.dateTimeSymbols_.DATEFORMATS[formatType - 8]);
+    pattern = pattern.replace('{0}',
+        this.dateTimeSymbols_.TIMEFORMATS[formatType - 8]);
+  } else {
+    this.applyStandardPattern_(goog.i18n.DateTimeFormat.Format.MEDIUM_DATETIME);
+    return;
+  }
+  this.applyPattern_(pattern);
+};
+
+
+/**
+ * Localizes a string potentially containing numbers, replacing ASCII digits
+ * with native digits if specified so by the locale. Leaves other characters.
+ *
+ * Although this is not private anymore, is should not be used.
+ * We needed to make it public so that we can use it in goog.date.relative.
+ * But when CLDR gets better support for relative dates, this will be
+ * refactored and will become private again.
+ *
+ * @param {string} input the string to be localized, using ASCII digits.
+ * @return {string} localized string, potentially using native digits.
+ */
+goog.i18n.DateTimeFormat.prototype.localizeNumbers = function(input) {
+  // TODO(user): fix date/duration.js and date/relative.js.
+  // They call goog.i18n.DateTimeFormat.prototype.localizeNumbers directly,
+  // without calling a constructor.
+  if (this.dateTimeSymbols_ === undefined ||
+      this.dateTimeSymbols_.ZERODIGIT === undefined) {
+    return input;
+  }
+
+  var parts = [];
+  for (var i = 0; i < input.length; i++) {
+    var c = input.charCodeAt(i);
+    parts.push((0x30 <= c && c <= 0x39) ? // '0' <= c <= '9'
+        String.fromCharCode(this.dateTimeSymbols_.ZERODIGIT + c - 0x30) :
+        input.charAt(i));
+  }
+  return parts.join('');
+};
+
+
+/**
+ * Formats Era field according to pattern specified.
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatEra_ = function(count, date) {
+  var value = date.getFullYear() > 0 ? 1 : 0;
+  return count >= 4 ? this.dateTimeSymbols_.ERANAMES[value] :
+                      this.dateTimeSymbols_.ERAS[value];
+};
+
+
+/**
+ * Formats Year field according to pattern specified
+ *   Javascript Date object seems incapable handling 1BC and
+ *   year before. It can show you year 0 which does not exists.
+ *   following we just keep consistent with javascript's
+ *   toString method. But keep in mind those things should be
+ *   unsupported.
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatYear_ = function(count, date) {
+  var value = date.getFullYear();
+  if (value < 0) {
+    value = -value;
+  }
+  if (count == 2) {
+    // See comment about special casing 'yy' at the start of the file, this
+    // matches ICU and CLDR behaviour. See also:
+    // http://icu-project.org/apiref/icu4j/com/ibm/icu/text/SimpleDateFormat.html
+    // http://www.unicode.org/reports/tr35/tr35-dates.html
+    value = value % 100;
+  }
+  return this.localizeNumbers(goog.string.padNumber(value, count));
+};
+
+
+/**
+ * Formats Month field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatMonth_ = function(count, date) {
+  var value = date.getMonth();
+  switch (count) {
+    case 5: return this.dateTimeSymbols_.NARROWMONTHS[value];
+    case 4: return this.dateTimeSymbols_.MONTHS[value];
+    case 3: return this.dateTimeSymbols_.SHORTMONTHS[value];
+    default:
+      return this.localizeNumbers(goog.string.padNumber(value + 1, count));
+  }
+};
+
+
+/**
+ * Formats (1..24) Hours field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats. This controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.format24Hours_ =
+    function(count, date) {
+  return this.localizeNumbers(
+      goog.string.padNumber(date.getHours() || 24, count));
+};
+
+
+/**
+ * Formats Fractional seconds field according to pattern
+ * specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ *
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatFractionalSeconds_ =
+    function(count, date) {
+  // Fractional seconds left-justify, append 0 for precision beyond 3
+  var value = date.getTime() % 1000 / 1000;
+  return this.localizeNumbers(
+      value.toFixed(Math.min(3, count)).substr(2) +
+      (count > 3 ? goog.string.padNumber(0, count - 3) : ''));
+};
+
+
+/**
+ * Formats Day of week field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatDayOfWeek_ =
+    function(count, date) {
+  var value = date.getDay();
+  return count >= 4 ? this.dateTimeSymbols_.WEEKDAYS[value] :
+                      this.dateTimeSymbols_.SHORTWEEKDAYS[value];
+};
+
+
+/**
+ * Formats Am/Pm field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatAmPm_ = function(count, date) {
+  var hours = date.getHours();
+  return this.dateTimeSymbols_.AMPMS[hours >= 12 && hours < 24 ? 1 : 0];
+};
+
+
+/**
+ * Formats (1..12) Hours field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.format1To12Hours_ =
+    function(count, date) {
+  return this.localizeNumbers(
+      goog.string.padNumber(date.getHours() % 12 || 12, count));
+};
+
+
+/**
+ * Formats (0..11) Hours field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.format0To11Hours_ =
+    function(count, date) {
+  return this.localizeNumbers(
+      goog.string.padNumber(date.getHours() % 12, count));
+};
+
+
+/**
+ * Formats (0..23) Hours field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.format0To23Hours_ =
+    function(count, date) {
+  return this.localizeNumbers(goog.string.padNumber(date.getHours(), count));
+};
+
+
+/**
+ * Formats Standalone weekday field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatStandaloneDay_ =
+    function(count, date) {
+  var value = date.getDay();
+  switch (count) {
+    case 5:
+      return this.dateTimeSymbols_.STANDALONENARROWWEEKDAYS[value];
+    case 4:
+      return this.dateTimeSymbols_.STANDALONEWEEKDAYS[value];
+    case 3:
+      return this.dateTimeSymbols_.STANDALONESHORTWEEKDAYS[value];
+    default:
+      return this.localizeNumbers(goog.string.padNumber(value, 1));
+  }
+};
+
+
+/**
+ * Formats Standalone Month field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatStandaloneMonth_ =
+    function(count, date) {
+  var value = date.getMonth();
+  switch (count) {
+    case 5:
+      return this.dateTimeSymbols_.STANDALONENARROWMONTHS[value];
+    case 4:
+      return this.dateTimeSymbols_.STANDALONEMONTHS[value];
+    case 3:
+      return this.dateTimeSymbols_.STANDALONESHORTMONTHS[value];
+    default:
+      return this.localizeNumbers(goog.string.padNumber(value + 1, count));
+  }
+};
+
+
+/**
+ * Formats Quarter field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatQuarter_ =
+    function(count, date) {
+  var value = Math.floor(date.getMonth() / 3);
+  return count < 4 ? this.dateTimeSymbols_.SHORTQUARTERS[value] :
+                     this.dateTimeSymbols_.QUARTERS[value];
+};
+
+
+/**
+ * Formats Date field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatDate_ = function(count, date) {
+  return this.localizeNumbers(goog.string.padNumber(date.getDate(), count));
+};
+
+
+/**
+ * Formats Minutes field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatMinutes_ =
+    function(count, date) {
+  return this.localizeNumbers(goog.string.padNumber(date.getMinutes(), count));
+};
+
+
+/**
+ * Formats Seconds field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatSeconds_ =
+    function(count, date) {
+  return this.localizeNumbers(goog.string.padNumber(date.getSeconds(), count));
+};
+
+
+/**
+ * Formats the week of year field according to pattern specified
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatWeekOfYear_ = function(count, date) {
+
+
+  var weekNum = goog.date.getWeekNumber(
+      date.getFullYear(), date.getMonth(), date.getDate(),
+      this.dateTimeSymbols_.FIRSTWEEKCUTOFFDAY,
+      this.dateTimeSymbols_.FIRSTDAYOFWEEK);
+
+  return this.localizeNumbers(goog.string.padNumber(weekNum, count));
+};
+
+
+/**
+ * Formats TimeZone field following RFC
+ *
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date It holds the date object to be formatted.
+ * @param {goog.i18n.TimeZone=} opt_timeZone This holds current time zone info.
+ * @return {string} Formatted string that represent this field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatTimeZoneRFC_ =
+    function(count, date, opt_timeZone) {
+  opt_timeZone = opt_timeZone ||
+      goog.i18n.TimeZone.createTimeZone(date.getTimezoneOffset());
+
+  // RFC 822 formats should be kept in ASCII, but localized GMT formats may need
+  // to use native digits.
+  return count < 4 ? opt_timeZone.getRFCTimeZoneString(date) :
+                     this.localizeNumbers(opt_timeZone.getGMTString(date));
+};
+
+
+/**
+ * Generate GMT timeZone string for given date
+ * @param {number} count Number of time pattern char repeats, it controls
+ *     how a field should be formatted.
+ * @param {goog.date.DateLike} date Whose value being evaluated.
+ * @param {goog.i18n.TimeZone=} opt_timeZone This holds current time zone info.
+ * @return {string} GMT timeZone string.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatTimeZone_ =
+    function(count, date, opt_timeZone) {
+  opt_timeZone = opt_timeZone ||
+      goog.i18n.TimeZone.createTimeZone(date.getTimezoneOffset());
+  return count < 4 ? opt_timeZone.getShortName(date) :
+             opt_timeZone.getLongName(date);
+};
+
+
+/**
+ * Generate GMT timeZone string for given date
+ * @param {goog.date.DateLike} date Whose value being evaluated.
+ * @param {goog.i18n.TimeZone=} opt_timeZone This holds current time zone info.
+ * @return {string} GMT timeZone string.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatTimeZoneId_ =
+    function(date, opt_timeZone) {
+  opt_timeZone = opt_timeZone ||
+      goog.i18n.TimeZone.createTimeZone(date.getTimezoneOffset());
+  return opt_timeZone.getTimeZoneId();
+};
+
+
+/**
+ * Formatting one date field.
+ * @param {string} patternStr The pattern string for the field being formatted.
+ * @param {goog.date.DateLike} date represents the real date to be formatted.
+ * @param {goog.date.DateLike} dateForDate used to resolve date fields
+ *     for formatting.
+ * @param {goog.date.DateLike} dateForTime used to resolve time fields
+ *     for formatting.
+ * @param {goog.i18n.TimeZone=} opt_timeZone This holds current time zone info.
+ * @return {string} string representation for the given field.
+ * @private
+ */
+goog.i18n.DateTimeFormat.prototype.formatField_ =
+    function(patternStr, date, dateForDate, dateForTime, opt_timeZone) {
+  var count = patternStr.length;
+  switch (patternStr.charAt(0)) {
+    case 'G': return this.formatEra_(count, dateForDate);
+    case 'y': return this.formatYear_(count, dateForDate);
+    case 'M': return this.formatMonth_(count, dateForDate);
+    case 'k': return this.format24Hours_(count, dateForTime);
+    case 'S': return this.formatFractionalSeconds_(count, dateForTime);
+    case 'E': return this.formatDayOfWeek_(count, dateForDate);
+    case 'a': return this.formatAmPm_(count, dateForTime);
+    case 'h': return this.format1To12Hours_(count, dateForTime);
+    case 'K': return this.format0To11Hours_(count, dateForTime);
+    case 'H': return this.format0To23Hours_(count, dateForTime);
+    case 'c': return this.formatStandaloneDay_(count, dateForDate);
+    case 'L': return this.formatStandaloneMonth_(count, dateForDate);
+    case 'Q': return this.formatQuarter_(count, dateForDate);
+    case 'd': return this.formatDate_(count, dateForDate);
+    case 'm': return this.formatMinutes_(count, dateForTime);
+    case 's': return this.formatSeconds_(count, dateForTime);
+    case 'v': return this.formatTimeZoneId_(date, opt_timeZone);
+    case 'w': return this.formatWeekOfYear_(count, dateForTime);
+    case 'z': return this.formatTimeZone_(count, date, opt_timeZone);
+    case 'Z': return this.formatTimeZoneRFC_(count, date, opt_timeZone);
+    default: return '';
+  }
+};
+
+// Copyright 2008 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Date range data structure. Based loosely on
+ * com.google.common.util.DateRange.
+ *
+ */
+
+goog.provide('goog.date.DateRange');
+goog.provide('goog.date.DateRange.Iterator');
+goog.provide('goog.date.DateRange.StandardDateRangeKeys');
+
+goog.require('goog.date.Date');
+goog.require('goog.date.Interval');
+goog.require('goog.iter.Iterator');
+goog.require('goog.iter.StopIteration');
+
+
+
+/**
+ * Constructs a date range.
+ * @constructor
+ * @param {goog.date.Date} startDate The first date in the range.
+ * @param {goog.date.Date} endDate The last date in the range.
+ * @final
+ */
+goog.date.DateRange = function(startDate, endDate) {
+  /**
+   * The first date in the range.
+   * @type {goog.date.Date}
+   * @private
+   */
+  this.startDate_ = startDate;
+
+  /**
+   * The last date in the range.
+   * @type {goog.date.Date}
+   * @private
+   */
+  this.endDate_ = endDate;
+};
+
+
+/**
+ * The first possible day, as far as this class is concerned.
+ * @type {goog.date.Date}
+ */
+goog.date.DateRange.MINIMUM_DATE = new goog.date.Date(0000, 0, 1);
+
+
+/**
+ * The last possible day, as far as this class is concerned.
+ * @type {goog.date.Date}
+ */
+goog.date.DateRange.MAXIMUM_DATE = new goog.date.Date(9999, 11, 31);
+
+
+/**
+ * @return {goog.date.Date} The first date in the range.
+ */
+goog.date.DateRange.prototype.getStartDate = function() {
+  return this.startDate_;
+};
+
+
+/**
+ * @return {goog.date.Date} The last date in the range.
+ */
+goog.date.DateRange.prototype.getEndDate = function() {
+  return this.endDate_;
+};
+
+
+/**
+ * Tests if a date falls within this range.
+ *
+ * @param {goog.date.Date} date The date to test.
+ * @return {boolean} Whether the date is in the range.
+ */
+goog.date.DateRange.prototype.contains = function(date) {
+  return date.valueOf() >= this.startDate_.valueOf() &&
+      date.valueOf() <= this.endDate_.valueOf();
+};
+
+
+/**
+ * @return {goog.iter.Iterator} An iterator over the date range.
+ */
+goog.date.DateRange.prototype.iterator = function() {
+  return new goog.date.DateRange.Iterator(this);
+};
+
+
+/**
+ * Tests two {@link goog.date.DateRange} objects for equality.
+ * @param {goog.date.DateRange} a A date range.
+ * @param {goog.date.DateRange} b A date range.
+ * @return {boolean} Whether |a| is the same range as |b|.
+ */
+goog.date.DateRange.equals = function(a, b) {
+  // Test for same object reference; type conversion is irrelevant.
+  if (a === b) {
+    return true;
+  }
+
+  if (a == null || b == null) {
+    return false;
+  }
+
+  return a.startDate_.equals(b.startDate_) && a.endDate_.equals(b.endDate_);
+};
+
+
+/**
+ * Calculates a date that is a number of days after a date. Does not modify its
+ * input.
+ * @param {goog.date.Date} date The input date.
+ * @param {number} offset Number of days.
+ * @return {goog.date.Date} The date that is |offset| days after |date|.
+ * @private
+ */
+goog.date.DateRange.offsetInDays_ = function(date, offset) {
+  var newDate = date.clone();
+  newDate.add(new goog.date.Interval(goog.date.Interval.DAYS, offset));
+  return newDate;
+};
+
+
+/**
+ * Calculates the Monday before a date. If the input is a Monday, returns the
+ * input. Does not modify its input.
+ * @param {goog.date.Date} date The input date.
+ * @return {goog.date.Date} If |date| is a Monday, return |date|; otherwise
+ *     return the Monday before |date|.
+ * @private
+ */
+goog.date.DateRange.currentOrLastMonday_ = function(date) {
+  var newDate = date.clone();
+  newDate.add(new goog.date.Interval(goog.date.Interval.DAYS,
+      -newDate.getIsoWeekday()));
+  return newDate;
+};
+
+
+/**
+ * Calculates a date that is a number of months after the first day in the
+ * month that contains its input. Does not modify its input.
+ * @param {goog.date.Date} date The input date.
+ * @param {number} offset Number of months.
+ * @return {goog.date.Date} The date that is |offset| months after the first
+ *     day in the month that contains |date|.
+ * @private
+ */
+goog.date.DateRange.offsetInMonths_ = function(date, offset) {
+  var newDate = date.clone();
+  newDate.setDate(1);
+  newDate.add(new goog.date.Interval(goog.date.Interval.MONTHS, offset));
+  return newDate;
+};
+
+
+/**
+ * Returns the range from yesterday to yesterday.
+ * @param {goog.date.Date=} opt_today The date to consider today.
+ *     Defaults to today.
+ * @return {goog.date.DateRange} The range that includes only yesterday.
+ */
+goog.date.DateRange.yesterday = function(opt_today) {
+  var today = goog.date.DateRange.cloneOrCreate_(opt_today);
+  var yesterday = goog.date.DateRange.offsetInDays_(today, -1);
+  return new goog.date.DateRange(yesterday, yesterday);
+};
+
+
+/**
+ * Returns the range from today to today.
+ * @param {goog.date.Date=} opt_today The date to consider today.
+ *     Defaults to today.
+ * @return {goog.date.DateRange} The range that includes only today.
+ */
+goog.date.DateRange.today = function(opt_today) {
+  var today = goog.date.DateRange.cloneOrCreate_(opt_today);
+  return new goog.date.DateRange(today, today);
+};
+
+
+/**
+ * Returns the range that includes the seven days that end yesterday.
+ * @param {goog.date.Date=} opt_today The date to consider today.
+ *     Defaults to today.
+ * @return {goog.date.DateRange} The range that includes the seven days that
+ *     end yesterday.
+ */
+goog.date.DateRange.last7Days = function(opt_today) {
+  var today = goog.date.DateRange.cloneOrCreate_(opt_today);
+  var yesterday = goog.date.DateRange.offsetInDays_(today, -1);
+  return new goog.date.DateRange(goog.date.DateRange.offsetInDays_(today, -7),
+      yesterday);
+};
+
+
+/**
+ * Returns the range that starts the first of this month and ends the last day
+ * of this month.
+ * @param {goog.date.Date=} opt_today The date to consider today.
+ *     Defaults to today.
+ * @return {goog.date.DateRange} The range that starts the first of this month
+ *     and ends the last day of this month.
+ */
+goog.date.DateRange.thisMonth = function(opt_today) {
+  var today = goog.date.DateRange.cloneOrCreate_(opt_today);
+  return new goog.date.DateRange(
+      goog.date.DateRange.offsetInMonths_(today, 0),
+      goog.date.DateRange.offsetInDays_(
+          goog.date.DateRange.offsetInMonths_(today, 1),
+          -1));
+};
+
+
+/**
+ * Returns the range that starts the first of last month and ends the last day
+ * of last month.
+ * @param {goog.date.Date=} opt_today The date to consider today.
+ *     Defaults to today.
+ * @return {goog.date.DateRange} The range that starts the first of last month
+ *     and ends the last day of last month.
+ */
+goog.date.DateRange.lastMonth = function(opt_today) {
+  var today = goog.date.DateRange.cloneOrCreate_(opt_today);
+  return new goog.date.DateRange(
+      goog.date.DateRange.offsetInMonths_(today, -1),
+      goog.date.DateRange.offsetInDays_(
+          goog.date.DateRange.offsetInMonths_(today, 0),
+          -1));
+};
+
+
+/**
+ * Returns the seven-day range that starts on the first day of the week
+ * (see {@link goog.i18n.DateTimeSymbols.FIRSTDAYOFWEEK}) on or before today.
+ * @param {goog.date.Date=} opt_today The date to consider today.
+ *     Defaults to today.
+ * @return {goog.date.DateRange} The range that starts the Monday on or before
+ *     today and ends the Sunday on or after today.
+ */
+goog.date.DateRange.thisWeek = function(opt_today) {
+  var today = goog.date.DateRange.cloneOrCreate_(opt_today);
+  var iso = today.getIsoWeekday();
+  var firstDay = today.getFirstDayOfWeek();
+  var i18nFirstDay = (iso >= firstDay) ? iso - firstDay : iso + (7 - firstDay);
+  var start = goog.date.DateRange.offsetInDays_(today, -i18nFirstDay);
+  var end = goog.date.DateRange.offsetInDays_(start, 6);
+  return new goog.date.DateRange(start, end);
+};
+
+
+/**
+ * Returns the seven-day range that ends the day before the first day of
+ * the week (see {@link goog.i18n.DateTimeSymbols.FIRSTDAYOFWEEK}) that
+ * contains today.
+ * @param {goog.date.Date=} opt_today The date to consider today.
+ *     Defaults to today.
+ * @return {goog.date.DateRange} The range that starts seven days before the
+ *     Monday on or before today and ends the Sunday on or before yesterday.
+ */
+goog.date.DateRange.lastWeek = function(opt_today) {
+  var thisWeek = goog.date.DateRange.thisWeek(opt_today);
+  var start = goog.date.DateRange.offsetInDays_(thisWeek.getStartDate(), -7);
+  var end = goog.date.DateRange.offsetInDays_(thisWeek.getEndDate(), -7);
+  return new goog.date.DateRange(start, end);
+};
+
+
+/**
+ * Returns the range that starts seven days before the Monday on or before
+ * today and ends the Friday before today.
+ * @param {goog.date.Date=} opt_today The date to consider today.
+ *     Defaults to today.
+ * @return {goog.date.DateRange} The range that starts seven days before the
+ *     Monday on or before today and ends the Friday before today.
+ */
+goog.date.DateRange.lastBusinessWeek = function(opt_today) {
+  // TODO(user): should be i18nized.
+  var today = goog.date.DateRange.cloneOrCreate_(opt_today);
+  var start = goog.date.DateRange.offsetInDays_(today,
+      - 7 - today.getIsoWeekday());
+  var end = goog.date.DateRange.offsetInDays_(start, 4);
+  return new goog.date.DateRange(start, end);
+};
+
+
+/**
+ * Returns the range that includes all days between January 1, 1900 and
+ * December 31, 9999.
+ * @param {goog.date.Date=} opt_today The date to consider today.
+ *     Defaults to today.
+ * @return {goog.date.DateRange} The range that includes all days between
+ *     January 1, 1900 and December 31, 9999.
+ */
+goog.date.DateRange.allTime = function(opt_today) {
+  return new goog.date.DateRange(
+      goog.date.DateRange.MINIMUM_DATE,
+      goog.date.DateRange.MAXIMUM_DATE);
+};
+
+
+/**
+ * Standard date range keys. Equivalent to the enum IDs in
+ * DateRange.java http://go/datarange.java
+ *
+ * @enum {string}
+ */
+goog.date.DateRange.StandardDateRangeKeys = {
+  YESTERDAY: 'yesterday',
+  TODAY: 'today',
+  LAST_7_DAYS: 'last7days',
+  THIS_MONTH: 'thismonth',
+  LAST_MONTH: 'lastmonth',
+  THIS_WEEK: 'thisweek',
+  LAST_WEEK: 'lastweek',
+  LAST_BUSINESS_WEEK: 'lastbusinessweek',
+  ALL_TIME: 'alltime'
+};
+
+
+/**
+ * @param {string} dateRangeKey A standard date range key.
+ * @param {goog.date.Date=} opt_today The date to consider today.
+ *     Defaults to today.
+ * @return {goog.date.DateRange} The date range that corresponds to that key.
+ * @throws {Error} If no standard date range with that key exists.
+ */
+goog.date.DateRange.standardDateRange = function(dateRangeKey, opt_today) {
+  switch (dateRangeKey) {
+    case goog.date.DateRange.StandardDateRangeKeys.YESTERDAY:
+      return goog.date.DateRange.yesterday(opt_today);
+
+    case goog.date.DateRange.StandardDateRangeKeys.TODAY:
+      return goog.date.DateRange.today(opt_today);
+
+    case goog.date.DateRange.StandardDateRangeKeys.LAST_7_DAYS:
+      return goog.date.DateRange.last7Days(opt_today);
+
+    case goog.date.DateRange.StandardDateRangeKeys.THIS_MONTH:
+      return goog.date.DateRange.thisMonth(opt_today);
+
+    case goog.date.DateRange.StandardDateRangeKeys.LAST_MONTH:
+      return goog.date.DateRange.lastMonth(opt_today);
+
+    case goog.date.DateRange.StandardDateRangeKeys.THIS_WEEK:
+      return goog.date.DateRange.thisWeek(opt_today);
+
+    case goog.date.DateRange.StandardDateRangeKeys.LAST_WEEK:
+      return goog.date.DateRange.lastWeek(opt_today);
+
+    case goog.date.DateRange.StandardDateRangeKeys.LAST_BUSINESS_WEEK:
+      return goog.date.DateRange.lastBusinessWeek(opt_today);
+
+    case goog.date.DateRange.StandardDateRangeKeys.ALL_TIME:
+      return goog.date.DateRange.allTime(opt_today);
+
+    default:
+      throw Error('no such date range key: ' + dateRangeKey);
+  }
+};
+
+
+/**
+ * Clones or creates new.
+ * @param {goog.date.Date=} opt_today The date to consider today.
+ *     Defaults to today.
+ * @return {!goog.date.Date} cloned or new.
+ * @private
+ */
+goog.date.DateRange.cloneOrCreate_ = function(opt_today) {
+  return opt_today ? opt_today.clone() : new goog.date.Date();
+};
+
+
+
+/**
+ * Creates an iterator over the dates in a {@link goog.date.DateRange}.
+ * @constructor
+ * @extends {goog.iter.Iterator}
+ * @param {goog.date.DateRange} dateRange The date range to iterate.
+ * @final
+ */
+goog.date.DateRange.Iterator = function(dateRange) {
+  /**
+   * The next date.
+   * @type {goog.date.Date}
+   * @private
+   */
+  this.nextDate_ = dateRange.getStartDate().clone();
+
+  /**
+   * The end date, expressed as an integer: YYYYMMDD.
+   * @type {number}
+   * @private
+   */
+  this.endDate_ = Number(dateRange.getEndDate().toIsoString());
+};
+goog.inherits(goog.date.DateRange.Iterator, goog.iter.Iterator);
+
+
+/** @override */
+goog.date.DateRange.Iterator.prototype.next = function() {
+  if (Number(this.nextDate_.toIsoString()) > this.endDate_) {
+    throw goog.iter.StopIteration;
+  }
+
+  var rv = this.nextDate_.clone();
+  this.nextDate_.add(new goog.date.Interval(goog.date.Interval.DAYS, 1));
+  return rv;
+};
+// Copyright 2006 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Constant declarations for common key codes.
+ *
+ * @author eae@google.com (Emil A Eklund)
+ * @see ../demos/keyhandler.html
+ */
+
+goog.provide('goog.events.KeyCodes');
+
+goog.require('goog.userAgent');
+
+
+/**
+ * Key codes for common characters.
+ *
+ * This list is not localized and therefore some of the key codes are not
+ * correct for non US keyboard layouts. See comments below.
+ *
+ * @enum {number}
+ */
+goog.events.KeyCodes = {
+  WIN_KEY_FF_LINUX: 0,
+  MAC_ENTER: 3,
+  BACKSPACE: 8,
+  TAB: 9,
+  NUM_CENTER: 12,  // NUMLOCK on FF/Safari Mac
+  ENTER: 13,
+  SHIFT: 16,
+  CTRL: 17,
+  ALT: 18,
+  PAUSE: 19,
+  CAPS_LOCK: 20,
+  ESC: 27,
+  SPACE: 32,
+  PAGE_UP: 33,     // also NUM_NORTH_EAST
+  PAGE_DOWN: 34,   // also NUM_SOUTH_EAST
+  END: 35,         // also NUM_SOUTH_WEST
+  HOME: 36,        // also NUM_NORTH_WEST
+  LEFT: 37,        // also NUM_WEST
+  UP: 38,          // also NUM_NORTH
+  RIGHT: 39,       // also NUM_EAST
+  DOWN: 40,        // also NUM_SOUTH
+  PRINT_SCREEN: 44,
+  INSERT: 45,      // also NUM_INSERT
+  DELETE: 46,      // also NUM_DELETE
+  ZERO: 48,
+  ONE: 49,
+  TWO: 50,
+  THREE: 51,
+  FOUR: 52,
+  FIVE: 53,
+  SIX: 54,
+  SEVEN: 55,
+  EIGHT: 56,
+  NINE: 57,
+  FF_SEMICOLON: 59, // Firefox (Gecko) fires this for semicolon instead of 186
+  FF_EQUALS: 61, // Firefox (Gecko) fires this for equals instead of 187
+  FF_DASH: 173, // Firefox (Gecko) fires this for dash instead of 189
+  QUESTION_MARK: 63, // needs localization
+  A: 65,
+  B: 66,
+  C: 67,
+  D: 68,
+  E: 69,
+  F: 70,
+  G: 71,
+  H: 72,
+  I: 73,
+  J: 74,
+  K: 75,
+  L: 76,
+  M: 77,
+  N: 78,
+  O: 79,
+  P: 80,
+  Q: 81,
+  R: 82,
+  S: 83,
+  T: 84,
+  U: 85,
+  V: 86,
+  W: 87,
+  X: 88,
+  Y: 89,
+  Z: 90,
+  META: 91, // WIN_KEY_LEFT
+  WIN_KEY_RIGHT: 92,
+  CONTEXT_MENU: 93,
+  NUM_ZERO: 96,
+  NUM_ONE: 97,
+  NUM_TWO: 98,
+  NUM_THREE: 99,
+  NUM_FOUR: 100,
+  NUM_FIVE: 101,
+  NUM_SIX: 102,
+  NUM_SEVEN: 103,
+  NUM_EIGHT: 104,
+  NUM_NINE: 105,
+  NUM_MULTIPLY: 106,
+  NUM_PLUS: 107,
+  NUM_MINUS: 109,
+  NUM_PERIOD: 110,
+  NUM_DIVISION: 111,
+  F1: 112,
+  F2: 113,
+  F3: 114,
+  F4: 115,
+  F5: 116,
+  F6: 117,
+  F7: 118,
+  F8: 119,
+  F9: 120,
+  F10: 121,
+  F11: 122,
+  F12: 123,
+  NUMLOCK: 144,
+  SCROLL_LOCK: 145,
+
+  // OS-specific media keys like volume controls and browser controls.
+  FIRST_MEDIA_KEY: 166,
+  LAST_MEDIA_KEY: 183,
+
+  SEMICOLON: 186,            // needs localization
+  DASH: 189,                 // needs localization
+  EQUALS: 187,               // needs localization
+  COMMA: 188,                // needs localization
+  PERIOD: 190,               // needs localization
+  SLASH: 191,                // needs localization
+  APOSTROPHE: 192,           // needs localization
+  TILDE: 192,                // needs localization
+  SINGLE_QUOTE: 222,         // needs localization
+  OPEN_SQUARE_BRACKET: 219,  // needs localization
+  BACKSLASH: 220,            // needs localization
+  CLOSE_SQUARE_BRACKET: 221, // needs localization
+  WIN_KEY: 224,
+  MAC_FF_META: 224, // Firefox (Gecko) fires this for the meta key instead of 91
+  MAC_WK_CMD_LEFT: 91,  // WebKit Left Command key fired, same as META
+  MAC_WK_CMD_RIGHT: 93, // WebKit Right Command key fired, different from META
+  WIN_IME: 229,
+
+  // We've seen users whose machines fire this keycode at regular one
+  // second intervals. The common thread among these users is that
+  // they're all using Dell Inspiron laptops, so we suspect that this
+  // indicates a hardware/bios problem.
+  // http://en.community.dell.com/support-forums/laptop/f/3518/p/19285957/19523128.aspx
+  PHANTOM: 255
+};
+
+
+/**
+ * Returns true if the event contains a text modifying key.
+ * @param {goog.events.BrowserEvent} e A key event.
+ * @return {boolean} Whether it's a text modifying key.
+ */
+goog.events.KeyCodes.isTextModifyingKeyEvent = function(e) {
+  if (e.altKey && !e.ctrlKey ||
+      e.metaKey ||
+      // Function keys don't generate text
+      e.keyCode >= goog.events.KeyCodes.F1 &&
+      e.keyCode <= goog.events.KeyCodes.F12) {
+    return false;
+  }
+
+  // The following keys are quite harmless, even in combination with
+  // CTRL, ALT or SHIFT.
+  switch (e.keyCode) {
+    case goog.events.KeyCodes.ALT:
+    case goog.events.KeyCodes.CAPS_LOCK:
+    case goog.events.KeyCodes.CONTEXT_MENU:
+    case goog.events.KeyCodes.CTRL:
+    case goog.events.KeyCodes.DOWN:
+    case goog.events.KeyCodes.END:
+    case goog.events.KeyCodes.ESC:
+    case goog.events.KeyCodes.HOME:
+    case goog.events.KeyCodes.INSERT:
+    case goog.events.KeyCodes.LEFT:
+    case goog.events.KeyCodes.MAC_FF_META:
+    case goog.events.KeyCodes.META:
+    case goog.events.KeyCodes.NUMLOCK:
+    case goog.events.KeyCodes.NUM_CENTER:
+    case goog.events.KeyCodes.PAGE_DOWN:
+    case goog.events.KeyCodes.PAGE_UP:
+    case goog.events.KeyCodes.PAUSE:
+    case goog.events.KeyCodes.PHANTOM:
+    case goog.events.KeyCodes.PRINT_SCREEN:
+    case goog.events.KeyCodes.RIGHT:
+    case goog.events.KeyCodes.SCROLL_LOCK:
+    case goog.events.KeyCodes.SHIFT:
+    case goog.events.KeyCodes.UP:
+    case goog.events.KeyCodes.WIN_KEY:
+    case goog.events.KeyCodes.WIN_KEY_RIGHT:
+      return false;
+    case goog.events.KeyCodes.WIN_KEY_FF_LINUX:
+      return !goog.userAgent.GECKO;
+    default:
+      return e.keyCode < goog.events.KeyCodes.FIRST_MEDIA_KEY ||
+          e.keyCode > goog.events.KeyCodes.LAST_MEDIA_KEY;
+  }
+};
+
+
+/**
+ * Returns true if the key fires a keypress event in the current browser.
+ *
+ * Accoridng to MSDN [1] IE only fires keypress events for the following keys:
+ * - Letters: A - Z (uppercase and lowercase)
+ * - Numerals: 0 - 9
+ * - Symbols: ! @ # $ % ^ & * ( ) _ - + = < [ ] { } , . / ? \ | ' ` " ~
+ * - System: ESC, SPACEBAR, ENTER
+ *
+ * That's not entirely correct though, for instance there's no distinction
+ * between upper and lower case letters.
+ *
+ * [1] http://msdn2.microsoft.com/en-us/library/ms536939(VS.85).aspx)
+ *
+ * Safari is similar to IE, but does not fire keypress for ESC.
+ *
+ * Additionally, IE6 does not fire keydown or keypress events for letters when
+ * the control or alt keys are held down and the shift key is not. IE7 does
+ * fire keydown in these cases, though, but not keypress.
+ *
+ * @param {number} keyCode A key code.
+ * @param {number=} opt_heldKeyCode Key code of a currently-held key.
+ * @param {boolean=} opt_shiftKey Whether the shift key is held down.
+ * @param {boolean=} opt_ctrlKey Whether the control key is held down.
+ * @param {boolean=} opt_altKey Whether the alt key is held down.
+ * @return {boolean} Whether it's a key that fires a keypress event.
+ */
+goog.events.KeyCodes.firesKeyPressEvent = function(keyCode, opt_heldKeyCode,
+    opt_shiftKey, opt_ctrlKey, opt_altKey) {
+  if (!goog.userAgent.IE &&
+      !(goog.userAgent.WEBKIT && goog.userAgent.isVersionOrHigher('525'))) {
+    return true;
+  }
+
+  if (goog.userAgent.MAC && opt_altKey) {
+    return goog.events.KeyCodes.isCharacterKey(keyCode);
+  }
+
+  // Alt but not AltGr which is represented as Alt+Ctrl.
+  if (opt_altKey && !opt_ctrlKey) {
+    return false;
+  }
+
+  // Saves Ctrl or Alt + key for IE and WebKit 525+, which won't fire keypress.
+  // Non-IE browsers and WebKit prior to 525 won't get this far so no need to
+  // check the user agent.
+  if (goog.isNumber(opt_heldKeyCode)) {
+    opt_heldKeyCode = goog.events.KeyCodes.normalizeKeyCode(opt_heldKeyCode);
+  }
+  if (!opt_shiftKey &&
+      (opt_heldKeyCode == goog.events.KeyCodes.CTRL ||
+       opt_heldKeyCode == goog.events.KeyCodes.ALT ||
+       goog.userAgent.MAC &&
+       opt_heldKeyCode == goog.events.KeyCodes.META)) {
+    return false;
+  }
+
+  // Some keys with Ctrl/Shift do not issue keypress in WEBKIT.
+  if (goog.userAgent.WEBKIT && opt_ctrlKey && opt_shiftKey) {
+    switch (keyCode) {
+      case goog.events.KeyCodes.BACKSLASH:
+      case goog.events.KeyCodes.OPEN_SQUARE_BRACKET:
+      case goog.events.KeyCodes.CLOSE_SQUARE_BRACKET:
+      case goog.events.KeyCodes.TILDE:
+      case goog.events.KeyCodes.SEMICOLON:
+      case goog.events.KeyCodes.DASH:
+      case goog.events.KeyCodes.EQUALS:
+      case goog.events.KeyCodes.COMMA:
+      case goog.events.KeyCodes.PERIOD:
+      case goog.events.KeyCodes.SLASH:
+      case goog.events.KeyCodes.APOSTROPHE:
+      case goog.events.KeyCodes.SINGLE_QUOTE:
+        return false;
+    }
+  }
+
+  // When Ctrl+<somekey> is held in IE, it only fires a keypress once, but it
+  // continues to fire keydown events as the event repeats.
+  if (goog.userAgent.IE && opt_ctrlKey && opt_heldKeyCode == keyCode) {
+    return false;
+  }
+
+  switch (keyCode) {
+    case goog.events.KeyCodes.ENTER:
+      // IE9 does not fire KEYPRESS on ENTER.
+      return !(goog.userAgent.IE && goog.userAgent.isDocumentModeOrHigher(9));
+    case goog.events.KeyCodes.ESC:
+      return !goog.userAgent.WEBKIT;
+  }
+
+  return goog.events.KeyCodes.isCharacterKey(keyCode);
+};
+
+
+/**
+ * Returns true if the key produces a character.
+ * This does not cover characters on non-US keyboards (Russian, Hebrew, etc.).
+ *
+ * @param {number} keyCode A key code.
+ * @return {boolean} Whether it's a character key.
+ */
+goog.events.KeyCodes.isCharacterKey = function(keyCode) {
+  if (keyCode >= goog.events.KeyCodes.ZERO &&
+      keyCode <= goog.events.KeyCodes.NINE) {
+    return true;
+  }
+
+  if (keyCode >= goog.events.KeyCodes.NUM_ZERO &&
+      keyCode <= goog.events.KeyCodes.NUM_MULTIPLY) {
+    return true;
+  }
+
+  if (keyCode >= goog.events.KeyCodes.A &&
+      keyCode <= goog.events.KeyCodes.Z) {
+    return true;
+  }
+
+  // Safari sends zero key code for non-latin characters.
+  if (goog.userAgent.WEBKIT && keyCode == 0) {
+    return true;
+  }
+
+  switch (keyCode) {
+    case goog.events.KeyCodes.SPACE:
+    case goog.events.KeyCodes.QUESTION_MARK:
+    case goog.events.KeyCodes.NUM_PLUS:
+    case goog.events.KeyCodes.NUM_MINUS:
+    case goog.events.KeyCodes.NUM_PERIOD:
+    case goog.events.KeyCodes.NUM_DIVISION:
+    case goog.events.KeyCodes.SEMICOLON:
+    case goog.events.KeyCodes.FF_SEMICOLON:
+    case goog.events.KeyCodes.DASH:
+    case goog.events.KeyCodes.EQUALS:
+    case goog.events.KeyCodes.FF_EQUALS:
+    case goog.events.KeyCodes.COMMA:
+    case goog.events.KeyCodes.PERIOD:
+    case goog.events.KeyCodes.SLASH:
+    case goog.events.KeyCodes.APOSTROPHE:
+    case goog.events.KeyCodes.SINGLE_QUOTE:
+    case goog.events.KeyCodes.OPEN_SQUARE_BRACKET:
+    case goog.events.KeyCodes.BACKSLASH:
+    case goog.events.KeyCodes.CLOSE_SQUARE_BRACKET:
+      return true;
+    default:
+      return false;
+  }
+};
+
+
+/**
+ * Normalizes key codes from OS/Browser-specific value to the general one.
+ * @param {number} keyCode The native key code.
+ * @return {number} The normalized key code.
+ */
+goog.events.KeyCodes.normalizeKeyCode = function(keyCode) {
+  if (goog.userAgent.GECKO) {
+    return goog.events.KeyCodes.normalizeGeckoKeyCode(keyCode);
+  } else if (goog.userAgent.MAC && goog.userAgent.WEBKIT) {
+    return goog.events.KeyCodes.normalizeMacWebKitKeyCode(keyCode);
+  } else {
+    return keyCode;
+  }
+};
+
+
+/**
+ * Normalizes key codes from their Gecko-specific value to the general one.
+ * @param {number} keyCode The native key code.
+ * @return {number} The normalized key code.
+ */
+goog.events.KeyCodes.normalizeGeckoKeyCode = function(keyCode) {
+  switch (keyCode) {
+    case goog.events.KeyCodes.FF_EQUALS:
+      return goog.events.KeyCodes.EQUALS;
+    case goog.events.KeyCodes.FF_SEMICOLON:
+      return goog.events.KeyCodes.SEMICOLON;
+    case goog.events.KeyCodes.FF_DASH:
+      return goog.events.KeyCodes.DASH;
+    case goog.events.KeyCodes.MAC_FF_META:
+      return goog.events.KeyCodes.META;
+    case goog.events.KeyCodes.WIN_KEY_FF_LINUX:
+      return goog.events.KeyCodes.WIN_KEY;
+    default:
+      return keyCode;
+  }
+};
+
+
+/**
+ * Normalizes key codes from their Mac WebKit-specific value to the general one.
+ * @param {number} keyCode The native key code.
+ * @return {number} The normalized key code.
+ */
+goog.events.KeyCodes.normalizeMacWebKitKeyCode = function(keyCode) {
+  switch (keyCode) {
+    case goog.events.KeyCodes.MAC_WK_CMD_RIGHT:  // 93
+      return goog.events.KeyCodes.META;          // 91
+    default:
+      return keyCode;
+  }
+};
+// Copyright 2007 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview This file contains a class for working with keyboard events
+ * that repeat consistently across browsers and platforms. It also unifies the
+ * key code so that it is the same in all browsers and platforms.
+ *
+ * Different web browsers have very different keyboard event handling. Most
+ * importantly is that only certain browsers repeat keydown events:
+ * IE, Opera, FF/Win32, and Safari 3 repeat keydown events.
+ * FF/Mac and Safari 2 do not.
+ *
+ * For the purposes of this code, "Safari 3" means WebKit 525+, when WebKit
+ * decided that they should try to match IE's key handling behavior.
+ * Safari 3.0.4, which shipped with Leopard (WebKit 523), has the
+ * Safari 2 behavior.
+ *
+ * Firefox, Safari, Opera prevent on keypress
+ *
+ * IE prevents on keydown
+ *
+ * Firefox does not fire keypress for shift, ctrl, alt
+ * Firefox does fire keydown for shift, ctrl, alt, meta
+ * Firefox does not repeat keydown for shift, ctrl, alt, meta
+ *
+ * Firefox does not fire keypress for up and down in an input
+ *
+ * Opera fires keypress for shift, ctrl, alt, meta
+ * Opera does not repeat keypress for shift, ctrl, alt, meta
+ *
+ * Safari 2 and 3 do not fire keypress for shift, ctrl, alt
+ * Safari 2 does not fire keydown for shift, ctrl, alt
+ * Safari 3 *does* fire keydown for shift, ctrl, alt
+ *
+ * IE provides the keycode for keyup/down events and the charcode (in the
+ * keycode field) for keypress.
+ *
+ * Mozilla provides the keycode for keyup/down and the charcode for keypress
+ * unless it's a non text modifying key in which case the keycode is provided.
+ *
+ * Safari 3 provides the keycode and charcode for all events.
+ *
+ * Opera provides the keycode for keyup/down event and either the charcode or
+ * the keycode (in the keycode field) for keypress events.
+ *
+ * Firefox x11 doesn't fire keydown events if a another key is already held down
+ * until the first key is released. This can cause a key event to be fired with
+ * a keyCode for the first key and a charCode for the second key.
+ *
+ * Safari in keypress
+ *
+ *        charCode keyCode which
+ * ENTER:       13      13    13
+ * F1:       63236   63236 63236
+ * F8:       63243   63243 63243
+ * ...
+ * p:          112     112   112
+ * P:           80      80    80
+ *
+ * Firefox, keypress:
+ *
+ *        charCode keyCode which
+ * ENTER:        0      13    13
+ * F1:           0     112     0
+ * F8:           0     119     0
+ * ...
+ * p:          112       0   112
+ * P:           80       0    80
+ *
+ * Opera, Mac+Win32, keypress:
+ *
+ *         charCode keyCode which
+ * ENTER: undefined      13    13
+ * F1:    undefined     112     0
+ * F8:    undefined     119     0
+ * ...
+ * p:     undefined     112   112
+ * P:     undefined      80    80
+ *
+ * IE7, keydown
+ *
+ *         charCode keyCode     which
+ * ENTER: undefined      13 undefined
+ * F1:    undefined     112 undefined
+ * F8:    undefined     119 undefined
+ * ...
+ * p:     undefined      80 undefined
+ * P:     undefined      80 undefined
+ *
+ * @author arv@google.com (Erik Arvidsson)
+ * @author eae@google.com (Emil A Eklund)
+ * @see ../demos/keyhandler.html
+ */
+
+goog.provide('goog.events.KeyEvent');
+goog.provide('goog.events.KeyHandler');
+goog.provide('goog.events.KeyHandler.EventType');
+
+goog.require('goog.events');
+goog.require('goog.events.BrowserEvent');
+goog.require('goog.events.EventTarget');
+goog.require('goog.events.EventType');
+goog.require('goog.events.KeyCodes');
+goog.require('goog.userAgent');
+
+
+
+/**
+ * A wrapper around an element that you want to listen to keyboard events on.
+ * @param {Element|Document=} opt_element The element or document to listen on.
+ * @param {boolean=} opt_capture Whether to listen for browser events in
+ *     capture phase (defaults to false).
+ * @constructor
+ * @extends {goog.events.EventTarget}
+ * @final
+ */
+goog.events.KeyHandler = function(opt_element, opt_capture) {
+  goog.events.EventTarget.call(this);
+
+  if (opt_element) {
+    this.attach(opt_element, opt_capture);
+  }
+};
+goog.inherits(goog.events.KeyHandler, goog.events.EventTarget);
+
+
+/**
+ * This is the element that we will listen to the real keyboard events on.
+ * @type {Element|Document|null}
+ * @private
+ */
+goog.events.KeyHandler.prototype.element_ = null;
+
+
+/**
+ * The key for the key press listener.
+ * @type {goog.events.Key}
+ * @private
+ */
+goog.events.KeyHandler.prototype.keyPressKey_ = null;
+
+
+/**
+ * The key for the key down listener.
+ * @type {goog.events.Key}
+ * @private
+ */
+goog.events.KeyHandler.prototype.keyDownKey_ = null;
+
+
+/**
+ * The key for the key up listener.
+ * @type {goog.events.Key}
+ * @private
+ */
+goog.events.KeyHandler.prototype.keyUpKey_ = null;
+
+
+/**
+ * Used to detect keyboard repeat events.
+ * @private
+ * @type {number}
+ */
+goog.events.KeyHandler.prototype.lastKey_ = -1;
+
+
+/**
+ * Keycode recorded for key down events. As most browsers don't report the
+ * keycode in the key press event we need to record it in the key down phase.
+ * @private
+ * @type {number}
+ */
+goog.events.KeyHandler.prototype.keyCode_ = -1;
+
+
+/**
+ * Alt key recorded for key down events. FF on Mac does not report the alt key
+ * flag in the key press event, we need to record it in the key down phase.
+ * @type {boolean}
+ * @private
+ */
+goog.events.KeyHandler.prototype.altKey_ = false;
+
+
+/**
+ * Enum type for the events fired by the key handler
+ * @enum {string}
+ */
+goog.events.KeyHandler.EventType = {
+  KEY: 'key'
+};
+
+
+/**
+ * An enumeration of key codes that Safari 2 does incorrectly
+ * @type {Object}
+ * @private
+ */
+goog.events.KeyHandler.safariKey_ = {
+  '3': goog.events.KeyCodes.ENTER, // 13
+  '12': goog.events.KeyCodes.NUMLOCK, // 144
+  '63232': goog.events.KeyCodes.UP, // 38
+  '63233': goog.events.KeyCodes.DOWN, // 40
+  '63234': goog.events.KeyCodes.LEFT, // 37
+  '63235': goog.events.KeyCodes.RIGHT, // 39
+  '63236': goog.events.KeyCodes.F1, // 112
+  '63237': goog.events.KeyCodes.F2, // 113
+  '63238': goog.events.KeyCodes.F3, // 114
+  '63239': goog.events.KeyCodes.F4, // 115
+  '63240': goog.events.KeyCodes.F5, // 116
+  '63241': goog.events.KeyCodes.F6, // 117
+  '63242': goog.events.KeyCodes.F7, // 118
+  '63243': goog.events.KeyCodes.F8, // 119
+  '63244': goog.events.KeyCodes.F9, // 120
+  '63245': goog.events.KeyCodes.F10, // 121
+  '63246': goog.events.KeyCodes.F11, // 122
+  '63247': goog.events.KeyCodes.F12, // 123
+  '63248': goog.events.KeyCodes.PRINT_SCREEN, // 44
+  '63272': goog.events.KeyCodes.DELETE, // 46
+  '63273': goog.events.KeyCodes.HOME, // 36
+  '63275': goog.events.KeyCodes.END, // 35
+  '63276': goog.events.KeyCodes.PAGE_UP, // 33
+  '63277': goog.events.KeyCodes.PAGE_DOWN, // 34
+  '63289': goog.events.KeyCodes.NUMLOCK, // 144
+  '63302': goog.events.KeyCodes.INSERT // 45
+};
+
+
+/**
+ * An enumeration of key identifiers currently part of the W3C draft for DOM3
+ * and their mappings to keyCodes.
+ * http://www.w3.org/TR/DOM-Level-3-Events/keyset.html#KeySet-Set
+ * This is currently supported in Safari and should be platform independent.
+ * @type {Object}
+ * @private
+ */
+goog.events.KeyHandler.keyIdentifier_ = {
+  'Up': goog.events.KeyCodes.UP, // 38
+  'Down': goog.events.KeyCodes.DOWN, // 40
+  'Left': goog.events.KeyCodes.LEFT, // 37
+  'Right': goog.events.KeyCodes.RIGHT, // 39
+  'Enter': goog.events.KeyCodes.ENTER, // 13
+  'F1': goog.events.KeyCodes.F1, // 112
+  'F2': goog.events.KeyCodes.F2, // 113
+  'F3': goog.events.KeyCodes.F3, // 114
+  'F4': goog.events.KeyCodes.F4, // 115
+  'F5': goog.events.KeyCodes.F5, // 116
+  'F6': goog.events.KeyCodes.F6, // 117
+  'F7': goog.events.KeyCodes.F7, // 118
+  'F8': goog.events.KeyCodes.F8, // 119
+  'F9': goog.events.KeyCodes.F9, // 120
+  'F10': goog.events.KeyCodes.F10, // 121
+  'F11': goog.events.KeyCodes.F11, // 122
+  'F12': goog.events.KeyCodes.F12, // 123
+  'U+007F': goog.events.KeyCodes.DELETE, // 46
+  'Home': goog.events.KeyCodes.HOME, // 36
+  'End': goog.events.KeyCodes.END, // 35
+  'PageUp': goog.events.KeyCodes.PAGE_UP, // 33
+  'PageDown': goog.events.KeyCodes.PAGE_DOWN, // 34
+  'Insert': goog.events.KeyCodes.INSERT // 45
+};
+
+
+/**
+ * If true, the KeyEvent fires on keydown. Otherwise, it fires on keypress.
+ *
+ * @type {boolean}
+ * @private
+ */
+goog.events.KeyHandler.USES_KEYDOWN_ = goog.userAgent.IE ||
+    goog.userAgent.WEBKIT && goog.userAgent.isVersionOrHigher('525');
+
+
+/**
+ * If true, the alt key flag is saved during the key down and reused when
+ * handling the key press. FF on Mac does not set the alt flag in the key press
+ * event.
+ * @type {boolean}
+ * @private
+ */
+goog.events.KeyHandler.SAVE_ALT_FOR_KEYPRESS_ = goog.userAgent.MAC &&
+    goog.userAgent.GECKO;
+
+
+/**
+ * Records the keycode for browsers that only returns the keycode for key up/
+ * down events. For browser/key combinations that doesn't trigger a key pressed
+ * event it also fires the patched key event.
+ * @param {goog.events.BrowserEvent} e The key down event.
+ * @private
+ */
+goog.events.KeyHandler.prototype.handleKeyDown_ = function(e) {
+  // Ctrl-Tab and Alt-Tab can cause the focus to be moved to another window
+  // before we've caught a key-up event.  If the last-key was one of these we
+  // reset the state.
+  if (goog.userAgent.WEBKIT) {
+    if (this.lastKey_ == goog.events.KeyCodes.CTRL && !e.ctrlKey ||
+        this.lastKey_ == goog.events.KeyCodes.ALT && !e.altKey ||
+        goog.userAgent.MAC &&
+        this.lastKey_ == goog.events.KeyCodes.META && !e.metaKey) {
+      this.lastKey_ = -1;
+      this.keyCode_ = -1;
+    }
+  }
+
+  if (this.lastKey_ == -1) {
+    if (e.ctrlKey && e.keyCode != goog.events.KeyCodes.CTRL) {
+      this.lastKey_ = goog.events.KeyCodes.CTRL;
+    } else if (e.altKey && e.keyCode != goog.events.KeyCodes.ALT) {
+      this.lastKey_ = goog.events.KeyCodes.ALT;
+    } else if (e.metaKey && e.keyCode != goog.events.KeyCodes.META) {
+      this.lastKey_ = goog.events.KeyCodes.META;
+    }
+  }
+
+  if (goog.events.KeyHandler.USES_KEYDOWN_ &&
+      !goog.events.KeyCodes.firesKeyPressEvent(e.keyCode,
+          this.lastKey_, e.shiftKey, e.ctrlKey, e.altKey)) {
+    this.handleEvent(e);
+  } else {
+    this.keyCode_ = goog.events.KeyCodes.normalizeKeyCode(e.keyCode);
+    if (goog.events.KeyHandler.SAVE_ALT_FOR_KEYPRESS_) {
+      this.altKey_ = e.altKey;
+    }
+  }
+};
+
+
+/**
+ * Resets the stored previous values. Needed to be called for webkit which will
+ * not generate a key up for meta key operations. This should only be called
+ * when having finished with repeat key possiblities.
+ */
+goog.events.KeyHandler.prototype.resetState = function() {
+  this.lastKey_ = -1;
+  this.keyCode_ = -1;
+};
+
+
+/**
+ * Clears the stored previous key value, resetting the key repeat status. Uses
+ * -1 because the Safari 3 Windows beta reports 0 for certain keys (like Home
+ * and End.)
+ * @param {goog.events.BrowserEvent} e The keyup event.
+ * @private
+ */
+goog.events.KeyHandler.prototype.handleKeyup_ = function(e) {
+  this.resetState();
+  this.altKey_ = e.altKey;
+};
+
+
+/**
+ * Handles the events on the element.
+ * @param {goog.events.BrowserEvent} e  The keyboard event sent from the
+ *     browser.
+ */
+goog.events.KeyHandler.prototype.handleEvent = function(e) {
+  var be = e.getBrowserEvent();
+  var keyCode, charCode;
+  var altKey = be.altKey;
+
+  // IE reports the character code in the keyCode field for keypress events.
+  // There are two exceptions however, Enter and Escape.
+  if (goog.userAgent.IE && e.type == goog.events.EventType.KEYPRESS) {
+    keyCode = this.keyCode_;
+    charCode = keyCode != goog.events.KeyCodes.ENTER &&
+        keyCode != goog.events.KeyCodes.ESC ?
+            be.keyCode : 0;
+
+  // Safari reports the character code in the keyCode field for keypress
+  // events but also has a charCode field.
+  } else if (goog.userAgent.WEBKIT &&
+      e.type == goog.events.EventType.KEYPRESS) {
+    keyCode = this.keyCode_;
+    charCode = be.charCode >= 0 && be.charCode < 63232 &&
+        goog.events.KeyCodes.isCharacterKey(keyCode) ?
+            be.charCode : 0;
+
+  // Opera reports the keycode or the character code in the keyCode field.
+  } else if (goog.userAgent.OPERA) {
+    keyCode = this.keyCode_;
+    charCode = goog.events.KeyCodes.isCharacterKey(keyCode) ?
+        be.keyCode : 0;
+
+  // Mozilla reports the character code in the charCode field.
+  } else {
+    keyCode = be.keyCode || this.keyCode_;
+    charCode = be.charCode || 0;
+    if (goog.events.KeyHandler.SAVE_ALT_FOR_KEYPRESS_) {
+      altKey = this.altKey_;
+    }
+    // On the Mac, shift-/ triggers a question mark char code and no key code
+    // (normalized to WIN_KEY), so we synthesize the latter.
+    if (goog.userAgent.MAC &&
+        charCode == goog.events.KeyCodes.QUESTION_MARK &&
+        keyCode == goog.events.KeyCodes.WIN_KEY) {
+      keyCode = goog.events.KeyCodes.SLASH;
+    }
+  }
+
+  keyCode = goog.events.KeyCodes.normalizeKeyCode(keyCode);
+  var key = keyCode;
+  var keyIdentifier = be.keyIdentifier;
+
+  // Correct the key value for certain browser-specific quirks.
+  if (keyCode) {
+    if (keyCode >= 63232 && keyCode in goog.events.KeyHandler.safariKey_) {
+      // NOTE(nicksantos): Safari 3 has fixed this problem,
+      // this is only needed for Safari 2.
+      key = goog.events.KeyHandler.safariKey_[keyCode];
+    } else {
+
+      // Safari returns 25 for Shift+Tab instead of 9.
+      if (keyCode == 25 && e.shiftKey) {
+        key = 9;
+      }
+    }
+  } else if (keyIdentifier &&
+             keyIdentifier in goog.events.KeyHandler.keyIdentifier_) {
+    // This is needed for Safari Windows because it currently doesn't give a
+    // keyCode/which for non printable keys.
+    key = goog.events.KeyHandler.keyIdentifier_[keyIdentifier];
+  }
+
+  // If we get the same keycode as a keydown/keypress without having seen a
+  // keyup event, then this event was caused by key repeat.
+  var repeat = key == this.lastKey_;
+  this.lastKey_ = key;
+
+  var event = new goog.events.KeyEvent(key, charCode, repeat, be);
+  event.altKey = altKey;
+  this.dispatchEvent(event);
+};
+
+
+/**
+ * Returns the element listened on for the real keyboard events.
+ * @return {Element|Document|null} The element listened on for the real
+ *     keyboard events.
+ */
+goog.events.KeyHandler.prototype.getElement = function() {
+  return this.element_;
+};
+
+
+/**
+ * Adds the proper key event listeners to the element.
+ * @param {Element|Document} element The element to listen on.
+ * @param {boolean=} opt_capture Whether to listen for browser events in
+ *     capture phase (defaults to false).
+ */
+goog.events.KeyHandler.prototype.attach = function(element, opt_capture) {
+  if (this.keyUpKey_) {
+    this.detach();
+  }
+
+  this.element_ = element;
+
+  this.keyPressKey_ = goog.events.listen(this.element_,
+                                         goog.events.EventType.KEYPRESS,
+                                         this,
+                                         opt_capture);
+
+  // Most browsers (Safari 2 being the notable exception) doesn't include the
+  // keyCode in keypress events (IE has the char code in the keyCode field and
+  // Mozilla only included the keyCode if there's no charCode). Thus we have to
+  // listen for keydown to capture the keycode.
+  this.keyDownKey_ = goog.events.listen(this.element_,
+                                        goog.events.EventType.KEYDOWN,
+                                        this.handleKeyDown_,
+                                        opt_capture,
+                                        this);
+
+
+  this.keyUpKey_ = goog.events.listen(this.element_,
+                                      goog.events.EventType.KEYUP,
+                                      this.handleKeyup_,
+                                      opt_capture,
+                                      this);
+};
+
+
+/**
+ * Removes the listeners that may exist.
+ */
+goog.events.KeyHandler.prototype.detach = function() {
+  if (this.keyPressKey_) {
+    goog.events.unlistenByKey(this.keyPressKey_);
+    goog.events.unlistenByKey(this.keyDownKey_);
+    goog.events.unlistenByKey(this.keyUpKey_);
+    this.keyPressKey_ = null;
+    this.keyDownKey_ = null;
+    this.keyUpKey_ = null;
+  }
+  this.element_ = null;
+  this.lastKey_ = -1;
+  this.keyCode_ = -1;
+};
+
+
+/** @override */
+goog.events.KeyHandler.prototype.disposeInternal = function() {
+  goog.events.KeyHandler.superClass_.disposeInternal.call(this);
+  this.detach();
+};
+
+
+
+/**
+ * This class is used for the goog.events.KeyHandler.EventType.KEY event and
+ * it overrides the key code with the fixed key code.
+ * @param {number} keyCode The adjusted key code.
+ * @param {number} charCode The unicode character code.
+ * @param {boolean} repeat Whether this event was generated by keyboard repeat.
+ * @param {Event} browserEvent Browser event object.
+ * @constructor
+ * @extends {goog.events.BrowserEvent}
+ * @final
+ */
+goog.events.KeyEvent = function(keyCode, charCode, repeat, browserEvent) {
+  goog.events.BrowserEvent.call(this, browserEvent);
+  this.type = goog.events.KeyHandler.EventType.KEY;
+
+  /**
+   * Keycode of key press.
+   * @type {number}
+   */
+  this.keyCode = keyCode;
+
+  /**
+   * Unicode character code.
+   * @type {number}
+   */
+  this.charCode = charCode;
+
+  /**
+   * True if this event was generated by keyboard auto-repeat (i.e., the user is
+   * holding the key down.)
+   * @type {boolean}
+   */
+  this.repeat = repeat;
+};
+goog.inherits(goog.events.KeyEvent, goog.events.BrowserEvent);
+// Copyright 2006 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Date picker implementation.
+ *
+ * @author eae@google.com (Emil A Eklund)
+ * @see ../demos/datepicker.html
+ */
+
+goog.provide('goog.ui.DatePicker');
+goog.provide('goog.ui.DatePicker.Events');
+goog.provide('goog.ui.DatePickerEvent');
+
+goog.require('goog.a11y.aria');
+goog.require('goog.asserts');
+goog.require('goog.date.Date');
+goog.require('goog.date.DateRange');
+goog.require('goog.date.Interval');
+goog.require('goog.dom');
+goog.require('goog.dom.NodeType');
+goog.require('goog.dom.classlist');
+goog.require('goog.events.Event');
+goog.require('goog.events.EventType');
+goog.require('goog.events.KeyHandler');
+goog.require('goog.i18n.DateTimeFormat');
+goog.require('goog.i18n.DateTimePatterns');
+goog.require('goog.i18n.DateTimeSymbols');
+goog.require('goog.style');
+goog.require('goog.ui.Component');
+goog.require('goog.ui.DefaultDatePickerRenderer');
+goog.require('goog.ui.IdGenerator');
+
+
+
+/**
+ * DatePicker widget. Allows a single date to be selected from a calendar like
+ * view.
+ *
+ * @param {goog.date.Date|Date=} opt_date Date to initialize the date picker
+ *     with, defaults to the current date.
+ * @param {Object=} opt_dateTimeSymbols Date and time symbols to use.
+ *     Defaults to goog.i18n.DateTimeSymbols if not set.
+ * @param {goog.dom.DomHelper=} opt_domHelper Optional DOM helper.
+ * @param {goog.ui.DatePickerRenderer=} opt_renderer Optional Date picker
+ *     renderer.
+ * @constructor
+ * @extends {goog.ui.Component}
+ */
+goog.ui.DatePicker = function(opt_date, opt_dateTimeSymbols, opt_domHelper,
+    opt_renderer) {
+  goog.ui.Component.call(this, opt_domHelper);
+
+  /**
+   * Date and time symbols to use.
+   * @type {Object}
+   * @private
+   */
+  this.symbols_ = opt_dateTimeSymbols || goog.i18n.DateTimeSymbols;
+
+  this.wdayNames_ = this.symbols_.STANDALONESHORTWEEKDAYS;
+
+  // The DateTimeFormat object uses the global goog.i18n.DateTimeSymbols
+  // for initialization. So we save the original value, the global object,
+  // create the formatters, then restore the original value.
+  var tempSymbols = goog.i18n.DateTimeSymbols;  // save
+  goog.i18n.DateTimeSymbols = this.symbols_;
+
+  // Formatters for the various areas of the picker
+  this.i18nDateFormatterDay_ = new goog.i18n.DateTimeFormat('d');
+  this.i18nDateFormatterDay2_ = new goog.i18n.DateTimeFormat('dd');
+  this.i18nDateFormatterWeek_ = new goog.i18n.DateTimeFormat('w');
+
+  // Previous implementation did not use goog.i18n.DateTimePatterns,
+  // so it is likely most developers did not set it.
+  // This is why the fallback to a hard-coded string (just in case).
+  var patYear = goog.i18n.DateTimePatterns.YEAR_FULL || 'y';
+  this.i18nDateFormatterYear_ = new goog.i18n.DateTimeFormat(patYear);
+  var patMMMMy = goog.i18n.DateTimePatterns.YEAR_MONTH_FULL || 'MMMM y';
+  this.i18nDateFormatterMonthYear_ = new goog.i18n.DateTimeFormat(patMMMMy);
+
+  goog.i18n.DateTimeSymbols = tempSymbols;  // restore
+
+  /**
+   * @type {!goog.ui.DatePickerRenderer}
+   * @private
+   */
+  this.renderer_ = opt_renderer || new goog.ui.DefaultDatePickerRenderer(
+      this.getBaseCssClass(), this.getDomHelper());
+
+  /**
+   * Selected date.
+   * @type {goog.date.Date}
+   * @private
+   */
+  this.date_ = new goog.date.Date(opt_date);
+  this.date_.setFirstWeekCutOffDay(this.symbols_.FIRSTWEEKCUTOFFDAY);
+  this.date_.setFirstDayOfWeek(this.symbols_.FIRSTDAYOFWEEK);
+
+  /**
+   * Active month.
+   * @type {goog.date.Date}
+   * @private
+   */
+  this.activeMonth_ = this.date_.clone();
+  this.activeMonth_.setDate(1);
+
+  /**
+   * Class names to apply to the weekday columns.
+   * @type {Array.<string>}
+   * @private
+   */
+  this.wdayStyles_ = ['', '', '', '', '', '', ''];
+  this.wdayStyles_[this.symbols_.WEEKENDRANGE[0]] =
+      goog.getCssName(this.getBaseCssClass(), 'wkend-start');
+  this.wdayStyles_[this.symbols_.WEEKENDRANGE[1]] =
+      goog.getCssName(this.getBaseCssClass(), 'wkend-end');
+
+  /**
+   * Object that is being used to cache key handlers.
+   * @type {Object}
+   * @private
+   */
+  this.keyHandlers_ = {};
+};
+goog.inherits(goog.ui.DatePicker, goog.ui.Component);
+
+
+/**
+ * Flag indicating if the number of weeks shown should be fixed.
+ * @type {boolean}
+ * @private
+ */
+goog.ui.DatePicker.prototype.showFixedNumWeeks_ = true;
+
+
+/**
+ * Flag indicating if days from other months should be shown.
+ * @type {boolean}
+ * @private
+ */
+goog.ui.DatePicker.prototype.showOtherMonths_ = true;
+
+
+/**
+ * Range of dates which are selectable by the user.
+ * @type {goog.date.DateRange}
+ * @private
+ */
+goog.ui.DatePicker.prototype.userSelectableDateRange_ =
+    goog.date.DateRange.allTime();
+
+
+/**
+ * Flag indicating if extra week(s) always should be added at the end. If not
+ * set the extra week is added at the beginning if the number of days shown
+ * from the previous month is less then the number from the next month.
+ * @type {boolean}
+ * @private
+ */
+goog.ui.DatePicker.prototype.extraWeekAtEnd_ = true;
+
+
+/**
+ * Flag indicating if week numbers should be shown.
+ * @type {boolean}
+ * @private
+ */
+goog.ui.DatePicker.prototype.showWeekNum_ = true;
+
+
+/**
+ * Flag indicating if weekday names should be shown.
+ * @type {boolean}
+ * @private
+ */
+goog.ui.DatePicker.prototype.showWeekdays_ = true;
+
+
+/**
+ * Flag indicating if none is a valid selection. Also controls if the none
+ * button should be shown or not.
+ * @type {boolean}
+ * @private
+ */
+goog.ui.DatePicker.prototype.allowNone_ = true;
+
+
+/**
+ * Flag indicating if the today button should be shown.
+ * @type {boolean}
+ * @private
+ */
+goog.ui.DatePicker.prototype.showToday_ = true;
+
+
+/**
+ * Flag indicating if the picker should use a simple navigation menu that only
+ * contains controls for navigating to the next and previous month. The default
+ * navigation menu contains controls for navigating to the next/previous month,
+ * next/previous year, and menus for jumping to specific months and years.
+ * @type {boolean}
+ * @private
+ */
+goog.ui.DatePicker.prototype.simpleNavigation_ = false;
+
+
+/**
+ * Custom decorator function. Takes a goog.date.Date object, returns a String
+ * representing a CSS class or null if no special styling applies
+ * @type {Function}
+ * @private
+ */
+goog.ui.DatePicker.prototype.decoratorFunction_ = null;
+
+
+/**
+ * Flag indicating if the dates should be printed as a two charater date.
+ * @type {boolean}
+ * @private
+ */
+goog.ui.DatePicker.prototype.longDateFormat_ = false;
+
+
+/**
+ * Element for navigation row on a datepicker.
+ * @type {Element}
+ * @private
+ */
+goog.ui.DatePicker.prototype.elNavRow_ = null;
+
+
+/**
+ * Element for the month/year in the navigation row.
+ * @type {Element}
+ * @private
+ */
+goog.ui.DatePicker.prototype.elMonthYear_ = null;
+
+
+/**
+ * Element for footer row on a datepicker.
+ * @type {Element}
+ * @private
+ */
+goog.ui.DatePicker.prototype.elFootRow_ = null;
+
+
+/**
+ * Generator for unique table cell IDs.
+ * @type {goog.ui.IdGenerator}
+ * @private
+ */
+goog.ui.DatePicker.prototype.cellIdGenerator_ =
+    goog.ui.IdGenerator.getInstance();
+
+
+/**
+ * Name of base CSS class of datepicker.
+ * @type {string}
+ * @private
+ */
+goog.ui.DatePicker.BASE_CSS_CLASS_ = goog.getCssName('goog-date-picker');
+
+
+/**
+ * The numbers of years to show before and after the current one in the
+ * year pull-down menu. A total of YEAR_MENU_RANGE * 2 + 1 will be shown.
+ * Example: for range = 2 and year 2013 => [2011, 2012, 2013, 2014, 2015]
+ * @const {number}
+ * @private
+ */
+goog.ui.DatePicker.YEAR_MENU_RANGE_ = 5;
+
+
+/**
+ * Constants for event names
+ *
+ * @type {Object}
+ */
+goog.ui.DatePicker.Events = {
+  CHANGE: 'change',
+  CHANGE_ACTIVE_MONTH: 'changeActiveMonth',
+  SELECT: 'select'
+};
+
+
+/**
+ * @deprecated Use isInDocument.
+ */
+goog.ui.DatePicker.prototype.isCreated =
+    goog.ui.DatePicker.prototype.isInDocument;
+
+
+/**
+ * @return {number} The first day of week, 0 = Monday, 6 = Sunday.
+ */
+goog.ui.DatePicker.prototype.getFirstWeekday = function() {
+  return this.activeMonth_.getFirstDayOfWeek();
+};
+
+
+/**
+ * Returns the class name associated with specified weekday.
+ * @param {number} wday The week day number to get the class name for.
+ * @return {string} The class name associated with specified weekday.
+ */
+goog.ui.DatePicker.prototype.getWeekdayClass = function(wday) {
+  return this.wdayStyles_[wday];
+};
+
+
+/**
+ * @return {boolean} Whether a fixed number of weeks should be showed. If not
+ *     only weeks for the current month will be shown.
+ */
+goog.ui.DatePicker.prototype.getShowFixedNumWeeks = function() {
+  return this.showFixedNumWeeks_;
+};
+
+
+/**
+ * @return {boolean} Whether a days from the previous and/or next month should
+ *     be shown.
+ */
+goog.ui.DatePicker.prototype.getShowOtherMonths = function() {
+  return this.showOtherMonths_;
+};
+
+
+/**
+ * @return {boolean} Whether a the extra week(s) added always should be at the
+ *     end. Only applicable if a fixed number of weeks are shown.
+ */
+goog.ui.DatePicker.prototype.getExtraWeekAtEnd = function() {
+  return this.extraWeekAtEnd_;
+};
+
+
+/**
+ * @return {boolean} Whether week numbers should be shown.
+ */
+goog.ui.DatePicker.prototype.getShowWeekNum = function() {
+  return this.showWeekNum_;
+};
+
+
+/**
+ * @return {boolean} Whether weekday names should be shown.
+ */
+goog.ui.DatePicker.prototype.getShowWeekdayNames = function() {
+  return this.showWeekdays_;
+};
+
+
+/**
+ * @return {boolean} Whether none is a valid selection.
+ */
+goog.ui.DatePicker.prototype.getAllowNone = function() {
+  return this.allowNone_;
+};
+
+
+/**
+ * @return {boolean} Whether the today button should be shown.
+ */
+goog.ui.DatePicker.prototype.getShowToday = function() {
+  return this.showToday_;
+};
+
+
+/**
+ * Returns base CSS class. This getter is used to get base CSS class part.
+ * All CSS class names in component are created as:
+ *   goog.getCssName(this.getBaseCssClass(), 'CLASS_NAME')
+ * @return {string} Base CSS class.
+ */
+goog.ui.DatePicker.prototype.getBaseCssClass = function() {
+  return goog.ui.DatePicker.BASE_CSS_CLASS_;
+};
+
+
+/**
+ * Sets the first day of week
+ *
+ * @param {number} wday Week day, 0 = Monday, 6 = Sunday.
+ */
+goog.ui.DatePicker.prototype.setFirstWeekday = function(wday) {
+  this.activeMonth_.setFirstDayOfWeek(wday);
+  this.updateCalendarGrid_();
+  this.redrawWeekdays_();
+};
+
+
+/**
+ * Sets class name associated with specified weekday.
+ *
+ * @param {number} wday Week day, 0 = Monday, 6 = Sunday.
+ * @param {string} className Class name.
+ */
+goog.ui.DatePicker.prototype.setWeekdayClass = function(wday, className) {
+  this.wdayStyles_[wday] = className;
+  this.redrawCalendarGrid_();
+};
+
+
+/**
+ * Sets whether a fixed number of weeks should be showed. If not only weeks
+ * for the current month will be showed.
+ *
+ * @param {boolean} b Whether a fixed number of weeks should be showed.
+ */
+goog.ui.DatePicker.prototype.setShowFixedNumWeeks = function(b) {
+  this.showFixedNumWeeks_ = b;
+  this.updateCalendarGrid_();
+};
+
+
+/**
+ * Sets whether a days from the previous and/or next month should be shown.
+ *
+ * @param {boolean} b Whether a days from the previous and/or next month should
+ *     be shown.
+ */
+goog.ui.DatePicker.prototype.setShowOtherMonths = function(b) {
+  this.showOtherMonths_ = b;
+  this.redrawCalendarGrid_();
+};
+
+
+/**
+ * Sets the range of dates which may be selected by the user.
+ *
+ * @param {goog.date.DateRange} dateRange The range of selectable dates.
+ */
+goog.ui.DatePicker.prototype.setUserSelectableDateRange =
+    function(dateRange) {
+  this.userSelectableDateRange_ = dateRange;
+};
+
+
+/**
+ * Determine if a date may be selected by the user.
+ *
+ * @param {goog.date.Date} date The date to be tested.
+ * @return {boolean} Whether the user may select this date.
+ * @private
+ */
+goog.ui.DatePicker.prototype.isUserSelectableDate_ = function(date) {
+  return this.userSelectableDateRange_.contains(date);
+};
+
+
+/**
+ * Sets whether the picker should use a simple navigation menu that only
+ * contains controls for navigating to the next and previous month. The default
+ * navigation menu contains controls for navigating to the next/previous month,
+ * next/previous year, and menus for jumping to specific months and years.
+ *
+ * @param {boolean} b Whether to use a simple navigation menu.
+ */
+goog.ui.DatePicker.prototype.setUseSimpleNavigationMenu = function(b) {
+  this.simpleNavigation_ = b;
+  this.updateNavigationRow_();
+  this.updateCalendarGrid_();
+};
+
+
+/**
+ * Sets whether a the extra week(s) added always should be at the end. Only
+ * applicable if a fixed number of weeks are shown.
+ *
+ * @param {boolean} b Whether a the extra week(s) added always should be at the
+ *     end.
+ */
+goog.ui.DatePicker.prototype.setExtraWeekAtEnd = function(b) {
+  this.extraWeekAtEnd_ = b;
+  this.updateCalendarGrid_();
+};
+
+
+/**
+ * Sets whether week numbers should be shown.
+ *
+ * @param {boolean} b Whether week numbers should be shown.
+ */
+goog.ui.DatePicker.prototype.setShowWeekNum = function(b) {
+  this.showWeekNum_ = b;
+  // The navigation and footer rows may rely on the number of visible columns,
+  // so we update them when adding/removing the weeknum column.
+  this.updateNavigationRow_();
+  this.updateFooterRow_();
+  this.updateCalendarGrid_();
+};
+
+
+/**
+ * Sets whether weekday names should be shown.
+ *
+ * @param {boolean} b Whether weekday names should be shown.
+ */
+goog.ui.DatePicker.prototype.setShowWeekdayNames = function(b) {
+  this.showWeekdays_ = b;
+  this.redrawWeekdays_();
+  this.redrawCalendarGrid_();
+};
+
+
+/**
+ * Sets whether the picker uses narrow weekday names ('M', 'T', 'W', ...).
+ *
+ * The default behavior is to use short names ('Mon', 'Tue', 'Wed', ...).
+ *
+ * @param {boolean} b Whether to use narrow weekday names.
+ */
+goog.ui.DatePicker.prototype.setUseNarrowWeekdayNames = function(b) {
+  this.wdayNames_ = b ? this.symbols_.STANDALONENARROWWEEKDAYS :
+      this.symbols_.STANDALONESHORTWEEKDAYS;
+  this.redrawWeekdays_();
+};
+
+
+/**
+ * Sets whether none is a valid selection.
+ *
+ * @param {boolean} b Whether none is a valid selection.
+ */
+goog.ui.DatePicker.prototype.setAllowNone = function(b) {
+  this.allowNone_ = b;
+  if (this.elNone_) {
+    this.updateTodayAndNone_();
+  }
+};
+
+
+/**
+ * Sets whether the today button should be shown.
+ *
+ * @param {boolean} b Whether the today button should be shown.
+ */
+goog.ui.DatePicker.prototype.setShowToday = function(b) {
+  this.showToday_ = b;
+  if (this.elToday_) {
+    this.updateTodayAndNone_();
+  }
+};
+
+
+/**
+ * Updates the display style of the None and Today buttons as well as hides the
+ * table foot if both are hidden.
+ * @private
+ */
+goog.ui.DatePicker.prototype.updateTodayAndNone_ = function() {
+  goog.style.setElementShown(this.elToday_, this.showToday_);
+  goog.style.setElementShown(this.elNone_, this.allowNone_);
+  goog.style.setElementShown(this.tableFoot_,
+                             this.showToday_ || this.allowNone_);
+};
+
+
+/**
+ * Sets the decorator function. The function should have the interface of
+ *   {string} f({goog.date.Date});
+ * and return a String representing a CSS class to decorate the cell
+ * corresponding to the date specified.
+ *
+ * @param {Function} f The decorator function.
+ */
+goog.ui.DatePicker.prototype.setDecorator = function(f) {
+  this.decoratorFunction_ = f;
+};
+
+
+/**
+ * Sets whether the date will be printed in long format. In long format, dates
+ * such as '1' will be printed as '01'.
+ *
+ * @param {boolean} b Whethere dates should be printed in long format.
+ */
+goog.ui.DatePicker.prototype.setLongDateFormat = function(b) {
+  this.longDateFormat_ = b;
+  this.redrawCalendarGrid_();
+};
+
+
+/**
+ * Changes the active month to the previous one.
+ */
+goog.ui.DatePicker.prototype.previousMonth = function() {
+  this.activeMonth_.add(new goog.date.Interval(goog.date.Interval.MONTHS, -1));
+  this.updateCalendarGrid_();
+  this.fireChangeActiveMonthEvent_();
+};
+
+
+/**
+ * Changes the active month to the next one.
+ */
+goog.ui.DatePicker.prototype.nextMonth = function() {
+  this.activeMonth_.add(new goog.date.Interval(goog.date.Interval.MONTHS, 1));
+  this.updateCalendarGrid_();
+  this.fireChangeActiveMonthEvent_();
+};
+
+
+/**
+ * Changes the active year to the previous one.
+ */
+goog.ui.DatePicker.prototype.previousYear = function() {
+  this.activeMonth_.add(new goog.date.Interval(goog.date.Interval.YEARS, -1));
+  this.updateCalendarGrid_();
+  this.fireChangeActiveMonthEvent_();
+};
+
+
+/**
+ * Changes the active year to the next one.
+ */
+goog.ui.DatePicker.prototype.nextYear = function() {
+  this.activeMonth_.add(new goog.date.Interval(goog.date.Interval.YEARS, 1));
+  this.updateCalendarGrid_();
+  this.fireChangeActiveMonthEvent_();
+};
+
+
+/**
+ * Selects the current date.
+ */
+goog.ui.DatePicker.prototype.selectToday = function() {
+  this.setDate(new goog.date.Date());
+};
+
+
+/**
+ * Clears the selection.
+ */
+goog.ui.DatePicker.prototype.selectNone = function() {
+  if (this.allowNone_) {
+    this.setDate(null);
+  }
+};
+
+
+/**
+ * @return {goog.date.Date} The active month displayed.
+ */
+goog.ui.DatePicker.prototype.getActiveMonth = function() {
+  return this.activeMonth_.clone();
+};
+
+
+/**
+ * @return {goog.date.Date} The selected date or null if nothing is selected.
+ */
+goog.ui.DatePicker.prototype.getDate = function() {
+  return this.date_ && this.date_.clone();
+};
+
+
+/**
+ * Sets the selected date.
+ *
+ * @param {goog.date.Date|Date} date Date to select or null to select nothing.
+ */
+goog.ui.DatePicker.prototype.setDate = function(date) {
+  // Check if the month has been changed.
+  var sameMonth = date == this.date_ || date && this.date_ &&
+      date.getFullYear() == this.date_.getFullYear() &&
+      date.getMonth() == this.date_.getMonth();
+
+  // Check if the date has been changed.
+  var sameDate = date == this.date_ || sameMonth &&
+      date.getDate() == this.date_.getDate();
+
+  // Set current date to clone of supplied goog.date.Date or Date.
+  this.date_ = date && new goog.date.Date(date);
+
+  // Set current month
+  if (date) {
+    this.activeMonth_.set(this.date_);
+    this.activeMonth_.setDate(1);
+  }
+
+  // Update calendar grid even if the date has not changed as even if today is
+  // selected another month can be displayed.
+  this.updateCalendarGrid_();
+
+  // TODO(eae): Standardize selection and change events with other components.
+  // Fire select event.
+  var selectEvent = new goog.ui.DatePickerEvent(
+      goog.ui.DatePicker.Events.SELECT, this, this.date_);
+  this.dispatchEvent(selectEvent);
+
+  // Fire change event.
+  if (!sameDate) {
+    var changeEvent = new goog.ui.DatePickerEvent(
+        goog.ui.DatePicker.Events.CHANGE, this, this.date_);
+    this.dispatchEvent(changeEvent);
+  }
+
+  // Fire change active month event.
+  if (!sameMonth) {
+    this.fireChangeActiveMonthEvent_();
+  }
+};
+
+
+/**
+ * Updates the navigation row (navigating months and maybe years) in the navRow_
+ * element of a created picker.
+ * @private
+ */
+goog.ui.DatePicker.prototype.updateNavigationRow_ = function() {
+  if (!this.elNavRow_) {
+    return;
+  }
+  var row = this.elNavRow_;
+
+  // Clear the navigation row.
+  while (row.firstChild) {
+    row.removeChild(row.firstChild);
+  }
+
+  var fullDateFormat = this.symbols_.DATEFORMATS[
+      goog.i18n.DateTimeFormat.Format.FULL_DATE].toLowerCase();
+  this.renderer_.renderNavigationRow(
+      row, this.simpleNavigation_, this.showWeekNum_, fullDateFormat);
+
+  if (this.simpleNavigation_) {
+    this.addPreventDefaultClickHandler_(row,
+        goog.getCssName(this.getBaseCssClass(), 'previousMonth'),
+        this.previousMonth);
+    this.addPreventDefaultClickHandler_(row,
+        goog.getCssName(this.getBaseCssClass(), 'nextMonth'),
+        this.nextMonth);
+
+    this.elMonthYear_ = goog.dom.getElementByClass(
+        goog.getCssName(this.getBaseCssClass(), 'monthyear'),
+        row);
+  } else {
+    this.addPreventDefaultClickHandler_(row,
+        goog.getCssName(this.getBaseCssClass(), 'previousMonth'),
+        this.previousMonth);
+    this.addPreventDefaultClickHandler_(row,
+        goog.getCssName(this.getBaseCssClass(), 'nextMonth'),
+        this.nextMonth);
+    this.addPreventDefaultClickHandler_(row,
+        goog.getCssName(this.getBaseCssClass(), 'month'),
+        this.showMonthMenu_);
+
+    this.addPreventDefaultClickHandler_(row,
+        goog.getCssName(this.getBaseCssClass(), 'previousYear'),
+        this.previousYear);
+    this.addPreventDefaultClickHandler_(row,
+        goog.getCssName(this.getBaseCssClass(), 'nextYear'),
+        this.nextYear);
+    this.addPreventDefaultClickHandler_(row,
+        goog.getCssName(this.getBaseCssClass(), 'year'),
+        this.showYearMenu_);
+
+    this.elMonth_ = goog.dom.getElementByClass(
+        goog.getCssName(this.getBaseCssClass(), 'month'), row);
+    this.elYear_ = goog.dom.getDomHelper().getElementByClass(
+        goog.getCssName(this.getBaseCssClass(), 'year'), row);
+  }
+};
+
+
+/**
+ * Setup click handler with prevent default.
+ *
+ * @param {!Element} parentElement The parent element of the element. This is
+ *     needed because the element in question might not be in the dom yet.
+ * @param {string} cssName The CSS class name of the element to attach a click
+ *     handler.
+ * @param {Function} handlerFunction The click handler function.
+ * @private
+ */
+goog.ui.DatePicker.prototype.addPreventDefaultClickHandler_ =
+    function(parentElement, cssName, handlerFunction) {
+  var element = goog.dom.getElementByClass(cssName, parentElement);
+  this.getHandler().listen(element,
+      goog.events.EventType.CLICK,
+      function(e) {
+        e.preventDefault();
+        handlerFunction.call(this, e);
+      });
+};
+
+
+/**
+ * Updates the footer row (with select buttons) in the footRow_ element of a
+ * created picker.
+ * @private
+ */
+goog.ui.DatePicker.prototype.updateFooterRow_ = function() {
+  if (!this.elFootRow_) {
+    return;
+  }
+
+  var row = this.elFootRow_;
+
+  // Clear the footer row.
+  goog.dom.removeChildren(row);
+
+  this.renderer_.renderFooterRow(row, this.showWeekNum_);
+
+  this.addPreventDefaultClickHandler_(row,
+      goog.getCssName(this.getBaseCssClass(), 'today-btn'),
+      this.selectToday);
+  this.addPreventDefaultClickHandler_(row,
+      goog.getCssName(this.getBaseCssClass(), 'none-btn'),
+      this.selectNone);
+
+  this.elToday_ = goog.dom.getElementByClass(
+      goog.getCssName(this.getBaseCssClass(), 'today-btn'), row);
+  this.elNone_ = goog.dom.getElementByClass(
+      goog.getCssName(this.getBaseCssClass(), 'none-btn'), row);
+
+  this.updateTodayAndNone_();
+};
+
+
+/** @override */
+goog.ui.DatePicker.prototype.decorateInternal = function(el) {
+  goog.ui.DatePicker.superClass_.decorateInternal.call(this, el);
+
+  goog.dom.classlist.add(el, this.getBaseCssClass());
+
+  var table = this.dom_.createElement('table');
+  var thead = this.dom_.createElement('thead');
+  var tbody = this.dom_.createElement('tbody');
+  var tfoot = this.dom_.createElement('tfoot');
+
+  goog.a11y.aria.setRole(tbody, 'grid');
+  tbody.tabIndex = '0';
+
+  // As per comment in colorpicker: table.tBodies and table.tFoot should not be
+  // used because of a bug in Safari, hence using an instance variable
+  this.tableBody_ = tbody;
+  this.tableFoot_ = tfoot;
+
+  var row = this.dom_.createElement('tr');
+  row.className = goog.getCssName(this.getBaseCssClass(), 'head');
+  this.elNavRow_ = row;
+  this.updateNavigationRow_();
+
+  thead.appendChild(row);
+
+  var cell;
+  this.elTable_ = [];
+  for (var i = 0; i < 7; i++) {
+    row = this.dom_.createElement('tr');
+    this.elTable_[i] = [];
+    for (var j = 0; j < 8; j++) {
+      cell = this.dom_.createElement(j == 0 || i == 0 ? 'th' : 'td');
+      if ((j == 0 || i == 0) && j != i) {
+        cell.className = (j == 0) ?
+            goog.getCssName(this.getBaseCssClass(), 'week') :
+            goog.getCssName(this.getBaseCssClass(), 'wday');
+        goog.a11y.aria.setRole(cell, j == 0 ? 'rowheader' : 'columnheader');
+      }
+      row.appendChild(cell);
+      this.elTable_[i][j] = cell;
+    }
+    tbody.appendChild(row);
+  }
+
+  row = this.dom_.createElement('tr');
+  row.className = goog.getCssName(this.getBaseCssClass(), 'foot');
+  this.elFootRow_ = row;
+  this.updateFooterRow_();
+  tfoot.appendChild(row);
+
+
+  table.cellSpacing = '0';
+  table.cellPadding = '0';
+  table.appendChild(thead);
+  table.appendChild(tbody);
+  table.appendChild(tfoot);
+  el.appendChild(table);
+
+  this.redrawWeekdays_();
+  this.updateCalendarGrid_();
+
+  el.tabIndex = 0;
+};
+
+
+/** @override */
+goog.ui.DatePicker.prototype.createDom = function() {
+  goog.ui.DatePicker.superClass_.createDom.call(this);
+  this.decorateInternal(this.getElement());
+};
+
+
+/** @override */
+goog.ui.DatePicker.prototype.enterDocument = function() {
+  goog.ui.DatePicker.superClass_.enterDocument.call(this);
+
+  var eh = this.getHandler();
+  eh.listen(this.tableBody_, goog.events.EventType.CLICK,
+      this.handleGridClick_);
+  eh.listen(this.getKeyHandlerForElement_(this.getElement()),
+      goog.events.KeyHandler.EventType.KEY, this.handleGridKeyPress_);
+};
+
+
+/** @override */
+goog.ui.DatePicker.prototype.exitDocument = function() {
+  goog.ui.DatePicker.superClass_.exitDocument.call(this);
+  this.destroyMenu_();
+  for (var uid in this.keyHandlers_) {
+    this.keyHandlers_[uid].dispose();
+  }
+  this.keyHandlers_ = {};
+};
+
+
+/**
+ * @deprecated Use decorate instead.
+ */
+goog.ui.DatePicker.prototype.create =
+    goog.ui.DatePicker.prototype.decorate;
+
+
+/** @override */
+goog.ui.DatePicker.prototype.disposeInternal = function() {
+  goog.ui.DatePicker.superClass_.disposeInternal.call(this);
+
+  this.elTable_ = null;
+  this.tableBody_ = null;
+  this.tableFoot_ = null;
+  this.elNavRow_ = null;
+  this.elFootRow_ = null;
+  this.elMonth_ = null;
+  this.elMonthYear_ = null;
+  this.elYear_ = null;
+  this.elToday_ = null;
+  this.elNone_ = null;
+};
+
+
+/**
+ * Click handler for date grid.
+ *
+ * @param {goog.events.BrowserEvent} event Click event.
+ * @private
+ */
+goog.ui.DatePicker.prototype.handleGridClick_ = function(event) {
+  if (event.target.tagName == 'TD') {
+    // colIndex/rowIndex is broken in Safari, find position by looping
+    var el, x = -2, y = -2; // first col/row is for weekday/weeknum
+    for (el = event.target; el; el = el.previousSibling, x++) {}
+    for (el = event.target.parentNode; el; el = el.previousSibling, y++) {}
+    var obj = this.grid_[y][x];
+    if (this.isUserSelectableDate_(obj)) {
+      this.setDate(obj.clone());
+    }
+  }
+};
+
+
+/**
+ * Keypress handler for date grid.
+ *
+ * @param {goog.events.BrowserEvent} event Keypress event.
+ * @private
+ */
+goog.ui.DatePicker.prototype.handleGridKeyPress_ = function(event) {
+  var months, days;
+  switch (event.keyCode) {
+    case 33: // Page up
+      event.preventDefault();
+      months = -1;
+      break;
+    case 34: // Page down
+      event.preventDefault();
+      months = 1;
+      break;
+    case 37: // Left
+      event.preventDefault();
+      days = -1;
+      break;
+    case 39: // Right
+      event.preventDefault();
+      days = 1;
+      break;
+    case 38: // Down
+      event.preventDefault();
+      days = -7;
+      break;
+    case 40: // Up
+      event.preventDefault();
+      days = 7;
+      break;
+    case 36: // Home
+      event.preventDefault();
+      this.selectToday();
+    case 46: // Delete
+      event.preventDefault();
+      this.selectNone();
+    default:
+      return;
+  }
+  var date;
+  if (this.date_) {
+    date = this.date_.clone();
+    date.add(new goog.date.Interval(0, months, days));
+  } else {
+    date = this.activeMonth_.clone();
+    date.setDate(1);
+  }
+  if (this.isUserSelectableDate_(date)) {
+    this.setDate(date);
+  }
+};
+
+
+/**
+ * Click handler for month button. Opens month selection menu.
+ *
+ * @param {goog.events.BrowserEvent} event Click event.
+ * @private
+ */
+goog.ui.DatePicker.prototype.showMonthMenu_ = function(event) {
+  event.stopPropagation();
+
+  var list = [];
+  for (var i = 0; i < 12; i++) {
+    list.push(this.symbols_.STANDALONEMONTHS[i]);
+  }
+  this.createMenu_(this.elMonth_, list, this.handleMonthMenuClick_,
+      this.symbols_.STANDALONEMONTHS[this.activeMonth_.getMonth()]);
+};
+
+
+/**
+ * Click handler for year button. Opens year selection menu.
+ *
+ * @param {goog.events.BrowserEvent} event Click event.
+ * @private
+ */
+goog.ui.DatePicker.prototype.showYearMenu_ = function(event) {
+  event.stopPropagation();
+
+  var list = [];
+  var year = this.activeMonth_.getFullYear();
+  var loopDate = this.activeMonth_.clone();
+  for (var i = -goog.ui.DatePicker.YEAR_MENU_RANGE_;
+      i <= goog.ui.DatePicker.YEAR_MENU_RANGE_; i++) {
+    loopDate.setFullYear(year + i);
+    list.push(this.i18nDateFormatterYear_.format(loopDate));
+  }
+  this.createMenu_(this.elYear_, list, this.handleYearMenuClick_,
+      this.i18nDateFormatterYear_.format(this.activeMonth_));
+};
+
+
+/**
+ * Call back function for month menu.
+ *
+ * @param {Element} target Selected item.
+ * @private
+ */
+goog.ui.DatePicker.prototype.handleMonthMenuClick_ = function(target) {
+  var itemIndex = Number(target.getAttribute('itemIndex'));
+  this.activeMonth_.setMonth(itemIndex);
+  this.updateCalendarGrid_();
+
+  if (this.elMonth_.focus) {
+    this.elMonth_.focus();
+  }
+};
+
+
+/**
+ * Call back function for year menu.
+ *
+ * @param {Element} target Selected item.
+ * @private
+ */
+goog.ui.DatePicker.prototype.handleYearMenuClick_ = function(target) {
+  if (target.firstChild.nodeType == goog.dom.NodeType.TEXT) {
+    // We use the same technique used for months to get the position of the
+    // item in the menu, as the year is not necessarily numeric.
+    var itemIndex = Number(target.getAttribute('itemIndex'));
+    var year = this.activeMonth_.getFullYear();
+    this.activeMonth_.setFullYear(year + itemIndex -
+        goog.ui.DatePicker.YEAR_MENU_RANGE_);
+    this.updateCalendarGrid_();
+  }
+
+  this.elYear_.focus();
+};
+
+
+/**
+ * Support function for menu creation.
+ *
+ * @param {Element} srcEl Button to create menu for.
+ * @param {Array.<string>} items List of items to populate menu with.
+ * @param {Function} method Call back method.
+ * @param {string} selected Item to mark as selected in menu.
+ * @private
+ */
+goog.ui.DatePicker.prototype.createMenu_ = function(srcEl, items, method,
+                                                    selected) {
+  this.destroyMenu_();
+
+  var el = this.dom_.createElement('div');
+  el.className = goog.getCssName(this.getBaseCssClass(), 'menu');
+
+  this.menuSelected_ = null;
+
+  var ul = this.dom_.createElement('ul');
+  for (var i = 0; i < items.length; i++) {
+    var li = this.dom_.createDom('li', null, items[i]);
+    li.setAttribute('itemIndex', i);
+    if (items[i] == selected) {
+      this.menuSelected_ = li;
+    }
+    ul.appendChild(li);
+  }
+  el.appendChild(ul);
+  el.style.left = srcEl.offsetLeft + srcEl.parentNode.offsetLeft + 'px';
+  el.style.top = srcEl.offsetTop + 'px';
+  el.style.width = srcEl.clientWidth + 'px';
+  this.elMonth_.parentNode.appendChild(el);
+
+  this.menu_ = el;
+  if (!this.menuSelected_) {
+    this.menuSelected_ = ul.firstChild;
+  }
+  this.menuSelected_.className =
+      goog.getCssName(this.getBaseCssClass(), 'menu-selected');
+  this.menuCallback_ = method;
+
+  var eh = this.getHandler();
+  eh.listen(this.menu_, goog.events.EventType.CLICK, this.handleMenuClick_);
+  eh.listen(this.getKeyHandlerForElement_(this.menu_),
+      goog.events.KeyHandler.EventType.KEY, this.handleMenuKeyPress_);
+  eh.listen(this.dom_.getDocument(), goog.events.EventType.CLICK,
+      this.destroyMenu_);
+  el.tabIndex = 0;
+  el.focus();
+};
+
+
+/**
+ * Click handler for menu.
+ *
+ * @param {goog.events.BrowserEvent} event Click event.
+ * @private
+ */
+goog.ui.DatePicker.prototype.handleMenuClick_ = function(event) {
+  event.stopPropagation();
+
+  this.destroyMenu_();
+  if (this.menuCallback_) {
+    this.menuCallback_(event.target);
+  }
+};
+
+
+/**
+ * Keypress handler for menu.
+ *
+ * @param {goog.events.BrowserEvent} event Keypress event.
+ * @private
+ */
+goog.ui.DatePicker.prototype.handleMenuKeyPress_ = function(event) {
+  // Prevent the grid keypress handler from catching the keypress event.
+  event.stopPropagation();
+
+  var el;
+  var menuSelected = this.menuSelected_;
+  switch (event.keyCode) {
+    case 35: // End
+      event.preventDefault();
+      el = menuSelected.parentNode.lastChild;
+      break;
+    case 36: // Home
+      event.preventDefault();
+      el = menuSelected.parentNode.firstChild;
+      break;
+    case 38: // Up
+      event.preventDefault();
+      el = menuSelected.previousSibling;
+      break;
+    case 40: // Down
+      event.preventDefault();
+      el = menuSelected.nextSibling;
+      break;
+    case 13: // Enter
+    case 9: // Tab
+    case 0: // Space
+      event.preventDefault();
+      this.destroyMenu_();
+      this.menuCallback_(menuSelected);
+      break;
+  }
+  if (el && el != menuSelected) {
+    menuSelected.className = '';
+    el.className = goog.getCssName(this.getBaseCssClass(), 'menu-selected');
+    this.menuSelected_ = el;
+  }
+};
+
+
+/**
+ * Support function for menu destruction.
+ * @private
+ */
+goog.ui.DatePicker.prototype.destroyMenu_ = function() {
+  if (this.menu_) {
+    var eh = this.getHandler();
+    eh.unlisten(this.menu_, goog.events.EventType.CLICK, this.handleMenuClick_);
+    eh.unlisten(this.getKeyHandlerForElement_(this.menu_),
+        goog.events.KeyHandler.EventType.KEY, this.handleMenuKeyPress_);
+    eh.unlisten(this.dom_.getDocument(), goog.events.EventType.CLICK,
+        this.destroyMenu_);
+    goog.dom.removeNode(this.menu_);
+    delete this.menu_;
+  }
+};
+
+
+/**
+ * Determines the dates/weekdays for the current month and builds an in memory
+ * representation of the calendar.
+ *
+ * @private
+ */
+goog.ui.DatePicker.prototype.updateCalendarGrid_ = function() {
+  if (!this.getElement()) {
+    return;
+  }
+
+  var date = this.activeMonth_.clone();
+  date.setDate(1);
+
+  // Show year name of select month
+  if (this.elMonthYear_) {
+    goog.dom.setTextContent(this.elMonthYear_,
+        this.i18nDateFormatterMonthYear_.format(date));
+  }
+  if (this.elMonth_) {
+    goog.dom.setTextContent(this.elMonth_,
+        this.symbols_.STANDALONEMONTHS[date.getMonth()]);
+  }
+  if (this.elYear_) {
+    goog.dom.setTextContent(this.elYear_,
+        this.i18nDateFormatterYear_.format(date));
+  }
+
+  var wday = date.getWeekday();
+  var days = date.getNumberOfDaysInMonth();
+
+  // Determine how many days to show for previous month
+  date.add(new goog.date.Interval(goog.date.Interval.MONTHS, -1));
+  date.setDate(date.getNumberOfDaysInMonth() - (wday - 1));
+
+  if (this.showFixedNumWeeks_ && !this.extraWeekAtEnd_ && days + wday < 33) {
+    date.add(new goog.date.Interval(goog.date.Interval.DAYS, -7));
+  }
+
+  // Create weekday/day grid
+  var dayInterval = new goog.date.Interval(goog.date.Interval.DAYS, 1);
+  this.grid_ = [];
+  for (var y = 0; y < 6; y++) { // Weeks
+    this.grid_[y] = [];
+    for (var x = 0; x < 7; x++) { // Weekdays
+      this.grid_[y][x] = date.clone();
+      date.add(dayInterval);
+    }
+  }
+
+  this.redrawCalendarGrid_();
+};
+
+
+/**
+ * Draws calendar view from in memory representation and applies class names
+ * depending on the selection, weekday and whatever the day belongs to the
+ * active month or not.
+ * @private
+ */
+goog.ui.DatePicker.prototype.redrawCalendarGrid_ = function() {
+  if (!this.getElement()) {
+    return;
+  }
+
+  var month = this.activeMonth_.getMonth();
+  var today = new goog.date.Date();
+  var todayYear = today.getFullYear();
+  var todayMonth = today.getMonth();
+  var todayDate = today.getDate();
+
+  // Draw calendar week by week, a worst case month has six weeks.
+  for (var y = 0; y < 6; y++) {
+
+    // Draw week number, if enabled
+    if (this.showWeekNum_) {
+      goog.dom.setTextContent(this.elTable_[y + 1][0],
+          this.i18nDateFormatterWeek_.format(this.grid_[y][0]));
+      goog.dom.classlist.set(this.elTable_[y + 1][0],
+          goog.getCssName(this.getBaseCssClass(), 'week'));
+    } else {
+      goog.dom.setTextContent(this.elTable_[y + 1][0], '');
+      goog.dom.classlist.set(this.elTable_[y + 1][0], '');
+    }
+
+    for (var x = 0; x < 7; x++) {
+      var o = this.grid_[y][x];
+      var el = this.elTable_[y + 1][x + 1];
+
+      // Assign a unique element id (required for setting the active descendant
+      // ARIA role) unless already set.
+      if (!el.id) {
+        el.id = this.cellIdGenerator_.getNextUniqueId();
+      }
+      goog.asserts.assert(el, 'The table DOM element cannot be null.');
+      goog.a11y.aria.setRole(el, 'gridcell');
+      var classes = [goog.getCssName(this.getBaseCssClass(), 'date')];
+      if (!this.isUserSelectableDate_(o)) {
+        classes.push(goog.getCssName(this.getBaseCssClass(),
+            'unavailable-date'));
+      }
+      if (this.showOtherMonths_ || o.getMonth() == month) {
+        // Date belongs to previous or next month
+        if (o.getMonth() != month) {
+          classes.push(goog.getCssName(this.getBaseCssClass(), 'other-month'));
+        }
+
+        // Apply styles set by setWeekdayClass
+        var wday = (x + this.activeMonth_.getFirstDayOfWeek() + 7) % 7;
+        if (this.wdayStyles_[wday]) {
+          classes.push(this.wdayStyles_[wday]);
+        }
+
+        // Current date
+        if (o.getDate() == todayDate && o.getMonth() == todayMonth &&
+            o.getFullYear() == todayYear) {
+          classes.push(goog.getCssName(this.getBaseCssClass(), 'today'));
+        }
+
+        // Selected date
+        if (this.date_ && o.getDate() == this.date_.getDate() &&
+            o.getMonth() == this.date_.getMonth() &&
+            o.getFullYear() == this.date_.getFullYear()) {
+          classes.push(goog.getCssName(this.getBaseCssClass(), 'selected'));
+          goog.asserts.assert(this.tableBody_,
+              'The table body DOM element cannot be null');
+          goog.a11y.aria.setState(this.tableBody_, 'activedescendant', el.id);
+        }
+
+        // Custom decorator
+        if (this.decoratorFunction_) {
+          var customClass = this.decoratorFunction_(o);
+          if (customClass) {
+            classes.push(customClass);
+          }
+        }
+
+        // Set cell text to the date and apply classes.
+        var formatedDate = this.longDateFormat_ ?
+            this.i18nDateFormatterDay2_.format(o) :
+            this.i18nDateFormatterDay_.format(o);
+        goog.dom.setTextContent(el, formatedDate);
+        // Date belongs to previous or next month and showOtherMonths is false,
+        // clear text and classes.
+      } else {
+        goog.dom.setTextContent(el, '');
+      }
+      goog.dom.classlist.set(el, classes.join(' '));
+    }
+
+    // Hide the either the last one or last two weeks if they contain no days
+    // from the active month and the showFixedNumWeeks is false. The first four
+    // weeks are always shown as no month has less than 28 days).
+    if (y >= 4) {
+      goog.style.setElementShown(this.elTable_[y + 1][0].parentNode,
+          this.grid_[y][0].getMonth() == month || this.showFixedNumWeeks_);
+    }
+  }
+};
+
+
+/**
+ * Fires the CHANGE_ACTIVE_MONTH event.
+ * @private
+ */
+goog.ui.DatePicker.prototype.fireChangeActiveMonthEvent_ = function() {
+  var changeMonthEvent = new goog.ui.DatePickerEvent(
+      goog.ui.DatePicker.Events.CHANGE_ACTIVE_MONTH,
+      this,
+      this.getActiveMonth());
+  this.dispatchEvent(changeMonthEvent);
+};
+
+
+/**
+ * Draw weekday names, if enabled. Start with whatever day has been set as the
+ * first day of week.
+ * @private
+ */
+goog.ui.DatePicker.prototype.redrawWeekdays_ = function() {
+  if (!this.getElement()) {
+    return;
+  }
+  if (this.showWeekdays_) {
+    for (var x = 0; x < 7; x++) {
+      var el = this.elTable_[0][x + 1];
+      var wday = (x + this.activeMonth_.getFirstDayOfWeek() + 7) % 7;
+      goog.dom.setTextContent(el, this.wdayNames_[(wday + 1) % 7]);
+    }
+  }
+  goog.style.setElementShown(this.elTable_[0][0].parentNode,
+                             this.showWeekdays_);
+};
+
+
+/**
+ * Returns the key handler for an element and caches it so that it can be
+ * retrieved at a later point.
+ * @param {Element} el The element to get the key handler for.
+ * @return {goog.events.KeyHandler} The key handler for the element.
+ * @private
+ */
+goog.ui.DatePicker.prototype.getKeyHandlerForElement_ = function(el) {
+  var uid = goog.getUid(el);
+  if (!(uid in this.keyHandlers_)) {
+    this.keyHandlers_[uid] = new goog.events.KeyHandler(el);
+  }
+  return this.keyHandlers_[uid];
+};
+
+
+
+/**
+ * Object representing a date picker event.
+ *
+ * @param {string} type Event type.
+ * @param {goog.ui.DatePicker} target Date picker initiating event.
+ * @param {goog.date.Date} date Selected date.
+ * @constructor
+ * @extends {goog.events.Event}
+ * @final
+ */
+goog.ui.DatePickerEvent = function(type, target, date) {
+  goog.events.Event.call(this, type, target);
+
+  /**
+   * The selected date
+   * @type {goog.date.Date}
+   */
+  this.date = date;
+};
+goog.inherits(goog.ui.DatePickerEvent, goog.events.Event);
+// Copyright 2006 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Utilities for manipulating a form and elements.
+ *
+ * @author arv@google.com (Erik Arvidsson)
+ * @author jonp@google.com (Jon Perlow)
+ * @author elsigh@google.com (Lindsey Simon)
+ */
+
+goog.provide('goog.dom.forms');
+
+goog.require('goog.structs.Map');
+
+
+/**
+ * Returns form data as a map of name to value arrays. This doesn't
+ * support file inputs.
+ * @param {HTMLFormElement} form The form.
+ * @return {!goog.structs.Map} A map of the form data as form name to arrays of
+ *     values.
+ */
+goog.dom.forms.getFormDataMap = function(form) {
+  var map = new goog.structs.Map();
+  goog.dom.forms.getFormDataHelper_(form, map,
+      goog.dom.forms.addFormDataToMap_);
+  return map;
+};
+
+
+/**
+ * Returns the form data as an application/x-www-url-encoded string. This
+ * doesn't support file inputs.
+ * @param {HTMLFormElement} form The form.
+ * @return {string} An application/x-www-url-encoded string.
+ */
+goog.dom.forms.getFormDataString = function(form) {
+  var sb = [];
+  goog.dom.forms.getFormDataHelper_(form, sb,
+      goog.dom.forms.addFormDataToStringBuffer_);
+  return sb.join('&');
+};
+
+
+/**
+ * Returns the form data as a map or an application/x-www-url-encoded
+ * string. This doesn't support file inputs.
+ * @param {HTMLFormElement} form The form.
+ * @param {Object} result The object form data is being put in.
+ * @param {Function} fnAppend Function that takes {@code result}, an element
+ *     name, and an element value, and adds the name/value pair to the result
+ *     object.
+ * @private
+ */
+goog.dom.forms.getFormDataHelper_ = function(form, result, fnAppend) {
+  var els = form.elements;
+  for (var el, i = 0; el = els[i]; i++) {
+    if (// Make sure we don't include elements that are not part of the form.
+        // Some browsers include non-form elements. Check for 'form' property.
+        // See http://code.google.com/p/closure-library/issues/detail?id=227
+        // and
+        // http://www.whatwg.org/specs/web-apps/current-work/multipage/the-input-element.html#the-input-element
+        (el.form != form) ||
+        el.disabled ||
+        // HTMLFieldSetElement has a form property but no value.
+        el.tagName.toLowerCase() == 'fieldset') {
+      continue;
+    }
+
+    var name = el.name;
+    switch (el.type.toLowerCase()) {
+      case 'file':
+        // file inputs are not supported
+      case 'submit':
+      case 'reset':
+      case 'button':
+        // don't submit these
+        break;
+      case 'select-multiple':
+        var values = goog.dom.forms.getValue(el);
+        if (values != null) {
+          for (var value, j = 0; value = values[j]; j++) {
+            fnAppend(result, name, value);
+          }
+        }
+        break;
+      default:
+        var value = goog.dom.forms.getValue(el);
+        if (value != null) {
+          fnAppend(result, name, value);
+        }
+    }
+  }
+
+  // input[type=image] are not included in the elements collection
+  var inputs = form.getElementsByTagName('input');
+  for (var input, i = 0; input = inputs[i]; i++) {
+    if (input.form == form && input.type.toLowerCase() == 'image') {
+      name = input.name;
+      fnAppend(result, name, input.value);
+      fnAppend(result, name + '.x', '0');
+      fnAppend(result, name + '.y', '0');
+    }
+  }
+};
+
+
+/**
+ * Adds the name/value pair to the map.
+ * @param {goog.structs.Map} map The map to add to.
+ * @param {string} name The name.
+ * @param {string} value The value.
+ * @private
+ */
+goog.dom.forms.addFormDataToMap_ = function(map, name, value) {
+  var array = map.get(name);
+  if (!array) {
+    array = [];
+    map.set(name, array);
+  }
+  array.push(value);
+};
+
+
+/**
+ * Adds a name/value pair to an string buffer array in the form 'name=value'.
+ * @param {Array} sb The string buffer array for storing data.
+ * @param {string} name The name.
+ * @param {string} value The value.
+ * @private
+ */
+goog.dom.forms.addFormDataToStringBuffer_ = function(sb, name, value) {
+  sb.push(encodeURIComponent(name) + '=' + encodeURIComponent(value));
+};
+
+
+/**
+ * Whether the form has a file input.
+ * @param {HTMLFormElement} form The form.
+ * @return {boolean} Whether the form has a file input.
+ */
+goog.dom.forms.hasFileInput = function(form) {
+  var els = form.elements;
+  for (var el, i = 0; el = els[i]; i++) {
+    if (!el.disabled && el.type && el.type.toLowerCase() == 'file') {
+      return true;
+    }
+  }
+  return false;
+};
+
+
+/**
+ * Enables or disables either all elements in a form or a single form element.
+ * @param {Element} el The element, either a form or an element within a form.
+ * @param {boolean} disabled Whether the element should be disabled.
+ */
+goog.dom.forms.setDisabled = function(el, disabled) {
+  // disable all elements in a form
+  if (el.tagName == 'FORM') {
+    var els = el.elements;
+    for (var i = 0; el = els[i]; i++) {
+      goog.dom.forms.setDisabled(el, disabled);
+    }
+  } else {
+    // makes sure to blur buttons, multi-selects, and any elements which
+    // maintain keyboard/accessibility focus when disabled
+    if (disabled == true) {
+      el.blur();
+    }
+    el.disabled = disabled;
+  }
+};
+
+
+/**
+ * Focuses, and optionally selects the content of, a form element.
+ * @param {Element} el The form element.
+ */
+goog.dom.forms.focusAndSelect = function(el) {
+  el.focus();
+  if (el.select) {
+    el.select();
+  }
+};
+
+
+/**
+ * Whether a form element has a value.
+ * @param {Element} el The element.
+ * @return {boolean} Whether the form has a value.
+ */
+goog.dom.forms.hasValue = function(el) {
+  var value = goog.dom.forms.getValue(el);
+  return !!value;
+};
+
+
+/**
+ * Whether a named form field has a value.
+ * @param {HTMLFormElement} form The form element.
+ * @param {string} name Name of an input to the form.
+ * @return {boolean} Whether the form has a value.
+ */
+goog.dom.forms.hasValueByName = function(form, name) {
+  var value = goog.dom.forms.getValueByName(form, name);
+  return !!value;
+};
+
+
+/**
+ * Gets the current value of any element with a type.
+ * @param {Element} el The element.
+ * @return {string|Array.<string>|null} The current value of the element
+ *     (or null).
+ */
+goog.dom.forms.getValue = function(el) {
+  var type = el.type;
+  if (!goog.isDef(type)) {
+    return null;
+  }
+  switch (type.toLowerCase()) {
+    case 'checkbox':
+    case 'radio':
+      return goog.dom.forms.getInputChecked_(el);
+    case 'select-one':
+      return goog.dom.forms.getSelectSingle_(el);
+    case 'select-multiple':
+      return goog.dom.forms.getSelectMultiple_(el);
+    default:
+      return goog.isDef(el.value) ? el.value : null;
+  }
+};
+
+
+/**
+ * Alias for goog.dom.form.element.getValue
+ * @type {Function}
+ * @deprecated Use {@link goog.dom.forms.getValue} instead.
+ */
+goog.dom.$F = goog.dom.forms.getValue;
+
+
+/**
+ * Returns the value of the named form field. In the case of radio buttons,
+ * returns the value of the checked button with the given name.
+ *
+ * @param {HTMLFormElement} form The form element.
+ * @param {string} name Name of an input to the form.
+ *
+ * @return {Array.<string>|string|null} The value of the form element, or
+ *     null if the form element does not exist or has no value.
+ */
+goog.dom.forms.getValueByName = function(form, name) {
+  var els = form.elements[name];
+
+  if (els) {
+    if (els.type) {
+      return goog.dom.forms.getValue(els);
+    } else {
+      for (var i = 0; i < els.length; i++) {
+        var val = goog.dom.forms.getValue(els[i]);
+        if (val) {
+          return val;
+        }
+      }
+    }
+  }
+  return null;
+};
+
+
+/**
+ * Gets the current value of a checkable input element.
+ * @param {Element} el The element.
+ * @return {?string} The value of the form element (or null).
+ * @private
+ */
+goog.dom.forms.getInputChecked_ = function(el) {
+  return el.checked ? el.value : null;
+};
+
+
+/**
+ * Gets the current value of a select-one element.
+ * @param {Element} el The element.
+ * @return {?string} The value of the form element (or null).
+ * @private
+ */
+goog.dom.forms.getSelectSingle_ = function(el) {
+  var selectedIndex = el.selectedIndex;
+  return selectedIndex >= 0 ? el.options[selectedIndex].value : null;
+};
+
+
+/**
+ * Gets the current value of a select-multiple element.
+ * @param {Element} el The element.
+ * @return {Array.<string>?} The value of the form element (or null).
+ * @private
+ */
+goog.dom.forms.getSelectMultiple_ = function(el) {
+  var values = [];
+  for (var option, i = 0; option = el.options[i]; i++) {
+    if (option.selected) {
+      values.push(option.value);
+    }
+  }
+  return values.length ? values : null;
+};
+
+
+/**
+ * Sets the current value of any element with a type.
+ * @param {Element} el The element.
+ * @param {*=} opt_value The value to give to the element, which will be coerced
+ *     by the browser in the default case using toString. This value should be
+ *     an array for setting the value of select multiple elements.
+ */
+goog.dom.forms.setValue = function(el, opt_value) {
+  var type = el.type;
+  if (goog.isDef(type)) {
+    switch (type.toLowerCase()) {
+      case 'checkbox':
+      case 'radio':
+        goog.dom.forms.setInputChecked_(el,
+            /** @type {string} */ (opt_value));
+        break;
+      case 'select-one':
+        goog.dom.forms.setSelectSingle_(el,
+            /** @type {string} */ (opt_value));
+        break;
+      case 'select-multiple':
+        goog.dom.forms.setSelectMultiple_(el,
+            /** @type {Array} */ (opt_value));
+        break;
+      default:
+        el.value = goog.isDefAndNotNull(opt_value) ? opt_value : '';
+    }
+  }
+};
+
+
+/**
+ * Sets a checkable input element's checked property.
+ * #TODO(user): This seems potentially unintuitive since it doesn't set
+ * the value property but my hunch is that the primary use case is to check a
+ * checkbox, not to reset its value property.
+ * @param {Element} el The element.
+ * @param {string|boolean=} opt_value The value, sets the element checked if
+ *     val is set.
+ * @private
+ */
+goog.dom.forms.setInputChecked_ = function(el, opt_value) {
+  el.checked = opt_value ? 'checked' : null;
+};
+
+
+/**
+ * Sets the value of a select-one element.
+ * @param {Element} el The element.
+ * @param {string=} opt_value The value of the selected option element.
+ * @private
+ */
+goog.dom.forms.setSelectSingle_ = function(el, opt_value) {
+  // unset any prior selections
+  el.selectedIndex = -1;
+  if (goog.isString(opt_value)) {
+    for (var option, i = 0; option = el.options[i]; i++) {
+      if (option.value == opt_value) {
+        option.selected = true;
+        break;
+      }
+    }
+  }
+};
+
+
+/**
+ * Sets the value of a select-multiple element.
+ * @param {Element} el The element.
+ * @param {Array.<string>|string=} opt_value The value of the selected option
+ *     element(s).
+ * @private
+ */
+goog.dom.forms.setSelectMultiple_ = function(el, opt_value) {
+  // reset string opt_values as an array
+  if (goog.isString(opt_value)) {
+    opt_value = [opt_value];
+  }
+  for (var option, i = 0; option = el.options[i]; i++) {
+    // we have to reset the other options to false for select-multiple
+    option.selected = false;
+    if (opt_value) {
+      for (var value, j = 0; value = opt_value[j]; j++) {
+        if (option.value == value) {
+          option.selected = true;
+        }
+      }
+    }
+  }
+};
+/**
+ * @fileoverview Time picker implementation.
+ *
+ * @author Wolfings, LLC
+ */
+
+goog.provide('wolf.ui.DateTimePicker');
+
+goog.require('goog.dom.forms');
+goog.require('goog.i18n.TimeZone');
+goog.require('goog.string');
+goog.require('goog.ui.Component');
+goog.require('goog.ui.DatePicker');
+goog.require('goog.ui.DatePickerEvent');
+
+
+
+/**
+ * DateTimePicker widget. Allows a single time to be selected from a dropdown.
+ *
+ * @param {goog.date.DateTime|DateTime=} opt_dateTime DateTime to initialize
+ *     the time picker with, defaults to the current datetime.
+ * @param {goog.dom.DomHelper=} opt_domHelper Optional DOM helper.
+ * @constructor
+ * @extends {goog.ui.Component}
+ */
+wolf.ui.DateTimePicker = function( opt_dateTime, opt_domHelper ) {
+    goog.base( this, opt_domHelper );
+    this.dateTime_ = opt_dateTime || new goog.date.DateTime();
+};
+goog.inherits( wolf.ui.DateTimePicker, goog.ui.Component );
+
+
+/**
+ * Constants for event names
+ *
+ * @type {Object}
+ */
+wolf.ui.DateTimePicker.Events = {
+  CHANGE: 'change',
+  SELECT: 'select'
+};
+
+
+/** @override */
+wolf.ui.DateTimePicker.prototype.createDom = function() {
+    goog.base( this, 'createDom' );
+    this.decorateInternal( this.dom_.createElement('div') );
+};
+
+
+/** @override */
+wolf.ui.DateTimePicker.prototype.decorateInternal = function( element ) {
+    goog.base( this, 'decorateInternal', element );
+
+    this.datePickerElement_ = this.dom_.createElement('div');
+    this.userInputElement_ = this.dom_.createElement('input');
+
+    goog.dom.setProperties( this.userInputElement_, {
+        'placeholder': 'Time (HH:MM pm)'
+    });
+
+    this.datePicker_ = new goog.ui.DatePicker( this.dateTime_ );
+    this.datePicker_.setShowWeekNum( false );
+    this.datePicker_.setAllowNone( false );
+    this.datePicker_.setShowToday( false );
+    this.datePicker_.render( this.datePickerElement_ );
+
+    this.renderTime_();
+
+    element.appendChild( this.datePickerElement_ );
+    element.appendChild( this.userInputElement_ );
+
+    return element;
+};
+
+
+/** @override */
+wolf.ui.DateTimePicker.prototype.enterDocument = function() {
+    goog.base( this, 'enterDocument' );
+
+    this.getHandler().listen( this.userInputElement_, goog.events.EventType.FOCUSOUT, this.onFocusOut_ );
+
+    this.datePicker_.listen( goog.ui.DatePicker.Events.SELECT, function( e ) {
+        var selectEvent;
+
+        selectEvent = new goog.ui.DatePickerEvent(
+            wolf.ui.DateTimePicker.Events.SELECT,
+            this, this.dateTime_
+        );
+        this.dispatchEvent( selectEvent );
+    }, false, this );
+
+    this.datePicker_.listen( goog.ui.DatePicker.Events.CHANGE, function( e ) {
+        var changeEvent;
+
+        changeEvent = new goog.ui.DatePickerEvent(
+            wolf.ui.DateTimePicker.Events.CHANGE,
+            this, this.dateTime_
+        );
+        this.dispatchEvent( changeEvent );
+    }, false, this );
+};
+
+
+wolf.ui.DateTimePicker.prototype.getDateTime = function() {
+    return this.dateTime_;
+};
+
+
+wolf.ui.DateTimePicker.prototype.onFocusOut_ = function( e ) {
+    this.updateTime_();
+};
+
+
+wolf.ui.DateTimePicker.prototype.parseUserInput_ = function() {
+    var re, matches,
+        hour,
+        minute,
+        period;
+
+    // Parse user input
+    re = /^(\d\d?)(?::(\d\d))?(?: ?([AaPp])[Mm])?$/;
+    if ( !(matches = re.exec( this.userInputElement_.value )) ) {
+        return null;
+    }
+    hour = +matches[1];
+    minute = +matches[2] || 0;
+    period = (matches[3] || 'A').toUpperCase();
+    if ( hour < 0 || hour > 23 || minute < 0 || minute > 59 ) {
+        return null;
+    }
+    if ( hour === 12 && period === 'A' ) {
+        hour = 0;
+    }
+    if ( hour < 12 && period == 'P' ) {
+        hour += 12;
+    }
+    
+    return {
+        'hours': hour,
+        'minutes': minute
+    };
+};
+
+
+wolf.ui.DateTimePicker.prototype.renderTime_ = function() {
+    goog.dom.forms.setValue( this.userInputElement_, this.dateTime_.toUsTimeString() );
+};
+
+
+wolf.ui.DateTimePicker.prototype.updateTime_ = function() {
+    var parsedInput,
+        selectEvent,
+        changeEvent;
+
+    if ( parsedInput = this.parseUserInput_() ) {
+        this.dateTime_.setHours( parsedInput.hours );
+        this.dateTime_.setMinutes( parsedInput.minutes );
+
+        this.renderTime_();
+
+        selectEvent = new goog.ui.DatePickerEvent(
+            wolf.ui.DateTimePicker.Events.SELECT,
+            this, this.dateTime_
+        );
+        this.dispatchEvent( selectEvent );
+
+        changeEvent = new goog.ui.DatePickerEvent(
+            wolf.ui.DateTimePicker.Events.CHANGE,
+            this, this.dateTime_
+        );
+        this.dispatchEvent( changeEvent );
+    }
+};
+// Copyright 2005-2009, The Dojo Foundation
+// Modifications Copyright 2008 The Closure Library Authors.
+// All Rights Reserved.
+
+/**
+ * @license Portions of this code are from the Dojo Toolkit, received by
+ * The Closure Library Authors under the BSD license. All other code is
+ * Copyright 2005-2009 The Closure Library Authors. All Rights Reserved.
+
+The "New" BSD License:
+
+Copyright (c) 2005-2009, The Dojo Foundation
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+  * Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+  * Neither the name of the Dojo Foundation nor the names of its contributors
+    may be used to endorse or promote products derived from this software
+    without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+/**
+ * @fileoverview This code was ported from the Dojo Toolkit
+   http://dojotoolkit.org and modified slightly for Closure.
+ *
+ *  goog.dom.query is a relatively full-featured CSS3 query function. It is
+ *  designed to take any valid CSS3 selector and return the nodes matching
+ *  the selector. To do this quickly, it processes queries in several
+ *  steps, applying caching where profitable.
+ *    The steps (roughly in reverse order of the way they appear in the code):
+ *    1.) check to see if we already have a "query dispatcher"
+ *      - if so, use that with the given parameterization. Skip to step 4.
+ *    2.) attempt to determine which branch to dispatch the query to:
+ *      - JS (optimized DOM iteration)
+ *      - native (FF3.1, Safari 3.2+, Chrome, some IE 8 doctypes). If native,
+ *        skip to step 4, using a stub dispatcher for QSA queries.
+ *    3.) tokenize and convert to executable "query dispatcher"
+ *        assembled as a chain of "yes/no" test functions pertaining to
+ *        a section of a simple query statement (".blah:nth-child(odd)"
+ *        but not "div div", which is 2 simple statements).
+ *    4.) the resulting query dispatcher is called in the passed scope
+ *        (by default the top-level document)
+ *      - for DOM queries, this results in a recursive, top-down
+ *        evaluation of nodes based on each simple query section
+ *      - querySelectorAll is used instead of DOM where possible. If a query
+ *        fails in this mode, it is re-run against the DOM evaluator and all
+ *        future queries using the same selector evaluate against the DOM branch
+ *        too.
+ *    5.) matched nodes are pruned to ensure they are unique
+ * @deprecated This is an all-software query selector. When developing for
+ *     recent browsers, use document.querySelector. See information at
+ *     http://caniuse.com/queryselector and
+ *     https://developer.mozilla.org/en-US/docs/DOM/Document.querySelector .
+ */
+
+goog.provide('goog.dom.query');
+
+goog.require('goog.array');
+goog.require('goog.dom');
+goog.require('goog.functions');
+goog.require('goog.string');
+goog.require('goog.userAgent');
+
+  /**
+   * Returns nodes which match the given CSS3 selector, searching the
+   * entire document by default but optionally taking a node to scope
+   * the search by.
+   *
+   * dojo.query() is the swiss army knife of DOM node manipulation in
+   * Dojo. Much like Prototype's "$$" (bling-bling) function or JQuery's
+   * "$" function, dojo.query provides robust, high-performance
+   * CSS-based node selector support with the option of scoping searches
+   * to a particular sub-tree of a document.
+   *
+   * Supported Selectors:
+   * --------------------
+   *
+   * dojo.query() supports a rich set of CSS3 selectors, including:
+   *
+   *   * class selectors (e.g., `.foo`)
+   *   * node type selectors like `span`
+   *   * ` ` descendant selectors
+   *   * `>` child element selectors
+   *   * `#foo` style ID selectors
+   *   * `*` universal selector
+   *   * `~`, the immediately preceded-by sibling selector
+   *   * `+`, the preceded-by sibling selector
+   *   * attribute queries:
+   *   |  * `[foo]` attribute presence selector
+   *   |  * `[foo='bar']` attribute value exact match
+   *   |  * `[foo~='bar']` attribute value list item match
+   *   |  * `[foo^='bar']` attribute start match
+   *   |  * `[foo$='bar']` attribute end match
+   *   |  * `[foo*='bar']` attribute substring match
+   *   * `:first-child`, `:last-child` positional selectors
+   *   * `:empty` content empty selector
+   *   * `:empty` content empty selector
+   *   * `:nth-child(n)`, `:nth-child(2n+1)` style positional calculations
+   *   * `:nth-child(even)`, `:nth-child(odd)` positional selectors
+   *   * `:not(...)` negation pseudo selectors
+   *
+   * Any legal combination of these selectors will work with
+   * `dojo.query()`, including compound selectors ("," delimited).
+   * Very complex and useful searches can be constructed with this
+   * palette of selectors.
+   *
+   * Unsupported Selectors:
+   * ----------------------
+   *
+   * While dojo.query handles many CSS3 selectors, some fall outside of
+   * what's reasonable for a programmatic node querying engine to
+   * handle. Currently unsupported selectors include:
+   *
+   *   * namespace-differentiated selectors of any form
+   *   * all `::` pseudo-element selectors
+   *   * certain pseudo-selectors which don't get a lot of day-to-day use:
+   *   |  * `:root`, `:lang()`, `:target`, `:focus`
+   *   * all visual and state selectors:
+   *   |  * `:root`, `:active`, `:hover`, `:visited`, `:link`,
+   *       `:enabled`, `:disabled`, `:checked`
+   *   * `:*-of-type` pseudo selectors
+   *
+   * dojo.query and XML Documents:
+   * -----------------------------
+   *
+   * `dojo.query` currently only supports searching XML documents
+   * whose tags and attributes are 100% lower-case. This is a known
+   * limitation and will [be addressed soon]
+   * (http://trac.dojotoolkit.org/ticket/3866)
+   *
+   * Non-selector Queries:
+   * ---------------------
+   *
+   * If something other than a String is passed for the query,
+   * `dojo.query` will return a new array constructed from
+   * that parameter alone and all further processing will stop. This
+   * means that if you have a reference to a node or array or nodes, you
+   * can quickly construct a new array of nodes from the original by
+   * calling `dojo.query(node)` or `dojo.query(array)`.
+   *
+   * example:
+   *   search the entire document for elements with the class "foo":
+   * |  dojo.query(".foo");
+   *   these elements will match:
+   * |  <span class="foo"></span>
+   * |  <span class="foo bar"></span>
+   * |  <p class="thud foo"></p>
+   * example:
+   *   search the entire document for elements with the classes "foo" *and*
+   *   "bar":
+   * |  dojo.query(".foo.bar");
+   *   these elements will match:
+   * |  <span class="foo bar"></span>
+   *   while these will not:
+   * |  <span class="foo"></span>
+   * |  <p class="thud foo"></p>
+   * example:
+   *   find `<span>` elements which are descendants of paragraphs and
+   *   which have a "highlighted" class:
+   * |  dojo.query("p span.highlighted");
+   *   the innermost span in this fragment matches:
+   * |  <p class="foo">
+   * |    <span>...
+   * |      <span class="highlighted foo bar">...</span>
+   * |    </span>
+   * |  </p>
+   * example:
+   *   find all odd table rows inside of the table
+   *   `#tabular_data`, using the `>` (direct child) selector to avoid
+   *   affecting any nested tables:
+   * |  dojo.query("#tabular_data > tbody > tr:nth-child(odd)");
+   *
+   * @param {string|Array} query The CSS3 expression to match against.
+   *     For details on the syntax of CSS3 selectors, see
+   *     http://www.w3.org/TR/css3-selectors/#selectors.
+   * @param {(string|Node)=} opt_root A Node (or node id) to scope the search
+   *     from (optional).
+   * @return { {length: number} } The elements that matched the query.
+   *
+   * @deprecated This is an all-software query selector. Use
+   *     document.querySelector. See
+   *     https://developer.mozilla.org/en-US/docs/DOM/Document.querySelector .
+   */
+goog.dom.query = (function() {
+  ////////////////////////////////////////////////////////////////////////
+  // Global utilities
+  ////////////////////////////////////////////////////////////////////////
+
+  var cssCaseBug = (goog.userAgent.WEBKIT &&
+                     ((goog.dom.getDocument().compatMode) == 'BackCompat')
+                   );
+
+  // On browsers that support the "children" collection we can avoid a lot of
+  // iteration on chaff (non-element) nodes.
+  var childNodesName = !!goog.dom.getDocument().firstChild['children'] ?
+                          'children' :
+                          'childNodes';
+
+  var specials = '>~+';
+
+  // Global thunk to determine whether we should treat the current query as
+  // case sensitive or not. This switch is flipped by the query evaluator based
+  // on the document passed as the context to search.
+  var caseSensitive = false;
+
+
+  ////////////////////////////////////////////////////////////////////////
+  // Tokenizer
+  ////////////////////////////////////////////////////////////////////////
+
+  var getQueryParts = function(query) {
+    //  summary:
+    //    state machine for query tokenization
+    //  description:
+    //    instead of using a brittle and slow regex-based CSS parser,
+    //    dojo.query implements an AST-style query representation. This
+    //    representation is only generated once per query. For example,
+    //    the same query run multiple times or under different root nodes
+    //    does not re-parse the selector expression but instead uses the
+    //    cached data structure. The state machine implemented here
+    //    terminates on the last " " (space) character and returns an
+    //    ordered array of query component structures (or "parts"). Each
+    //    part represents an operator or a simple CSS filtering
+    //    expression. The structure for parts is documented in the code
+    //    below.
+
+
+    // NOTE:
+    //    this code is designed to run fast and compress well. Sacrifices
+    //    to readability and maintainability have been made.
+    if (specials.indexOf(query.slice(-1)) >= 0) {
+      // If we end with a ">", "+", or "~", that means we're implicitly
+      // searching all children, so make it explicit.
+      query += ' * '
+    } else {
+      // if you have not provided a terminator, one will be provided for
+      // you...
+      query += ' ';
+    }
+
+    var ts = function(/*Integer*/ s, /*Integer*/ e) {
+      // trim and slice.
+
+      // take an index to start a string slice from and an end position
+      // and return a trimmed copy of that sub-string
+      return goog.string.trim(query.slice(s, e));
+    };
+
+    // The overall data graph of the full query, as represented by queryPart
+    // objects.
+    var queryParts = [];
+
+
+    // state keeping vars
+    var inBrackets = -1,
+        inParens = -1,
+        inMatchFor = -1,
+        inPseudo = -1,
+        inClass = -1,
+        inId = -1,
+        inTag = -1,
+        lc = '',
+        cc = '',
+        pStart;
+
+    // iteration vars
+    var x = 0, // index in the query
+        ql = query.length,
+        currentPart = null, // data structure representing the entire clause
+        cp = null; // the current pseudo or attr matcher
+
+    // several temporary variables are assigned to this structure during a
+    // potential sub-expression match:
+    //    attr:
+    //      a string representing the current full attribute match in a
+    //      bracket expression
+    //    type:
+    //      if there's an operator in a bracket expression, this is
+    //      used to keep track of it
+    //    value:
+    //      the internals of parenthetical expression for a pseudo. for
+    //      :nth-child(2n+1), value might be '2n+1'
+
+    var endTag = function() {
+      // called when the tokenizer hits the end of a particular tag name.
+      // Re-sets state variables for tag matching and sets up the matcher
+      // to handle the next type of token (tag or operator).
+      if (inTag >= 0) {
+        var tv = (inTag == x) ? null : ts(inTag, x);
+        if (specials.indexOf(tv) < 0) {
+          currentPart.tag = tv;
+        } else {
+          currentPart.oper = tv;
+        }
+        inTag = -1;
+      }
+    };
+
+    var endId = function() {
+      // Called when the tokenizer might be at the end of an ID portion of a
+      // match.
+      if (inId >= 0) {
+        currentPart.id = ts(inId, x).replace(/\\/g, '');
+        inId = -1;
+      }
+    };
+
+    var endClass = function() {
+      // Called when the tokenizer might be at the end of a class name
+      // match. CSS allows for multiple classes, so we augment the
+      // current item with another class in its list.
+      if (inClass >= 0) {
+        currentPart.classes.push(ts(inClass + 1, x).replace(/\\/g, ''));
+        inClass = -1;
+      }
+    };
+
+    var endAll = function() {
+      // at the end of a simple fragment, so wall off the matches
+      endId(); endTag(); endClass();
+    };
+
+    var endPart = function() {
+      endAll();
+      if (inPseudo >= 0) {
+        currentPart.pseudos.push({ name: ts(inPseudo + 1, x) });
+      }
+      // Hint to the selector engine to tell it whether or not it
+      // needs to do any iteration. Many simple selectors don't, and
+      // we can avoid significant construction-time work by advising
+      // the system to skip them.
+      currentPart.loops = currentPart.pseudos.length ||
+                          currentPart.attrs.length ||
+                          currentPart.classes.length;
+
+      // save the full expression as a string
+      currentPart.oquery = currentPart.query = ts(pStart, x);
+
+
+      // otag/tag are hints to suggest to the system whether or not
+      // it's an operator or a tag. We save a copy of otag since the
+      // tag name is cast to upper-case in regular HTML matches. The
+      // system has a global switch to figure out if the current
+      // expression needs to be case sensitive or not and it will use
+      // otag or tag accordingly
+      currentPart.otag = currentPart.tag = (currentPart.oper) ?
+                                                     null :
+                                                     (currentPart.tag || '*');
+
+      if (currentPart.tag) {
+        // if we're in a case-insensitive HTML doc, we likely want
+        // the toUpperCase when matching on element.tagName. If we
+        // do it here, we can skip the string op per node
+        // comparison
+        currentPart.tag = currentPart.tag.toUpperCase();
+      }
+
+      // add the part to the list
+      if (queryParts.length && (queryParts[queryParts.length - 1].oper)) {
+        // operators are always infix, so we remove them from the
+        // list and attach them to the next match. The evaluator is
+        // responsible for sorting out how to handle them.
+        currentPart.infixOper = queryParts.pop();
+        currentPart.query = currentPart.infixOper.query + ' ' +
+            currentPart.query;
+      }
+      queryParts.push(currentPart);
+
+      currentPart = null;
+    }
+
+    // iterate over the query, character by character, building up a
+    // list of query part objects
+    for (; lc = cc, cc = query.charAt(x), x < ql; x++) {
+      //    cc: the current character in the match
+      //    lc: the last character (if any)
+
+      // someone is trying to escape something, so don't try to match any
+      // fragments. We assume we're inside a literal.
+      if (lc == '\\') {
+        continue;
+      }
+      if (!currentPart) { // a part was just ended or none has yet been created
+        // NOTE: I hate all this alloc, but it's shorter than writing tons of
+        // if's
+        pStart = x;
+        //  rules describe full CSS sub-expressions, like:
+        //    #someId
+        //    .className:first-child
+        //  but not:
+        //    thinger > div.howdy[type=thinger]
+        //  the individual components of the previous query would be
+        //  split into 3 parts that would be represented a structure
+        //  like:
+        //    [
+        //      {
+        //        query: 'thinger',
+        //        tag: 'thinger',
+        //      },
+        //      {
+        //        query: 'div.howdy[type=thinger]',
+        //        classes: ['howdy'],
+        //        infixOper: {
+        //          query: '>',
+        //          oper: '>',
+        //        }
+        //      },
+        //    ]
+        currentPart = {
+          query: null, // the full text of the part's rule
+          pseudos: [], // CSS supports multiple pseudo-class matches in a single
+              // rule
+          attrs: [],  // CSS supports multi-attribute match, so we need an array
+          classes: [], // class matches may be additive,
+              // e.g.: .thinger.blah.howdy
+          tag: null,  // only one tag...
+          oper: null, // ...or operator per component. Note that these wind up
+              // being exclusive.
+          id: null,   // the id component of a rule
+          getTag: function() {
+            return (caseSensitive) ? this.otag : this.tag;
+          }
+        };
+
+        // if we don't have a part, we assume we're going to start at
+        // the beginning of a match, which should be a tag name. This
+        // might fault a little later on, but we detect that and this
+        // iteration will still be fine.
+        inTag = x;
+      }
+
+      if (inBrackets >= 0) {
+        // look for a the close first
+        if (cc == ']') { // if we're in a [...] clause and we end, do assignment
+          if (!cp.attr) {
+            // no attribute match was previously begun, so we
+            // assume this is an attribute existence match in the
+            // form of [someAttributeName]
+            cp.attr = ts(inBrackets + 1, x);
+          } else {
+            // we had an attribute already, so we know that we're
+            // matching some sort of value, as in [attrName=howdy]
+            cp.matchFor = ts((inMatchFor || inBrackets + 1), x);
+          }
+          var cmf = cp.matchFor;
+          if (cmf) {
+            // try to strip quotes from the matchFor value. We want
+            // [attrName=howdy] to match the same
+            //  as [attrName = 'howdy' ]
+            if ((cmf.charAt(0) == '"') || (cmf.charAt(0) == "'")) {
+              cp.matchFor = cmf.slice(1, -1);
+            }
+          }
+          // end the attribute by adding it to the list of attributes.
+          currentPart.attrs.push(cp);
+          cp = null; // necessary?
+          inBrackets = inMatchFor = -1;
+        } else if (cc == '=') {
+          // if the last char was an operator prefix, make sure we
+          // record it along with the '=' operator.
+          var addToCc = ('|~^$*'.indexOf(lc) >= 0) ? lc : '';
+          cp.type = addToCc + cc;
+          cp.attr = ts(inBrackets + 1, x - addToCc.length);
+          inMatchFor = x + 1;
+        }
+        // now look for other clause parts
+      } else if (inParens >= 0) {
+        // if we're in a parenthetical expression, we need to figure
+        // out if it's attached to a pseudo-selector rule like
+        // :nth-child(1)
+        if (cc == ')') {
+          if (inPseudo >= 0) {
+            cp.value = ts(inParens + 1, x);
+          }
+          inPseudo = inParens = -1;
+        }
+      } else if (cc == '#') {
+        // start of an ID match
+        endAll();
+        inId = x + 1;
+      } else if (cc == '.') {
+        // start of a class match
+        endAll();
+        inClass = x;
+      } else if (cc == ':') {
+        // start of a pseudo-selector match
+        endAll();
+        inPseudo = x;
+      } else if (cc == '[') {
+        // start of an attribute match.
+        endAll();
+        inBrackets = x;
+        // provide a new structure for the attribute match to fill-in
+        cp = {
+          /*=====
+          attr: null, type: null, matchFor: null
+          =====*/
+        };
+      } else if (cc == '(') {
+        // we really only care if we've entered a parenthetical
+        // expression if we're already inside a pseudo-selector match
+        if (inPseudo >= 0) {
+          // provide a new structure for the pseudo match to fill-in
+          cp = {
+            name: ts(inPseudo + 1, x),
+            value: null
+          }
+          currentPart.pseudos.push(cp);
+        }
+        inParens = x;
+      } else if (
+        (cc == ' ') &&
+        // if it's a space char and the last char is too, consume the
+        // current one without doing more work
+        (lc != cc)
+      ) {
+        endPart();
+      }
+    }
+    return queryParts;
+  };
+
+
+  ////////////////////////////////////////////////////////////////////////
+  // DOM query infrastructure
+  ////////////////////////////////////////////////////////////////////////
+
+  var agree = function(first, second) {
+    // the basic building block of the yes/no chaining system. agree(f1,
+    // f2) generates a new function which returns the boolean results of
+    // both of the passed functions to a single logical-anded result. If
+    // either are not passed, the other is used exclusively.
+    if (!first) {
+      return second;
+    }
+    if (!second) {
+      return first;
+    }
+
+    return function() {
+      return first.apply(window, arguments) && second.apply(window, arguments);
+    }
+  };
+
+  /**
+   * @param {Array=} opt_arr
+   */
+  function getArr(i, opt_arr) {
+    // helps us avoid array alloc when we don't need it
+    var r = opt_arr || [];
+    if (i) {
+      r.push(i);
+    }
+    return r;
+  };
+
+  var isElement = function(n) {
+    return (1 == n.nodeType);
+  };
+
+  // FIXME: need to coalesce getAttr with defaultGetter
+  var blank = '';
+  var getAttr = function(elem, attr) {
+    if (!elem) {
+      return blank;
+    }
+    if (attr == 'class') {
+      return elem.className || blank;
+    }
+    if (attr == 'for') {
+      return elem.htmlFor || blank;
+    }
+    if (attr == 'style') {
+      return elem.style.cssText || blank;
+    }
+    return (caseSensitive ? elem.getAttribute(attr) :
+        elem.getAttribute(attr, 2)) || blank;
+  };
+
+  var attrs = {
+    '*=': function(attr, value) {
+      return function(elem) {
+        // E[foo*="bar"]
+        //    an E element whose "foo" attribute value contains
+        //    the substring "bar"
+        return (getAttr(elem, attr).indexOf(value) >= 0);
+      }
+    },
+    '^=': function(attr, value) {
+      // E[foo^="bar"]
+      //    an E element whose "foo" attribute value begins exactly
+      //    with the string "bar"
+      return function(elem) {
+        return (getAttr(elem, attr).indexOf(value) == 0);
+      }
+    },
+    '$=': function(attr, value) {
+      // E[foo$="bar"]
+      //    an E element whose "foo" attribute value ends exactly
+      //    with the string "bar"
+      var tval = ' ' + value;
+      return function(elem) {
+        var ea = ' ' + getAttr(elem, attr);
+        return (ea.lastIndexOf(value) == (ea.length - value.length));
+      }
+    },
+    '~=': function(attr, value) {
+      // E[foo~="bar"]
+      //    an E element whose "foo" attribute value is a list of
+      //    space-separated values, one of which is exactly equal
+      //    to "bar"
+
+      var tval = ' ' + value + ' ';
+      return function(elem) {
+        var ea = ' ' + getAttr(elem, attr) + ' ';
+        return (ea.indexOf(tval) >= 0);
+      }
+    },
+    '|=': function(attr, value) {
+      // E[hreflang|="en"]
+      //    an E element whose "hreflang" attribute has a
+      //    hyphen-separated list of values beginning (from the
+      //    left) with "en"
+      value = ' ' + value;
+      return function(elem) {
+        var ea = ' ' + getAttr(elem, attr);
+        return (
+          (ea == value) ||
+          (ea.indexOf(value + '-') == 0)
+        );
+      }
+    },
+    '=': function(attr, value) {
+      return function(elem) {
+        return (getAttr(elem, attr) == value);
+      }
+    }
+  };
+
+  // avoid testing for node type if we can. Defining this in the negative
+  // here to avoid negation in the fast path.
+  var noNextElementSibling = (
+    typeof goog.dom.getDocument().firstChild.nextElementSibling == 'undefined'
+  );
+  var nSibling = !noNextElementSibling ? 'nextElementSibling' : 'nextSibling';
+  var pSibling = !noNextElementSibling ?
+                    'previousElementSibling' :
+                    'previousSibling';
+  var simpleNodeTest = (noNextElementSibling ? isElement : goog.functions.TRUE);
+
+  var _lookLeft = function(node) {
+    while (node = node[pSibling]) {
+      if (simpleNodeTest(node)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  var _lookRight = function(node) {
+    while (node = node[nSibling]) {
+      if (simpleNodeTest(node)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  var getNodeIndex = function(node) {
+    var root = node.parentNode;
+    var i = 0,
+        tret = root[childNodesName],
+        ci = (node['_i'] || -1),
+        cl = (root['_l'] || -1);
+
+    if (!tret) {
+      return -1;
+    }
+    var l = tret.length;
+
+    // we calculate the parent length as a cheap way to invalidate the
+    // cache. It's not 100% accurate, but it's much more honest than what
+    // other libraries do
+    if (cl == l && ci >= 0 && cl >= 0) {
+      // if it's legit, tag and release
+      return ci;
+    }
+
+    // else re-key things
+    root['_l'] = l;
+    ci = -1;
+    var te = root['firstElementChild'] || root['firstChild'];
+    for (; te; te = te[nSibling]) {
+      if (simpleNodeTest(te)) {
+        te['_i'] = ++i;
+        if (node === te) {
+          // NOTE:
+          //  shortcutting the return at this step in indexing works
+          //  very well for benchmarking but we avoid it here since
+          //  it leads to potential O(n^2) behavior in sequential
+          //  getNodexIndex operations on a previously un-indexed
+          //  parent. We may revisit this at a later time, but for
+          //  now we just want to get the right answer more often
+          //  than not.
+          ci = i;
+        }
+      }
+    }
+    return ci;
+  };
+
+  var isEven = function(elem) {
+    return !((getNodeIndex(elem)) % 2);
+  };
+
+  var isOdd = function(elem) {
+    return (getNodeIndex(elem)) % 2;
+  };
+
+  var pseudos = {
+    'checked': function(name, condition) {
+      return function(elem) {
+        return elem.checked || elem.attributes['checked'];
+      }
+    },
+    'first-child': function() {
+      return _lookLeft;
+    },
+    'last-child': function() {
+      return _lookRight;
+    },
+    'only-child': function(name, condition) {
+      return function(node) {
+        if (!_lookLeft(node)) {
+          return false;
+        }
+        if (!_lookRight(node)) {
+          return false;
+        }
+        return true;
+      };
+    },
+    'empty': function(name, condition) {
+      return function(elem) {
+        // DomQuery and jQuery get this wrong, oddly enough.
+        // The CSS 3 selectors spec is pretty explicit about it, too.
+        var cn = elem.childNodes;
+        var cnl = elem.childNodes.length;
+        // if(!cnl) { return true; }
+        for (var x = cnl - 1; x >= 0; x--) {
+          var nt = cn[x].nodeType;
+          if ((nt === 1) || (nt == 3)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    },
+    'contains': function(name, condition) {
+      var cz = condition.charAt(0);
+      if (cz == '"' || cz == "'") { // Remove quotes.
+        condition = condition.slice(1, -1);
+      }
+      return function(elem) {
+        return (elem.innerHTML.indexOf(condition) >= 0);
+      }
+    },
+    'not': function(name, condition) {
+      var p = getQueryParts(condition)[0];
+      var ignores = { el: 1 };
+      if (p.tag != '*') {
+        ignores.tag = 1;
+      }
+      if (!p.classes.length) {
+        ignores.classes = 1;
+      }
+      var ntf = getSimpleFilterFunc(p, ignores);
+      return function(elem) {
+        return !ntf(elem);
+      }
+    },
+    'nth-child': function(name, condition) {
+      function pi(n) {
+        return parseInt(n, 10);
+      }
+      // avoid re-defining function objects if we can
+      if (condition == 'odd') {
+        return isOdd;
+      } else if (condition == 'even') {
+        return isEven;
+      }
+      // FIXME: can we shorten this?
+      if (condition.indexOf('n') != -1) {
+        var tparts = condition.split('n', 2);
+        var pred = tparts[0] ? ((tparts[0] == '-') ? -1 : pi(tparts[0])) : 1;
+        var idx = tparts[1] ? pi(tparts[1]) : 0;
+        var lb = 0, ub = -1;
+        if (pred > 0) {
+          if (idx < 0) {
+            idx = (idx % pred) && (pred + (idx % pred));
+          } else if (idx > 0) {
+            if (idx >= pred) {
+              lb = idx - idx % pred;
+            }
+            idx = idx % pred;
+          }
+        } else if (pred < 0) {
+          pred *= -1;
+          // idx has to be greater than 0 when pred is negative;
+          // shall we throw an error here?
+          if (idx > 0) {
+            ub = idx;
+            idx = idx % pred;
+          }
+        }
+        if (pred > 0) {
+          return function(elem) {
+            var i = getNodeIndex(elem);
+            return (i >= lb) && (ub < 0 || i <= ub) && ((i % pred) == idx);
+          }
+        } else {
+          condition = idx;
+        }
+      }
+      var ncount = pi(condition);
+      return function(elem) {
+        return (getNodeIndex(elem) == ncount);
+      }
+    }
+  };
+
+  var defaultGetter = (goog.userAgent.IE) ? function(cond) {
+    var clc = cond.toLowerCase();
+    if (clc == 'class') {
+      cond = 'className';
+    }
+    return function(elem) {
+      return caseSensitive ? elem.getAttribute(cond) : elem[cond] || elem[clc];
+    }
+  } : function(cond) {
+    return function(elem) {
+      return elem && elem.getAttribute && elem.hasAttribute(cond);
+    }
+  };
+
+  var getSimpleFilterFunc = function(query, ignores) {
+    // Generates a node tester function based on the passed query part. The
+    // query part is one of the structures generated by the query parser when it
+    // creates the query AST. The 'ignores' object specifies which (if any)
+    // tests to skip, allowing the system to avoid duplicating work where it
+    // may have already been taken into account by other factors such as how
+    // the nodes to test were fetched in the first place.
+    if (!query) {
+      return goog.functions.TRUE;
+    }
+    ignores = ignores || {};
+
+    var ff = null;
+
+    if (!ignores.el) {
+      ff = agree(ff, isElement);
+    }
+
+    if (!ignores.tag) {
+      if (query.tag != '*') {
+        ff = agree(ff, function(elem) {
+          return (elem && (elem.tagName == query.getTag()));
+        });
+      }
+    }
+
+    if (!ignores.classes) {
+      goog.array.forEach(query.classes, function(cname, idx, arr) {
+        // Get the class name.
+        var re = new RegExp('(?:^|\\s)' + cname + '(?:\\s|$)');
+        ff = agree(ff, function(elem) {
+          return re.test(elem.className);
+        });
+        ff.count = idx;
+      });
+    }
+
+    if (!ignores.pseudos) {
+      goog.array.forEach(query.pseudos, function(pseudo) {
+        var pn = pseudo.name;
+        if (pseudos[pn]) {
+          ff = agree(ff, pseudos[pn](pn, pseudo.value));
+        }
+      });
+    }
+
+    if (!ignores.attrs) {
+      goog.array.forEach(query.attrs, function(attr) {
+        var matcher;
+        var a = attr.attr;
+        // type, attr, matchFor
+        if (attr.type && attrs[attr.type]) {
+          matcher = attrs[attr.type](a, attr.matchFor);
+        } else if (a.length) {
+          matcher = defaultGetter(a);
+        }
+        if (matcher) {
+          ff = agree(ff, matcher);
+        }
+      });
+    }
+
+    if (!ignores.id) {
+      if (query.id) {
+        ff = agree(ff, function(elem) {
+          return (!!elem && (elem.id == query.id));
+        });
+      }
+    }
+
+    if (!ff) {
+      if (!('default' in ignores)) {
+        ff = goog.functions.TRUE;
+      }
+    }
+    return ff;
+  };
+
+  var nextSiblingIterator = function(filterFunc) {
+    return function(node, ret, bag) {
+      while (node = node[nSibling]) {
+        if (noNextElementSibling && (!isElement(node))) {
+          continue;
+        }
+        if (
+          (!bag || _isUnique(node, bag)) &&
+          filterFunc(node)
+        ) {
+          ret.push(node);
+        }
+        break;
+      }
+      return ret;
+    };
+  };
+
+  var nextSiblingsIterator = function(filterFunc) {
+    return function(root, ret, bag) {
+      var te = root[nSibling];
+      while (te) {
+        if (simpleNodeTest(te)) {
+          if (bag && !_isUnique(te, bag)) {
+            break;
+          }
+          if (filterFunc(te)) {
+            ret.push(te);
+          }
+        }
+        te = te[nSibling];
+      }
+      return ret;
+    };
+  };
+
+  // Get an array of child *elements*, skipping text and comment nodes
+  var _childElements = function(filterFunc) {
+    filterFunc = filterFunc || goog.functions.TRUE;
+    return function(root, ret, bag) {
+      var te, x = 0, tret = root[childNodesName];
+      while (te = tret[x++]) {
+        if (
+          simpleNodeTest(te) &&
+          (!bag || _isUnique(te, bag)) &&
+          (filterFunc(te, x))
+        ) {
+          ret.push(te);
+        }
+      }
+      return ret;
+    };
+  };
+
+  // test to see if node is below root
+  var _isDescendant = function(node, root) {
+    var pn = node.parentNode;
+    while (pn) {
+      if (pn == root) {
+        break;
+      }
+      pn = pn.parentNode;
+    }
+    return !!pn;
+  };
+
+  var _getElementsFuncCache = {};
+
+  var getElementsFunc = function(query) {
+    var retFunc = _getElementsFuncCache[query.query];
+    // If we've got a cached dispatcher, just use that.
+    if (retFunc) {
+      return retFunc;
+    }
+    // Else, generate a new one.
+
+    // NOTE:
+    //    This function returns a function that searches for nodes and
+    //    filters them. The search may be specialized by infix operators
+    //    (">", "~", or "+") else it will default to searching all
+    //    descendants (the " " selector). Once a group of children is
+    //    found, a test function is applied to weed out the ones we
+    //    don't want. Many common cases can be fast-pathed. We spend a
+    //    lot of cycles to create a dispatcher that doesn't do more work
+    //    than necessary at any point since, unlike this function, the
+    //    dispatchers will be called every time. The logic of generating
+    //    efficient dispatchers looks like this in pseudo code:
+    //
+    //    # if it's a purely descendant query (no ">", "+", or "~" modifiers)
+    //    if infixOperator == " ":
+    //      if only(id):
+    //        return def(root):
+    //          return d.byId(id, root);
+    //
+    //      elif id:
+    //        return def(root):
+    //          return filter(d.byId(id, root));
+    //
+    //      elif cssClass && getElementsByClassName:
+    //        return def(root):
+    //          return filter(root.getElementsByClassName(cssClass));
+    //
+    //      elif only(tag):
+    //        return def(root):
+    //          return root.getElementsByTagName(tagName);
+    //
+    //      else:
+    //        # search by tag name, then filter
+    //        return def(root):
+    //          return filter(root.getElementsByTagName(tagName||"*"));
+    //
+    //    elif infixOperator == ">":
+    //      # search direct children
+    //      return def(root):
+    //        return filter(root.children);
+    //
+    //    elif infixOperator == "+":
+    //      # search next sibling
+    //      return def(root):
+    //        return filter(root.nextElementSibling);
+    //
+    //    elif infixOperator == "~":
+    //      # search rightward siblings
+    //      return def(root):
+    //        return filter(nextSiblings(root));
+
+    var io = query.infixOper;
+    var oper = (io ? io.oper : '');
+    // The default filter func which tests for all conditions in the query
+    // part. This is potentially inefficient, so some optimized paths may
+    // re-define it to test fewer things.
+    var filterFunc = getSimpleFilterFunc(query, { el: 1 });
+    var qt = query.tag;
+    var wildcardTag = ('*' == qt);
+    var ecs = goog.dom.getDocument()['getElementsByClassName'];
+
+    if (!oper) {
+      // If there's no infix operator, then it's a descendant query. ID
+      // and "elements by class name" variants can be accelerated so we
+      // call them out explicitly:
+      if (query.id) {
+        // Testing shows that the overhead of goog.functions.TRUE() is
+        // acceptable and can save us some bytes vs. re-defining the function
+        // everywhere.
+        filterFunc = (!query.loops && wildcardTag) ?
+          goog.functions.TRUE :
+          getSimpleFilterFunc(query, { el: 1, id: 1 });
+
+        retFunc = function(root, arr) {
+          var te = goog.dom.getDomHelper(root).getElement(query.id);
+          if (!te || !filterFunc(te)) {
+            return;
+          }
+          if (9 == root.nodeType) { // If root's a doc, we just return directly.
+            return getArr(te, arr);
+          } else { // otherwise check ancestry
+            if (_isDescendant(te, root)) {
+              return getArr(te, arr);
+            }
+          }
+        }
+      } else if (
+        ecs &&
+        // isAlien check. Workaround for Prototype.js being totally evil/dumb.
+        /\{\s*\[native code\]\s*\}/.test(String(ecs)) &&
+        query.classes.length &&
+        // WebKit bug where quirks-mode docs select by class w/o case
+        // sensitivity.
+        !cssCaseBug
+      ) {
+        // it's a class-based query and we've got a fast way to run it.
+
+        // ignore class and ID filters since we will have handled both
+        filterFunc = getSimpleFilterFunc(query, { el: 1, classes: 1, id: 1 });
+        var classesString = query.classes.join(' ');
+        retFunc = function(root, arr) {
+          var ret = getArr(0, arr), te, x = 0;
+          var tret = root.getElementsByClassName(classesString);
+          while ((te = tret[x++])) {
+            if (filterFunc(te, root)) {
+              ret.push(te);
+            }
+          }
+          return ret;
+        };
+
+      } else if (!wildcardTag && !query.loops) {
+        // it's tag only. Fast-path it.
+        retFunc = function(root, arr) {
+          var ret = getArr(0, arr), te, x = 0;
+          var tret = root.getElementsByTagName(query.getTag());
+          while ((te = tret[x++])) {
+            ret.push(te);
+          }
+          return ret;
+        };
+      } else {
+        // the common case:
+        //    a descendant selector without a fast path. By now it's got
+        //    to have a tag selector, even if it's just "*" so we query
+        //    by that and filter
+        filterFunc = getSimpleFilterFunc(query, { el: 1, tag: 1, id: 1 });
+        retFunc = function(root, arr) {
+          var ret = getArr(0, arr), te, x = 0;
+          // we use getTag() to avoid case sensitivity issues
+          var tret = root.getElementsByTagName(query.getTag());
+          while (te = tret[x++]) {
+            if (filterFunc(te, root)) {
+              ret.push(te);
+            }
+          }
+          return ret;
+        };
+      }
+    } else {
+      // the query is scoped in some way. Instead of querying by tag we
+      // use some other collection to find candidate nodes
+      var skipFilters = { el: 1 };
+      if (wildcardTag) {
+        skipFilters.tag = 1;
+      }
+      filterFunc = getSimpleFilterFunc(query, skipFilters);
+      if ('+' == oper) {
+        retFunc = nextSiblingIterator(filterFunc);
+      } else if ('~' == oper) {
+        retFunc = nextSiblingsIterator(filterFunc);
+      } else if ('>' == oper) {
+        retFunc = _childElements(filterFunc);
+      }
+    }
+    // cache it and return
+    return _getElementsFuncCache[query.query] = retFunc;
+  };
+
+  var filterDown = function(root, queryParts) {
+    // NOTE:
+    //    this is the guts of the DOM query system. It takes a list of
+    //    parsed query parts and a root and finds children which match
+    //    the selector represented by the parts
+    var candidates = getArr(root), qp, x, te, qpl = queryParts.length, bag, ret;
+
+    for (var i = 0; i < qpl; i++) {
+      ret = [];
+      qp = queryParts[i];
+      x = candidates.length - 1;
+      if (x > 0) {
+        // if we have more than one root at this level, provide a new
+        // hash to use for checking group membership but tell the
+        // system not to post-filter us since we will already have been
+        // guaranteed to be unique
+        bag = {};
+        ret.nozip = true;
+      }
+      var gef = getElementsFunc(qp);
+      for (var j = 0; te = candidates[j]; j++) {
+        // for every root, get the elements that match the descendant
+        // selector, adding them to the 'ret' array and filtering them
+        // via membership in this level's bag. If there are more query
+        // parts, then this level's return will be used as the next
+        // level's candidates
+        gef(te, ret, bag);
+      }
+      if (!ret.length) { break; }
+      candidates = ret;
+    }
+    return ret;
+  };
+
+  ////////////////////////////////////////////////////////////////////////
+  // the query runner
+  ////////////////////////////////////////////////////////////////////////
+
+  // these are the primary caches for full-query results. The query
+  // dispatcher functions are generated then stored here for hash lookup in
+  // the future
+  var _queryFuncCacheDOM = {},
+    _queryFuncCacheQSA = {};
+
+  // this is the second level of splitting, from full-length queries (e.g.,
+  // 'div.foo .bar') into simple query expressions (e.g., ['div.foo',
+  // '.bar'])
+  var getStepQueryFunc = function(query) {
+    var qparts = getQueryParts(goog.string.trim(query));
+
+    // if it's trivial, avoid iteration and zipping costs
+    if (qparts.length == 1) {
+      // We optimize this case here to prevent dispatch further down the
+      // chain, potentially slowing things down. We could more elegantly
+      // handle this in filterDown(), but it's slower for simple things
+      // that need to be fast (e.g., '#someId').
+      var tef = getElementsFunc(qparts[0]);
+      return function(root) {
+        var r = tef(root, []);
+        if (r) { r.nozip = true; }
+        return r;
+      }
+    }
+
+    // otherwise, break it up and return a runner that iterates over the parts
+    // recursively
+    return function(root) {
+      return filterDown(root, qparts);
+    }
+  };
+
+  // NOTES:
+  //  * we can't trust QSA for anything but document-rooted queries, so
+  //    caching is split into DOM query evaluators and QSA query evaluators
+  //  * caching query results is dirty and leak-prone (or, at a minimum,
+  //    prone to unbounded growth). Other toolkits may go this route, but
+  //    they totally destroy their own ability to manage their memory
+  //    footprint. If we implement it, it should only ever be with a fixed
+  //    total element reference # limit and an LRU-style algorithm since JS
+  //    has no weakref support. Caching compiled query evaluators is also
+  //    potentially problematic, but even on large documents the size of the
+  //    query evaluators is often < 100 function objects per evaluator (and
+  //    LRU can be applied if it's ever shown to be an issue).
+  //  * since IE's QSA support is currently only for HTML documents and even
+  //    then only in IE 8's 'standards mode', we have to detect our dispatch
+  //    route at query time and keep 2 separate caches. Ugg.
+
+  var qsa = 'querySelectorAll';
+
+  // some versions of Safari provided QSA, but it was buggy and crash-prone.
+  // We need to detect the right 'internal' webkit version to make this work.
+  var qsaAvail = (
+    !!goog.dom.getDocument()[qsa] &&
+    // see #5832
+    (!goog.userAgent.WEBKIT || goog.userAgent.isVersionOrHigher('526'))
+  );
+
+  /** @param {boolean=} opt_forceDOM */
+  var getQueryFunc = function(query, opt_forceDOM) {
+
+    if (qsaAvail) {
+      // if we've got a cached variant and we think we can do it, run it!
+      var qsaCached = _queryFuncCacheQSA[query];
+      if (qsaCached && !opt_forceDOM) {
+        return qsaCached;
+      }
+    }
+
+    // else if we've got a DOM cached variant, assume that we already know
+    // all we need to and use it
+    var domCached = _queryFuncCacheDOM[query];
+    if (domCached) {
+      return domCached;
+    }
+
+    // TODO:
+    //    today we're caching DOM and QSA branches separately so we
+    //    recalc useQSA every time. If we had a way to tag root+query
+    //    efficiently, we'd be in good shape to do a global cache.
+
+    var qcz = query.charAt(0);
+    var nospace = (-1 == query.indexOf(' '));
+
+    // byId searches are wicked fast compared to QSA, even when filtering
+    // is required
+    if ((query.indexOf('#') >= 0) && (nospace)) {
+      opt_forceDOM = true;
+    }
+
+    var useQSA = (
+      qsaAvail && (!opt_forceDOM) &&
+      // as per CSS 3, we can't currently start w/ combinator:
+      //    http://www.w3.org/TR/css3-selectors/#w3cselgrammar
+      (specials.indexOf(qcz) == -1) &&
+      // IE's QSA impl sucks on pseudos
+      (!goog.userAgent.IE || (query.indexOf(':') == -1)) &&
+
+      (!(cssCaseBug && (query.indexOf('.') >= 0))) &&
+
+      // FIXME:
+      //    need to tighten up browser rules on ':contains' and '|=' to
+      //    figure out which aren't good
+      (query.indexOf(':contains') == -1) &&
+      (query.indexOf('|=') == -1) // some browsers don't understand it
+    );
+
+    // TODO:
+    //    if we've got a descendant query (e.g., '> .thinger' instead of
+    //    just '.thinger') in a QSA-able doc, but are passed a child as a
+    //    root, it should be possible to give the item a synthetic ID and
+    //    trivially rewrite the query to the form '#synid > .thinger' to
+    //    use the QSA branch
+
+
+    if (useQSA) {
+      var tq = (specials.indexOf(query.charAt(query.length - 1)) >= 0) ?
+            (query + ' *') : query;
+      return _queryFuncCacheQSA[query] = function(root) {
+        try {
+          // the QSA system contains an egregious spec bug which
+          // limits us, effectively, to only running QSA queries over
+          // entire documents.  See:
+          //    http://ejohn.org/blog/thoughts-on-queryselectorall/
+          //  despite this, we can also handle QSA runs on simple
+          //  selectors, but we don't want detection to be expensive
+          //  so we're just checking for the presence of a space char
+          //  right now. Not elegant, but it's cheaper than running
+          //  the query parser when we might not need to
+          if (!((9 == root.nodeType) || nospace)) {
+            throw '';
+          }
+          var r = root[qsa](tq);
+          // IE QSA queries may incorrectly include comment nodes, so we throw
+          // the zipping function into 'remove' comments mode instead of the
+          // normal 'skip it' which every other QSA-clued browser enjoys
+          // skip expensive duplication checks and just wrap in an array.
+          if (goog.userAgent.IE) {
+            r.commentStrip = true;
+          } else {
+            r.nozip = true;
+          }
+          return r;
+        } catch (e) {
+          // else run the DOM branch on this query, ensuring that we
+          // default that way in the future
+          return getQueryFunc(query, true)(root);
+        }
+      }
+    } else {
+      // DOM branch
+      var parts = query.split(/\s*,\s*/);
+      return _queryFuncCacheDOM[query] = ((parts.length < 2) ?
+        // if not a compound query (e.g., '.foo, .bar'), cache and return a
+        // dispatcher
+        getStepQueryFunc(query) :
+        // if it *is* a complex query, break it up into its
+        // constituent parts and return a dispatcher that will
+        // merge the parts when run
+        function(root) {
+          var pindex = 0, // avoid array alloc for every invocation
+            ret = [],
+            tp;
+          while (tp = parts[pindex++]) {
+            ret = ret.concat(getStepQueryFunc(tp)(root));
+          }
+          return ret;
+        }
+      );
+    }
+  };
+
+  var _zipIdx = 0;
+
+  // NOTE:
+  //    this function is Moo inspired, but our own impl to deal correctly
+  //    with XML in IE
+  var _nodeUID = goog.userAgent.IE ? function(node) {
+    if (caseSensitive) {
+      // XML docs don't have uniqueID on their nodes
+      return node.getAttribute('_uid') ||
+          node.setAttribute('_uid', ++_zipIdx) || _zipIdx;
+
+    } else {
+      return node.uniqueID;
+    }
+  } :
+  function(node) {
+    return (node['_uid'] || (node['_uid'] = ++_zipIdx));
+  };
+
+  // determine if a node in is unique in a 'bag'. In this case we don't want
+  // to flatten a list of unique items, but rather just tell if the item in
+  // question is already in the bag. Normally we'd just use hash lookup to do
+  // this for us but IE's DOM is busted so we can't really count on that. On
+  // the upside, it gives us a built in unique ID function.
+  var _isUnique = function(node, bag) {
+    if (!bag) {
+      return 1;
+    }
+    var id = _nodeUID(node);
+    if (!bag[id]) {
+      return bag[id] = 1;
+    }
+    return 0;
+  };
+
+  // attempt to efficiently determine if an item in a list is a dupe,
+  // returning a list of 'uniques', hopefully in document order
+  var _zipIdxName = '_zipIdx';
+  var _zip = function(arr) {
+    if (arr && arr.nozip) {
+      return arr;
+    }
+    var ret = [];
+    if (!arr || !arr.length) {
+      return ret;
+    }
+    if (arr[0]) {
+      ret.push(arr[0]);
+    }
+    if (arr.length < 2) {
+      return ret;
+    }
+
+    _zipIdx++;
+
+    // we have to fork here for IE and XML docs because we can't set
+    // expandos on their nodes (apparently). *sigh*
+    if (goog.userAgent.IE && caseSensitive) {
+      var szidx = _zipIdx + '';
+      arr[0].setAttribute(_zipIdxName, szidx);
+      for (var x = 1, te; te = arr[x]; x++) {
+        if (arr[x].getAttribute(_zipIdxName) != szidx) {
+          ret.push(te);
+        }
+        te.setAttribute(_zipIdxName, szidx);
+      }
+    } else if (goog.userAgent.IE && arr.commentStrip) {
+      try {
+        for (var x = 1, te; te = arr[x]; x++) {
+          if (isElement(te)) {
+            ret.push(te);
+          }
+        }
+      } catch (e) { /* squelch */ }
+    } else {
+      if (arr[0]) {
+        arr[0][_zipIdxName] = _zipIdx;
+      }
+      for (var x = 1, te; te = arr[x]; x++) {
+        if (arr[x][_zipIdxName] != _zipIdx) {
+          ret.push(te);
+        }
+        te[_zipIdxName] = _zipIdx;
+      }
+    }
+    return ret;
+  };
+
+  /**
+   * The main executor. Type specification from above.
+   * @param {string|Array} query The query.
+   * @param {(string|Node)=} root The root.
+   * @return {!Array} The elements that matched the query.
+   */
+  var query = function(query, root) {
+    // NOTE: elementsById is not currently supported
+    // NOTE: ignores xpath-ish queries for now
+
+    //Set list constructor to desired value. This can change
+    //between calls, so always re-assign here.
+
+    if (!query) {
+      return [];
+    }
+
+    if (query.constructor == Array) {
+      return /** @type {!Array} */ (query);
+    }
+
+    if (!goog.isString(query)) {
+      return [query];
+    }
+
+    if (goog.isString(root)) {
+      root = goog.dom.getElement(root);
+      if (!root) {
+        return [];
+      }
+    }
+
+    root = root || goog.dom.getDocument();
+    var od = root.ownerDocument || root.documentElement;
+
+    // throw the big case sensitivity switch
+
+    // NOTE:
+    //    Opera in XHTML mode doesn't detect case-sensitivity correctly
+    //    and it's not clear that there's any way to test for it
+    caseSensitive =
+        root.contentType && root.contentType == 'application/xml' ||
+        goog.userAgent.OPERA &&
+          (root.doctype || od.toString() == '[object XMLDocument]') ||
+        !!od &&
+        (goog.userAgent.IE ? od.xml : (root.xmlVersion || od.xmlVersion));
+
+    // NOTE:
+    //    adding 'true' as the 2nd argument to getQueryFunc is useful for
+    //    testing the DOM branch without worrying about the
+    //    behavior/performance of the QSA branch.
+    var r = getQueryFunc(query)(root);
+
+    // FIXME(slightlyoff):
+    //    need to investigate this branch WRT dojo:#8074 and dojo:#8075
+    if (r && r.nozip) {
+      return r;
+    }
+    return _zip(r);
+  }
+
+  // FIXME: need to add infrastructure for post-filtering pseudos, ala :last
+  query.pseudos = pseudos;
+
+  return query;
+})();
+
+// TODO(arv): Please don't export here since it clobbers dead code elimination.
+goog.exportSymbol('goog.dom.query', goog.dom.query);
+goog.exportSymbol('goog.dom.query.pseudos', goog.dom.query.pseudos);
 // Copyright 2007 The Closure Library Authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -36248,10 +48026,12 @@ wolf.Status = function( el ) {
     this.el = goog.dom.getFirstElementChild( this.container );
     this.button = goog.dom.getFirstElementChild( this.el );
     this.h = goog.style.getSize( this.container ).height;
+}
+
+wolf.Status.prototype.init = function() {
     this.expanded = true;
     goog.events.listen( this.button, goog.events.EventType.CLICK, this.slideUp, true, this );
-    return this;
-}
+};
 
 wolf.Status.prototype.slideUp = function() {
     var anim;
@@ -36302,31 +48082,257 @@ wolf.Status.prototype.hideAfterTimeout = function( timeout ) {
     }, timeout);
     delay.start();
 }
-goog.require('goog.dom');
+// Copyright 2008 The Closure Library Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS-IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Global renderer and decorator registry.
+ * @author attila@google.com (Attila Bodis)
+ */
+
+goog.provide('goog.ui.registry');
+
+goog.require('goog.dom.classlist');
+
+
+/**
+ * Given a {@link goog.ui.Component} constructor, returns an instance of its
+ * default renderer.  If the default renderer is a singleton, returns the
+ * singleton instance; otherwise returns a new instance of the renderer class.
+ * @param {Function} componentCtor Component constructor function (for example
+ *     {@code goog.ui.Button}).
+ * @return {goog.ui.ControlRenderer?} Renderer instance (for example the
+ *     singleton instance of {@code goog.ui.ButtonRenderer}), or null if
+ *     no default renderer was found.
+ */
+goog.ui.registry.getDefaultRenderer = function(componentCtor) {
+  // Locate the default renderer based on the constructor's unique ID.  If no
+  // renderer is registered for this class, walk up the superClass_ chain.
+  var key;
+  /** @type {Function|undefined} */ var rendererCtor;
+  while (componentCtor) {
+    key = goog.getUid(componentCtor);
+    if ((rendererCtor = goog.ui.registry.defaultRenderers_[key])) {
+      break;
+    }
+    componentCtor = componentCtor.superClass_ ?
+        componentCtor.superClass_.constructor : null;
+  }
+
+  // If the renderer has a static getInstance method, return the singleton
+  // instance; otherwise create and return a new instance.
+  if (rendererCtor) {
+    return goog.isFunction(rendererCtor.getInstance) ?
+        rendererCtor.getInstance() : new rendererCtor();
+  }
+
+  return null;
+};
+
+
+/**
+ * Sets the default renderer for the given {@link goog.ui.Component}
+ * constructor.
+ * @param {Function} componentCtor Component constructor function (for example
+ *     {@code goog.ui.Button}).
+ * @param {Function} rendererCtor Renderer constructor function (for example
+ *     {@code goog.ui.ButtonRenderer}).
+ * @throws {Error} If the arguments aren't functions.
+ */
+goog.ui.registry.setDefaultRenderer = function(componentCtor, rendererCtor) {
+  // In this case, explicit validation has negligible overhead (since each
+  // renderer is only registered once), and helps catch subtle bugs.
+  if (!goog.isFunction(componentCtor)) {
+    throw Error('Invalid component class ' + componentCtor);
+  }
+  if (!goog.isFunction(rendererCtor)) {
+    throw Error('Invalid renderer class ' + rendererCtor);
+  }
+
+  // Map the component constructor's unique ID to the renderer constructor.
+  var key = goog.getUid(componentCtor);
+  goog.ui.registry.defaultRenderers_[key] = rendererCtor;
+};
+
+
+/**
+ * Returns the {@link goog.ui.Component} instance created by the decorator
+ * factory function registered for the given CSS class name, or null if no
+ * decorator factory function was found.
+ * @param {string} className CSS class name.
+ * @return {goog.ui.Component?} Component instance.
+ */
+goog.ui.registry.getDecoratorByClassName = function(className) {
+  return className in goog.ui.registry.decoratorFunctions_ ?
+      goog.ui.registry.decoratorFunctions_[className]() : null;
+};
+
+
+/**
+ * Maps a CSS class name to a function that returns a new instance of
+ * {@link goog.ui.Component} or a subclass, suitable to decorate an element
+ * that has the specified CSS class.
+ * @param {string} className CSS class name.
+ * @param {Function} decoratorFn No-argument function that returns a new
+ *     instance of a {@link goog.ui.Component} to decorate an element.
+ * @throws {Error} If the class name or the decorator function is invalid.
+ */
+goog.ui.registry.setDecoratorByClassName = function(className, decoratorFn) {
+  // In this case, explicit validation has negligible overhead (since each
+  // decorator  is only registered once), and helps catch subtle bugs.
+  if (!className) {
+    throw Error('Invalid class name ' + className);
+  }
+  if (!goog.isFunction(decoratorFn)) {
+    throw Error('Invalid decorator function ' + decoratorFn);
+  }
+
+  goog.ui.registry.decoratorFunctions_[className] = decoratorFn;
+};
+
+
+/**
+ * Returns an instance of {@link goog.ui.Component} or a subclass suitable to
+ * decorate the given element, based on its CSS class.
+ * @param {Element} element Element to decorate.
+ * @return {goog.ui.Component?} Component to decorate the element (null if
+ *     none).
+ */
+goog.ui.registry.getDecorator = function(element) {
+  var decorator;
+  var classNames = goog.dom.classlist.get(element);
+  for (var i = 0, len = classNames.length; i < len; i++) {
+    if ((decorator = goog.ui.registry.getDecoratorByClassName(classNames[i]))) {
+      return decorator;
+    }
+  }
+  return null;
+};
+
+
+/**
+ * Resets the global renderer and decorator registry.
+ */
+goog.ui.registry.reset = function() {
+  goog.ui.registry.defaultRenderers_ = {};
+  goog.ui.registry.decoratorFunctions_ = {};
+};
+
+
+/**
+ * Map of {@link goog.ui.Component} constructor unique IDs to the constructors
+ * of their default {@link goog.ui.Renderer}s.
+ * @type {Object}
+ * @private
+ */
+goog.ui.registry.defaultRenderers_ = {};
+
+
+/**
+ * Map of CSS class names to registry factory functions.  The keys are
+ * class names.  The values are function objects that return new instances
+ * of {@link goog.ui.registry} or one of its subclasses, suitable to
+ * decorate elements marked with the corresponding CSS class.  Used by
+ * containers while decorating their children.
+ * @type {Object}
+ * @private
+ */
+goog.ui.registry.decoratorFunctions_ = {};
+
+goog.provide('wolf.start');
+
+goog.require('goog.locale.timeZoneDetection');
 goog.require('wolf.set');
 goog.require('wolf.Status');
-goog.provide('wolf.start');
+goog.require('wolf.coupon.Coupon');
+goog.require('goog.dom');
+goog.require('goog.ui.registry');
 wolf.start = function( uid ) {
     var status;
 
     wolf.set( 'user', uid );
 
     status = new wolf.Status( goog.dom.getElement('statusContainer') );
+    status.init();
+
+    goog.ui.registry.reset();
+    goog.ui.registry.setDecoratorByClassName('goog-time-picker', function() {
+        return new wolf.ui.DateTimePicker();
+    });
 };
 
+
 goog.provide('wolf.setup_coupons');
-goog.require('wolf.coupon.Coupon');
+
 goog.require('goog.dom.query');
 wolf.setup_coupons = function() {
     var couponNodes,
+        coupon,
         i;
 
     couponNodes = goog.dom.query('.coupon');
     for ( i=0; i<couponNodes.length; i++ )
     {
-        new wolf.coupon.Coupon( couponNodes[i] );
+        coupon = new wolf.coupon.Coupon( couponNodes[i] );
+        coupon.init();
     }
+};
+
+
+goog.provide('wolf.setup_coupon_edit');
+
+goog.require('goog.ui.DatePicker');
+goog.require('goog.dom.forms');
+goog.require('wolf.ui.DateTimePicker');
+wolf.setup_coupon_edit = function() {
+    var DateTimePickers,
+        dateTimeInput,
+        dateTimeInputName,
+        controller,
+        defaultDateTime,
+        i;
+
+    // Set up DateTimePickers
+    DateTimePickers = goog.dom.getElementsByClass('goog-time-picker');
+    for ( i=0; i<DateTimePickers.length; i++ )
+    {
+        dateTimeInputName = DateTimePickers[i].id.substring( 0, DateTimePickers[i].id.length - 6 );
+        dateTimeInput = goog.dom.query( 'input[name=' + dateTimeInputName + ']' )[0];
+        defaultDateTime = new Date( dateTimeInput.value );
+        controller = new wolf.ui.DateTimePicker( new goog.date.DateTime(
+            defaultDateTime.getFullYear(), defaultDateTime.getMonth(), defaultDateTime.getDate(),
+            defaultDateTime.getHours(), defaultDateTime.getMinutes()
+        ));
+        (function( controller, dateTimeInput ) {
+            controller.listen( wolf.ui.DateTimePicker.Events.CHANGE, function( e ) {
+                var utcIsoString;
+
+                utcIsoString = controller.getDateTime().toUTCIsoString( true, true );
+                // Replace the space with a T to make the string ISO 8601-compliant
+                utcIsoString = utcIsoString.substr(0, 10) + 'T' + utcIsoString.substr(11);
+                goog.dom.forms.setValue( dateTimeInput, utcIsoString );
+            });
+        })( controller, dateTimeInput );
+        controller.decorate( DateTimePickers[i] );
+    }
+    wolf.ui.DateTimePicker.prototype.renderDateTime_ = function() {
+};
+
+
+
 };
 
 goog.exportSymbol('wolf.start');
 goog.exportSymbol('wolf.setup_coupons');
+goog.exportSymbol('wolf.setup_coupon_edit');

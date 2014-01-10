@@ -9,47 +9,47 @@
 {% endmacro %}
 
 
-{% macro utc_options() %}
-    <option value="UTC-12:00">UTC-12:00</option>
-    <option value="UTC-11:00">UTC-11:00</option>
-    <option value="UTC-10:00">UTC-10:00</option>
-    <option value="UTC-09:30">UTC-09:30</option>
-    <option value="UTC-09:00">UTC-09:00</option>
-    <option value="UTC-08:00">UTC-08:00</option>
-    <option value="UTC-07:00">UTC-07:00</option>
-    <option value="UTC-06:00">UTC-06:00</option>
-    <option value="UTC-05:00">UTC-05:00</option>
-    <option value="UTC-04:30">UTC-04:30</option>
-    <option value="UTC-04:00">UTC-04:00</option>
-    <option value="UTC-03:30">UTC-03:30</option>
-    <option value="UTC-03:00">UTC-03:00</option>
-    <option value="UTC-02:00">UTC-02:00</option>
-    <option value="UTC-01:00">UTC-01:00</option>
-    <option value="UTC+00:00" selected="selected">UTC</option>
-    <option value="UTC+01:00">UTC+01:00</option>
-    <option value="UTC+02:00">UTC+02:00</option>
-    <option value="UTC+03:00">UTC+03:00</option>
-    <option value="UTC+03:30">UTC+03:30</option>
-    <option value="UTC+04:00">UTC+04:00</option>
-    <option value="UTC+04:30">UTC+04:30</option>
-    <option value="UTC+05:00">UTC+05:00</option>
-    <option value="UTC+05:30">UTC+05:30</option>
-    <option value="UTC+05:45">UTC+05:45</option>
-    <option value="UTC+06:00">UTC+06:00</option>
-    <option value="UTC+06:30">UTC+06:30</option>
-    <option value="UTC+07:00">UTC+07:00</option>
-    <option value="UTC+08:00">UTC+08:00</option>
-    <option value="UTC+08:45">UTC+08:45</option>
-    <option value="UTC+09:00">UTC+09:00</option>
-    <option value="UTC+09:30">UTC+09:30</option>
-    <option value="UTC+10:00">UTC+10:00</option>
-    <option value="UTC+10:30">UTC+10:30</option>
-    <option value="UTC+11:00">UTC+11:00</option>
-    <option value="UTC+11:30">UTC+11:30</option>
-    <option value="UTC+12:00">UTC+12:00</option>
-    <option value="UTC+12:45">UTC+12:45</option>
-    <option value="UTC+13:00">UTC+13:00</option>
-    <option value="UTC+14:00">UTC+14:00</option>
+{% macro utc_options(selected='+00:00') %}
+    <option value="-12:00" {% if selected == '-12:00' %} selected="selected" {% endif %}>UTC -12:00</option>
+    <option value="-11:00" {% if selected == '-11:00' %} selected="selected" {% endif %}>UTC -11:00</option>
+    <option value="-10:00" {% if selected == '-10:00' %} selected="selected" {% endif %}>UTC -10:00</option>
+    <option value="-09:30" {% if selected == '-09:30' %} selected="selected" {% endif %}>UTC -09:30</option>
+    <option value="-09:00" {% if selected == '-09:00' %} selected="selected" {% endif %}>UTC -09:00</option>
+    <option value="-08:00" {% if selected == '-08:00' %} selected="selected" {% endif %}>UTC -08:00</option>
+    <option value="-07:00" {% if selected == '-07:00' %} selected="selected" {% endif %}>UTC -07:00</option>
+    <option value="-06:00" {% if selected == '-06:00' %} selected="selected" {% endif %}>UTC -06:00</option>
+    <option value="-05:00" {% if selected == '-05:00' %} selected="selected" {% endif %}>UTC -05:00</option>
+    <option value="-04:30" {% if selected == '-04:30' %} selected="selected" {% endif %}>UTC -04:30</option>
+    <option value="-04:00" {% if selected == '-04:00' %} selected="selected" {% endif %}>UTC -04:00</option>
+    <option value="-03:30" {% if selected == '-03:30' %} selected="selected" {% endif %}>UTC -03:30</option>
+    <option value="-03:00" {% if selected == '-03:00' %} selected="selected" {% endif %}>UTC -03:00</option>
+    <option value="-02:00" {% if selected == '-02:00' %} selected="selected" {% endif %}>UTC -02:00</option>
+    <option value="-01:00" {% if selected == '-01:00' %} selected="selected" {% endif %}>UTC -01:00</option>
+    <option value="+00:00" {% if selected == '+00:00' %} selected="selected" {% endif %}>UTC</option>
+    <option value="+01:00" {% if selected == '+01:00' %} selected="selected" {% endif %}>UTC +01:00</option>
+    <option value="+02:00" {% if selected == '+02:00' %} selected="selected" {% endif %}>UTC +02:00</option>
+    <option value="+03:00" {% if selected == '+03:00' %} selected="selected" {% endif %}>UTC +03:00</option>
+    <option value="+03:30" {% if selected == '+03:30' %} selected="selected" {% endif %}>UTC +03:30</option>
+    <option value="+04:00" {% if selected == '+04:00' %} selected="selected" {% endif %}>UTC +04:00</option>
+    <option value="+04:30" {% if selected == '+04:30' %} selected="selected" {% endif %}>UTC +04:30</option>
+    <option value="+05:00" {% if selected == '+05:00' %} selected="selected" {% endif %}>UTC +05:00</option>
+    <option value="+05:30" {% if selected == '+05:30' %} selected="selected" {% endif %}>UTC +05:30</option>
+    <option value="+05:45" {% if selected == '+05:45' %} selected="selected" {% endif %}>UTC +05:45</option>
+    <option value="+06:00" {% if selected == '+06:00' %} selected="selected" {% endif %}>UTC +06:00</option>
+    <option value="+06:30" {% if selected == '+06:30' %} selected="selected" {% endif %}>UTC +06:30</option>
+    <option value="+07:00" {% if selected == '+07:00' %} selected="selected" {% endif %}>UTC +07:00</option>
+    <option value="+08:00" {% if selected == '+08:00' %} selected="selected" {% endif %}>UTC +08:00</option>
+    <option value="+08:45" {% if selected == '+08:45' %} selected="selected" {% endif %}>UTC +08:45</option>
+    <option value="+09:00" {% if selected == '+09:00' %} selected="selected" {% endif %}>UTC +09:00</option>
+    <option value="+09:30" {% if selected == '+09:30' %} selected="selected" {% endif %}>UTC +09:30</option>
+    <option value="+10:00" {% if selected == '+10:00' %} selected="selected" {% endif %}>UTC +10:00</option>
+    <option value="+10:30" {% if selected == '+10:30' %} selected="selected" {% endif %}>UTC +10:30</option>
+    <option value="+11:00" {% if selected == '+11:00' %} selected="selected" {% endif %}>UTC +11:00</option>
+    <option value="+11:30" {% if selected == '+11:30' %} selected="selected" {% endif %}>UTC +11:30</option>
+    <option value="+12:00" {% if selected == '+12:00' %} selected="selected" {% endif %}>UTC +12:00</option>
+    <option value="+12:45" {% if selected == '+12:45' %} selected="selected" {% endif %}>UTC +12:45</option>
+    <option value="+13:00" {% if selected == '+13:00' %} selected="selected" {% endif %}>UTC +13:00</option>
+    <option value="+14:00" {% if selected == '+14:00' %} selected="selected" {% endif %}>UTC +14:00</option>
 {% endmacro %}
 
 
@@ -58,33 +58,18 @@
     - label: An optional string to be used as a label for the input field
     - dt: The pre-entered datetime #}
 {% macro input_datetime(name, label=None, dt=None) %}
+<div class="date-time-picker">
     {% if dt %}
-        {% set date = dt.strftime('%m/%d/%Y') %}
-        {% set hour = dt.hour %}
-        {% set minute = dt.minute %}
+    {% set date = dt.strftime('%m/%d/%Y') %}
+    {% set hour = dt.hour %}
+    {% set minute = dt.minute %}
     {% endif %}
+
     {% if label %}
-        <label for="{{ name }}_date">{{ label }}</label>
+    <label>{{ label }}</label><br>
     {% endif %}
-    <input
-        name="{{ name }}_date"
-        value="{{ date }}"
-        id="{{ name }}_date"
-    >
-    </input>
-    <select name="{{ name }}_hour">
-        {% for i in range(24) %}
-            {{ option(i, '{:02}'.format(i), hour) }}
-        {% endfor %}
-    </select> : <select name="{{ name }}_min">
-        {% for i in range(60) %}
-            {{ option(i, '{:02}'.format(i), minute) }}
-        {% endfor %}
-    </select>
-    <select name="{{ name }}_locale">
-        {{ utc_options() }}
-    </select>
-    <script>
-        jQuery( document.getElementById('{{ name }}_date') ).datepicker();
-    </script>
+
+    <div class="goog-time-picker" id="{{ name }}_timepicker"></div>
+    <input class="time" name="{{ name }}_time" type="text" value="{{ dt.isoformat() }}">
+</div>
 {% endmacro %}

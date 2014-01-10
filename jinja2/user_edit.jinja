@@ -7,6 +7,7 @@ Globals:
     - is_admin(business): Verifies user has rights to modify the entity
 #}
 {% extends "base.jinja" %}
+{% from "_helpers.jinja" import utc_options %}
 {% from "coupon_snip.jinja" import coupon_snip %}
 
 {% block title %}{{ u.familiar_name or u.surname }}{% endblock title %}
@@ -18,12 +19,21 @@ Globals:
 <header>User Preferences</header>
 <section>
 	<form method="POST">
-		<label for="familiar_name">First name:</label>
+		<label for="familiar_name">First name</label>
 		<input type="text" name="familiar_name" value="{{ u.familiar_name }}"><br>
-		<label for="surname">Last name:</label>
+		<label for="surname">Last name</label>
 		<input type="text" name="surname" value="{{ u.surname }}"><br>
-		<label for="email">Email:</label>
-		<input type="text" name="email" value="{{ u.email }}"><br>
+		<label for="email">Email</label>
+        <input type="text" name="email" value="{{ u.email }}"><br>
+        <label for="email">Timezone</label>
+        <select name="tz_offset">
+            {{ utc_options(selected=u.tz_offset) }}
+        </select><br>
+        <label for="email">DST</label>
+        <select name="dst">
+            <option value="true" {% if u.dst %} selected="selected" {% endif %}>On</option>
+            <option value="false" {% if not u.dst %} selected="selected" {% endif %}>Off</option>
+        </select>        
 		<input type="submit" value="Update">
 	</form>
 </section>

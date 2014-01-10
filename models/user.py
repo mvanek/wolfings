@@ -10,6 +10,8 @@ class User(ndb.Model):
     email         = ndb.StringProperty('e', required=True)
     phone         = ndb.IntegerProperty('p')
     address       = ndb.StructuredProperty(Address)
+    tz_offset     = ndb.StringProperty('t')
+    dst           = ndb.BooleanProperty('d')
     held_coupons  = ndb.KeyProperty('c', kind='Coupon', repeated=True)
     old_coupons   = ndb.KeyProperty('o', kind='Coupon', repeated=True)
 

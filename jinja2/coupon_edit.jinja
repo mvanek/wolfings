@@ -11,34 +11,30 @@ Parameters:
 {% block title %}{{ b.name }}{% endblock title %}
 
 {% block head %} {{ super() }}
-<link href="/static/lib/jquery-ui/css/dot-luv/jquery-ui-1.10.3.custom.css" rel="stylesheet" type="text/css">
 <link href="/static/style/business_admin.css" rel="stylesheet" type="text/css">
 <link href="/static/style/coupon_snip.css" rel="stylesheet" type="text/css">
-<script src="/static/lib/jquery-ui/js/jquery-ui-1.10.3.custom.js"></script>
-<script src="/static/js/utils.js"></script>
-<script src="/static/js/business_admin.js"></script>
-<script src="/static/js/coupon_edit.js"></script>
 {% endblock head %}
 
 {% block body %}
-<section>
-    <header>Admin Panel</header>
-    <article>
-        <header>Update Details</header>
-        <button id="trash" class="trash" style="margin-bottom:0.5em;">DISCONTINUE</button>
-        <script>
-            (function() {
-                var b = document.getElementById('trash');
-                b.addEventListener('click', delete_coupon, false);
-            })();
-        </script>
-        <form name="update" action="javascript:put_coupon()">
-            <label for="name">Name: </label>
-            <input type="text" name="name" value="{{ c.name }}"> <br>
-            {{ input_datetime('start', label='Start time:', dt=c.start) }} <br>
-            {{ input_datetime('end', label='End time:', dt=c.end) }}
-            <input type="submit" class="blue" value="submit">
-        </form>
-    </article>
-</section>
+<h1>Update Coupon Details</h1>
+<button id="trash" class="trash">DISCONTINUE</button>
+<form name="update" method="POST">
+    <div class="coupon-details">
+        <div class="input-text-container">
+            <input type="text" name="name" value="{{ c.name }}" placeholder="Coupon Name">
+        </div>
+        <div class="input-text-container">
+            <textarea name="description" placeholder="Description">{{ c.description }}</textarea>
+        </div>
+        <div class="coupon-time-select">
+            {{ input_datetime('start', label='Start time', dt=c.start) }}
+            {{ input_datetime('end', label='End time', dt=c.end) }}
+        </div>
+    </div>
+    <input type="submit" value="submit">
+</form>
 {% endblock body %}
+
+{% block scripts %} {{ super() }}
+wolf.setup_coupon_edit();
+{% endblock scripts %}

@@ -90,7 +90,9 @@ class UserIDAdminHandler(BaseUserHandler):
         self.load_http_params({
             'surname': (str, False),
             'familiar_name': (str, False),
-            'email': (str, False)
+            'email': (str, False),
+            'tz_offset': (str, False),
+            'dst': (lambda s: s == 'true', False)
         })
         u = self.get_page_entity()
         try:

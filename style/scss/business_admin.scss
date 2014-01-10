@@ -1,36 +1,66 @@
+@import "utils";
 @import "buttons";
 @import "business";
+@import "datepicker";
 
+button#trash,
 input[type=submit]
 {
     @include red-button;
 }
 
-label
+.input-text-container
 {
-    display: inline-block;
-    width: 5em;
-    vertical-align: top;
+    margin: 0;
+    border: solid 1px;
+    padding: 1px; 
+
+    & + .input-text-container
+    {
+        border-top: 0px;
+    }   
+
+    textarea,
+    input[name=name]
+    {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+        border-width: 0;
+    }
+
+    input[name=name]
+    {
+        font-size: 1.75em;
+    }
+
+    textarea
+    {
+        height: 8em;
+    }
 }
 
-input,
-textarea
+.coupon-time-select
 {
-    margin-bottom: 0.5em;
-}
+    text-align: center;
+    margin-top: 1em;
 
-textarea
-{
-    height:5em;
-    width:30em;
-}
+    .date-time-picker
+    {
+        display: inline-block;
 
-.ui-datepicker
-{
-    font-size: 0.80em;
-}
+        .date-picker
+        {
+            input
+            {
+                display: none;
+            }
+        }
 
-li
-{
-    margin-left: 2em;
+        &>input
+        {
+            display: none;
+        }
+    }
 }
