@@ -11,6 +11,7 @@ class Coupon(ndb.Model):
     description = ndb.TextProperty('d')
     start       = ndb.DateTimeProperty('s', required=True)
     end         = ndb.DateTimeProperty('e', required=True)
+    visible     = ndb.BooleanProperty('v', required=True)
 
     @classmethod
     def _pre_delete_hook(cls, key):

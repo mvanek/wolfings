@@ -17,8 +17,17 @@ Parameters:
 
 {% block body %}
 <h1>Update Coupon Details</h1>
-<button id="trash" class="trash">DISCONTINUE</button>
+<div id="removal-panel">
+    <form name="discontinue" method="POST">
+        <input type="hidden" name="action" value="discontinue">
+        <input type="submit" value="Discontinue">
+    </form>
+    <form name="delete" method="DELETE">
+        <input type="submit" value="Delete">
+    </form>
+</div>
 <form name="update" method="POST">
+    <input type="hidden" name="action" value="update">
     <div class="coupon-details">
         <div class="input-text-container">
             <input type="text" name="name" value="{{ c.name }}" placeholder="Coupon Name">
@@ -31,7 +40,7 @@ Parameters:
             {{ input_datetime('end', label='End time', dt=c.end) }}
         </div>
     </div>
-    <input type="submit" value="submit">
+    <input type="submit" value="Update">
 </form>
 {% endblock body %}
 

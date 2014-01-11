@@ -83,10 +83,12 @@ class RequestHandler(webapp2.RequestHandler):
     def _load_params(self, data, param_info, use_default):
         params = {}
         for k,(dtype,required) in param_info.iteritems():
+            logging.info('Unpacking '+k)
             try:
                 params[k] = dtype(data[k])
             except (ValueError, TypeError):
                 if required or data[k]:
+                    logging.info('Exception occured when converting '+data[k])
                     self.abort(400)
                 if use_default:
                     params[k] = dtype()

@@ -3,17 +3,43 @@
 @import "business";
 @import "datepicker";
 
-button#trash,
+h1
+{
+    font-size: 1.3em;
+    text-align: center;
+    border-bottom: solid 1px;
+    margin-bottom: 0.5em;
+    padding-bottom: 0.25em;
+}
+
 input[type=submit]
 {
     @include red-button;
+    padding: 1em 2em;
+    font-size: 0.9em;
+}
+
+#removal-panel
+{
+    text-align: center;
+    form
+    {
+        display: inline-block;
+        input
+        {
+            display: inline-block;
+
+        }
+    }
 }
 
 .input-text-container
 {
     margin: 0;
     border: solid 1px;
-    padding: 1px; 
+    padding: 5px;
+    box-shadow: 1px 1px 5px -2px gray inset;
+    background: white;
 
     & + .input-text-container
     {
@@ -21,18 +47,24 @@ input[type=submit]
     }   
 
     textarea,
-    input[name=name]
+    input
     {
         width: 100%;
         max-width: 100%;
         margin: 0;
         padding: 0;
         border-width: 0;
+        background: none;
+
+        &:focus
+        {
+            outline: none;
+        }
     }
 
     input[name=name]
     {
-        font-size: 1.75em;
+        font-size: 1.25em;
     }
 
     textarea
@@ -62,5 +94,24 @@ input[type=submit]
         {
             display: none;
         }
+    }
+}
+
+.coupon-details
+{
+    margin: 0.75em 0;
+}
+
+.goog-time-picker
+{
+    input
+    {
+        text-align: center;
+    }
+
+    .input-text-container
+    {
+        border-top: 0;
+        clear: both;
     }
 }

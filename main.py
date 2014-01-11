@@ -1,5 +1,8 @@
 import webapp2
 from handlers import *
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'lib'))
 
 def main():
     return webapp2.WSGIApplication([

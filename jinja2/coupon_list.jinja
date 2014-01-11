@@ -8,9 +8,36 @@ Globals:
 {% extends "base.jinja" %}
 {% from "coupon_snip.jinja" import coupon_snip %}
 
+{% macro pages(page_number, total_pages, url) %}
+    {% if page_number-5 > 1 %}
+        {% set lower_page = page_number-5 %}
+    {% else %}
+        {% set lower_page = 1 %}
+    {% endif %}
+    {% if page_number+5 < total_pages %}
+        {% set upper_page = page_number+5 %}
+    {% else %}
+        {% set upper_page = total_pages+1 %}
+    {% endif %}
+    
+    {% if page_number > 1 %}
+        <li><a href="{{ url }}{{ page_number-1 }}">Prev</a></li>
+    {% endif %}
+    {% for i in range(lower_page, upper_page) %}
+        {% if i == page_number %}
+            <li>{{ i }}</li>
+        {% else %}
+            <li><a href="{{ url }}{{ i }}">{{ i }}</a></li>
+        {% endif %}
+    {% endfor %}
+    {% if page_number < total_pages %}
+        <li><a href="{{ url }}{{ page_number+1 }}">Next</a></li>
+    {% endif %}
+{% endmacro %}
+
 {% block title %}Coupons{% endblock title %}
 {% block head %}{{ super() }}
-<link rel="stylesheet" type="text/css" href="/static/style/coupon_snip.css">
+<link rel="stylesheet" type="text/css" href="/static/style/coupon_list.css">
 {% endblock head %}
 
 {% block body %}
@@ -21,6 +48,9 @@ Globals:
     {% endif %}
     {% endfor %}
 </section>
+<ul class="coupon-page-nav">
+    {{ pages(page_number, total_pages, '/coupon/?p=')}}
+</ul>
 {% endblock body %}
 
 {% block scripts %} {{ super() }}

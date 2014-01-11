@@ -7,6 +7,9 @@ import urllib
 import jinja2
 import os
 import datetime
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
+import dateutil.parser
 import logging
 from models import Business, Coupon, User
 
@@ -36,44 +39,24 @@ class CouponHandler(RequestHandler):
         super(CouponHandler, self).__init__(*args, **kwargs)
         self.template = self.JINJA_ENVIRONMENT.get_template('coupon_list.jinja')
         self.idtype = int
+        self.COUPONS_PER_PAGE = 5
 
     def get(self):
         '''
         Lists coupons, filtered by optional parameters
-        Parameters:
-            name - Name of the business
-            lat,lon - Location of the business
+        Parameters: none
         '''
-        try:
-            lat = float(urllib.unquote(self.request.get('lat')))
-            lon = float(urllib.unquote(self.request.get('lon')))
-        except ValueError:
-            query = Business.query()
-        else:
-            query = Business.query_location(lat=lat, lon=lon)
+        page_number = int(self.request.GET.get('p', 1))
+        qry = Coupon.query().order(Coupon.end)
+        coupons = qry.fetch(
+            limit=self.COUPONS_PER_PAGE,
+            offset=((page_number - 1) * self.COUPONS_PER_PAGE)
+        )
 
-        name = urllib.unquote(self.request.get('name'))
-        if name:
-            query = query.filter(Business.name == name)
-        coupons = [c for business in query.map(lambda x: Coupon.get_by_business(x.key.id()))
-                   for c in business]
-
-        coupons = sorted(coupons, lambda x, y: cmp(x.end, y.end))
-        now = datetime.datetime.now()
-        i = 0
-        expired_index = None
-        for i in range(len(coupons)):
-            if expired_index is None and now < coupons[i].end:
-                expired_index = i
-            if now < coupons[i].start:
-                break
-        expired = coupons[0:expired_index]
-        active = coupons[expired_index:i]
-        inactive = coupons[i:]
-
-        self.response.status = '200 OK'
         self.response.write(self.template.render(
-            coupons=active+inactive+expired
+            coupons=coupons,
+            page_number=page_number,
+            total_pages=qry.count()/self.COUPONS_PER_PAGE
         ))
 
 
@@ -92,7 +75,6 @@ class CouponIDHandler(RequestHandler):
         '''
         c = self.get_page_entity()
         b = c.business.get()
-        self.response.status = '200 OK'
         self.response.write(self.template.render(
             c=c,
             b=b
@@ -113,8 +95,31 @@ class CouponIDEditHandler(RequestHandler):
         b = c.business.get()
         if not is_admin(b):
             self.abort(401)
-        self.response.status = '200 OK'
         self.response.write(self.template.render(
             c=c,
             b=b
         ))
+
+    def post(self):
+        c = self.get_page_entity()
+        b = c.business.get()
+        if not is_admin(b):
+            self.abort(401)
+
+        if self.request.POST.get('action') == 'update':
+            self.load_http_params({
+                'name': (str, True),
+                'description': (str, True),
+                'start_time': (str, True),
+                'end_time': (str, True)
+            })
+            start = dateutil.parser.parse(self.params['start_time'], ignoretz=True)
+            end = dateutil.parser.parse(self.params['end_time'], ignoretz=True)
+            c.name          = self.params['name']
+            c.description   = self.params['description']
+            c.start         = start
+            c.end           = end
+        elif self.request.POST.get('action') == 'discontinue':
+            c.visible = False
+        c.put()
+        self.redirect('/coupon/{}/'.format(c.key.id()))

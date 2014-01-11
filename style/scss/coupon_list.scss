@@ -1,0 +1,18 @@
+@import "coupon_snip";
+
+.coupon-page-nav
+{
+    margin-top: 0.5em;
+    text-align: center;
+
+    li
+    {
+        font-size: 1.1em;
+        display: inline-block;
+
+        &+li
+        {
+            margin-left: 1em;
+        }
+    }
+}

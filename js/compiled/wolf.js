@@ -43007,12 +43007,16 @@ wolf.ui.DateTimePicker.prototype.createDom = function() {
 
 /** @override */
 wolf.ui.DateTimePicker.prototype.decorateInternal = function( element ) {
+    var userInputContainer;
+
     goog.base( this, 'decorateInternal', element );
 
-    this.datePickerElement_ = this.dom_.createElement('div');
+    userInputContainer = this.dom_.createElement('div');
     this.userInputElement_ = this.dom_.createElement('input');
 
+    userInputContainer.className = 'input-text-container';
     goog.dom.setProperties( this.userInputElement_, {
+        'class': 'goog-time-input',
         'placeholder': 'Time (HH:MM pm)'
     });
 
@@ -43020,12 +43024,12 @@ wolf.ui.DateTimePicker.prototype.decorateInternal = function( element ) {
     this.datePicker_.setShowWeekNum( false );
     this.datePicker_.setAllowNone( false );
     this.datePicker_.setShowToday( false );
-    this.datePicker_.render( this.datePickerElement_ );
 
     this.renderTime_();
 
-    element.appendChild( this.datePickerElement_ );
-    element.appendChild( this.userInputElement_ );
+    this.datePicker_.render( element );
+    userInputContainer.appendChild( this.userInputElement_ );
+    element.appendChild( userInputContainer );
 
     return element;
 };
@@ -43035,12 +43039,14 @@ wolf.ui.DateTimePicker.prototype.decorateInternal = function( element ) {
 wolf.ui.DateTimePicker.prototype.enterDocument = function() {
     goog.base( this, 'enterDocument' );
 
-    this.getHandler().listen( this.userInputElement_, goog.events.EventType.FOCUSOUT, this.onFocusOut_ );
+    this.getHandler().listen(
+        this.userInputElement_,
+        goog.events.EventType.FOCUSOUT,
+        this.onFocusOut_
+    );
 
     this.datePicker_.listen( goog.ui.DatePicker.Events.SELECT, function( e ) {
-        var selectEvent;
-
-        selectEvent = new goog.ui.DatePickerEvent(
+        var selectEvent = new goog.ui.DatePickerEvent(
             wolf.ui.DateTimePicker.Events.SELECT,
             this, this.dateTime_
         );
@@ -43048,9 +43054,7 @@ wolf.ui.DateTimePicker.prototype.enterDocument = function() {
     }, false, this );
 
     this.datePicker_.listen( goog.ui.DatePicker.Events.CHANGE, function( e ) {
-        var changeEvent;
-
-        changeEvent = new goog.ui.DatePickerEvent(
+        var changeEvent = new goog.ui.DatePickerEvent(
             wolf.ui.DateTimePicker.Events.CHANGE,
             this, this.dateTime_
         );
@@ -43101,7 +43105,10 @@ wolf.ui.DateTimePicker.prototype.parseUserInput_ = function() {
 
 
 wolf.ui.DateTimePicker.prototype.renderTime_ = function() {
-    goog.dom.forms.setValue( this.userInputElement_, this.dateTime_.toUsTimeString() );
+    goog.dom.forms.setValue(
+        this.userInputElement_,
+        this.dateTime_.toUsTimeString()
+    );
 };
 
 
@@ -48296,41 +48303,84 @@ goog.require('goog.ui.DatePicker');
 goog.require('goog.dom.forms');
 goog.require('wolf.ui.DateTimePicker');
 wolf.setup_coupon_edit = function() {
-    var DateTimePickers,
-        dateTimeInput,
-        dateTimeInputName,
+    var dateTimePickers,
+        dateTimeInputName, dateTimeInput,
         controller,
         defaultDateTime,
         i;
 
-    // Set up DateTimePickers
-    DateTimePickers = goog.dom.getElementsByClass('goog-time-picker');
-    for ( i=0; i<DateTimePickers.length; i++ )
+    // Set up dateTimePickers
+    dateTimePickers = goog.dom.getElementsByClass('goog-time-picker');
+    for ( i=0; i<dateTimePickers.length; i++ )
     {
-        dateTimeInputName = DateTimePickers[i].id.substring( 0, DateTimePickers[i].id.length - 6 );
-        dateTimeInput = goog.dom.query( 'input[name=' + dateTimeInputName + ']' )[0];
+        dateTimeInputName = dateTimePickers[i].id.substring(
+            0,
+            dateTimePickers[i].id.length - 6
+        );
+        dateTimeInput = goog.dom.query(
+            'input[name=' +
+            dateTimeInputName
+            + ']'
+        )[0];
         defaultDateTime = new Date( dateTimeInput.value );
         controller = new wolf.ui.DateTimePicker( new goog.date.DateTime(
-            defaultDateTime.getFullYear(), defaultDateTime.getMonth(), defaultDateTime.getDate(),
-            defaultDateTime.getHours(), defaultDateTime.getMinutes()
+            defaultDateTime.getFullYear(),
+            defaultDateTime.getMonth(),
+            defaultDateTime.getDate(),
+            defaultDateTime.getHours(),
+            defaultDateTime.getMinutes()
         ));
         (function( controller, dateTimeInput ) {
-            controller.listen( wolf.ui.DateTimePicker.Events.CHANGE, function( e ) {
-                var utcIsoString;
+            controller.listen(
+                wolf.ui.DateTimePicker.Events.CHANGE,
+                function( e ) {
+                    var utcIsoString;
 
-                utcIsoString = controller.getDateTime().toUTCIsoString( true, true );
-                // Replace the space with a T to make the string ISO 8601-compliant
-                utcIsoString = utcIsoString.substr(0, 10) + 'T' + utcIsoString.substr(11);
-                goog.dom.forms.setValue( dateTimeInput, utcIsoString );
-            });
+                    utcIsoString = controller.getDateTime().toUTCIsoString(
+                        true,
+                        true
+                    );
+                    // Replace the space with a T to make the string
+                    // ISO 8601-compliant
+                    utcIsoString = (
+                        utcIsoString.substr(0, 10) +
+                        'T' +
+                        utcIsoString.substr(11)
+                    );
+                    goog.dom.forms.setValue( dateTimeInput, utcIsoString );
+                }
+            );
         })( controller, dateTimeInput );
-        controller.decorate( DateTimePickers[i] );
+        controller.decorate( dateTimePickers[i] );
     }
-    wolf.ui.DateTimePicker.prototype.renderDateTime_ = function() {
-};
 
+    // Set up removal buttons
+    var qry;
 
+    qry = goog.dom.getElementsByTagNameAndClass(
+        'input',
+        null,
+        goog.dom.getElement('removal-panel')
+    );
 
+    for ( i=0; i<2; i++ ) (function( i ) {
+        var origText,
+            button,
+            listenableKey;
+        button = qry[i];
+        origText = button.value;
+        listenableKey = goog.events.listenOnce(
+            button,
+            goog.events.EventType.CLICK,
+            function( e ) {
+                goog.dom.forms.setValue(
+                    e.target,
+                    'Confirm ' + origText
+                );
+                e.preventDefault();
+            }
+        );
+    })( i );
 };
 
 goog.exportSymbol('wolf.start');
